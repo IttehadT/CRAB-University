@@ -2,7 +2,7 @@ export const siteConfig = {
   name: "CRAB University",
   description: "The ultimate automated platform for students.",
   logo: {
-    text: "🦀 CRAB Uni",
+    text: "🦀 CRAB University",
     path: "/",
   },
   // These links appear in the Landing Page Navbar
