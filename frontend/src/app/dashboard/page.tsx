@@ -1,9 +1,37 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+
 export default function DashboardPage() {
+  const [serverStatus, setServerStatus] = useState<string>("Checking...");
+
+  // Check server connection on load
+  useEffect(() => {
+    api.getHealth().then((data) => {
+      if (data && data.status === "active") {
+        setServerStatus("Online 🟢");
+      } else {
+        setServerStatus("Offline 🔴");
+      }
+    });
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Student Overview</h1>
-        <span className="text-sm text-slate-500">Spring 2026</span>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Student Overview</h1>
+          <p className="text-sm text-slate-500">Spring 2026</p>
+        </div>
+        
+        {/* Server Status Badge */}
+        <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium shadow-sm">
+          <span className="text-slate-500">System:</span>
+          <span className={serverStatus.includes("Online") ? "text-green-600" : "text-red-500"}>
+            {serverStatus}
+          </span>
+        </div>
       </div>
 
       {/* Stats Grid */}
