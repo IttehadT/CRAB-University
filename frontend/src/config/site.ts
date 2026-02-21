@@ -1,42 +1,70 @@
+// THE CENTRAL CONTROL ROOM FOR CRAB UNIVERSITY
+
 export const siteConfig = {
-  name: "CRAB University",
-  description: "The ultimate automated platform for students.",
-  logo: {
-    text: "🦀 CRAB University",
-    path: "/",
+  // 1. GLOBAL BRANDING
+  brand: {
+    name: "CRAB University",
+    shortName: "CRABU", // Hidden identifier for backend/future use
+    description: "The ultimate automated platform for students.",
+    logoText: "CRAB University",
+    colors: {
+      primary: "blue-600",     // Change this to "red-600" and the whole site changes
+      primaryHover: "blue-700",
+      background: "slate-50",
+    }
   },
-  // These links appear in the Landing Page Navbar
+
+  // 2. PUBLIC NAVBAR LINKS
   navItems: [
-    { label: "Home", href: "/" },
-    { label: "About", href: "#mission" },
-    { label: "Features", href: "#features" },
-    { label: "Contact", href: "#footer" },
+    { label: "Home", href: "/", is_enabled: true, is_beta: false },
+    { label: "About", href: "/#mission", is_enabled: true, is_beta: false },
+    { label: "Features", href: "/#features", is_enabled: true, is_beta: false },
   ],
-  // These will be used for your "Sliding Feature" section
-  features: [
+
+  // 3. DASHBOARD FEATURES (The Sidebar)
+  dashboardFeatures: [
     { 
-      title: "Academic Tools", 
-      desc: "CGPA Calculator, Converters, and Logic Simulators.", 
-      icon: "📚", 
-      href: "/courses" 
+      label: "Overview", 
+      href: "/dashboard", 
+      icon: "🏠", 
+      is_enabled: true, 
+      is_beta: false 
     },
     { 
-      title: "Campus Life", 
-      desc: "Bus schedules, Map navigation, and Club info.", 
-      icon: "🚌", 
-      href: "/guidance" 
+      label: "Class Schedule", 
+      href: "/dashboard/schedule", 
+      icon: "📅", 
+      is_enabled: true, 
+      is_beta: false 
     },
     { 
-      title: "AI Mentor", 
-      desc: "24/7 Academic assistant powered by custom AI.", 
+      label: "Advising Panel", 
+      href: "/dashboard/advising", 
+      icon: "🎓", 
+      is_enabled: true, 
+      is_beta: true // <-- We will show a beautiful BETA badge for this
+    },
+    { 
+      label: "Grade Sheet", 
+      href: "/dashboard/grades", 
+      icon: "📊", 
+      is_enabled: true, 
+      is_beta: false 
+    },
+    { 
+      label: "AI Mentor (RAG)", 
+      href: "/dashboard/chat", 
       icon: "🤖", 
-      href: "/chat" 
+      is_enabled: true, 
+      is_beta: true // <-- BETA tag will appear here automatically
     },
+    // Example of turning off a feature instantly:
     { 
-      title: "Student Lounge", 
-      desc: "Multiplayer games and routine matcher.", 
-      icon: "🎮", 
-      href: "/games" 
+      label: "Bus Tracker", 
+      href: "/dashboard/bus", 
+      icon: "🚌", 
+      is_enabled: false, // <-- This completely hides it from the UI
+      is_beta: false 
     },
   ]
 };
