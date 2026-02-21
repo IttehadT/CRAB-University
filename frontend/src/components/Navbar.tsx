@@ -33,7 +33,7 @@ export function Navbar() {
           {/* 3. Login Button (Desktop) */}
           <div className="hidden md:block">
             <Link 
-              href="/dashboard"
+              href="/login"
               className="rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             >
               Login

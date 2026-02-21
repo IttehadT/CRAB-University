@@ -23,7 +23,7 @@ export default function Home() {
         </p>
 
         <div className="mt-8 flex gap-4">
-          <Link href="/dashboard" className="rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg transition hover:bg-blue-700 hover:shadow-xl">
+          <Link href="/login" className="rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg transition hover:bg-blue-700 hover:shadow-xl">
             Go to Dashboard
           </Link>
           <Link href="#mission" className="rounded-xl border border-slate-200 bg-white px-8 py-4 font-bold text-slate-700 transition hover:bg-slate-50">
