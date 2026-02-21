@@ -14,7 +14,7 @@ export function Navbar() {
           
           {/* 1. Logo */}
           <Link href="/" className="text-xl font-bold text-blue-700">
-            {siteConfig.logo.text}
+            {siteConfig.brand.logoText}
           </Link>
 
           {/* 2. Desktop Menu (Hidden on Mobile) */}
