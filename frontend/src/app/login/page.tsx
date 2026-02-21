@@ -11,31 +11,49 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   
+  // NEW: State to toggle between Sign In and Sign Up
+  const [isSignUp, setIsSignUp] = useState(false);
+  
   const supabase = createClient();
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  // COMBINED: Handles both signing in and signing up
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("Verifying credentials...");
+    setMessage(isSignUp ? "Creating your account..." : "Verifying credentials...");
     
-    // 1. Attempt to sign in
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+    if (isSignUp) {
+      // --- SIGN UP LOGIC ---
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      });
 
-    if (error) {
-      // 2. If the user doesn't exist, you might want to sign them up instead
-      if (error.message.includes("Invalid login credentials")) {
-         setMessage("Invalid credentials or user not found. Please Sign Up or use Google.");
+      if (error) {
+        setMessage(error.message);
+        setLoading(false);
       } else {
-         setMessage(error.message);
+        setMessage("Account created successfully! Redirecting...");
+        window.location.href = "/dashboard";
       }
-      setLoading(false);
     } else {
-      // 3. Success! Send them to the dashboard
-      setMessage("Success! Redirecting...");
-      window.location.href = "/dashboard";
+      // --- SIGN IN LOGIC ---
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+           setMessage("Invalid credentials. Please Sign Up or try again.");
+        } else {
+           setMessage(error.message);
+        }
+        setLoading(false);
+      } else {
+        setMessage("Success! Redirecting...");
+        window.location.href = "/dashboard";
+      }
     }
   };
 
@@ -46,7 +64,6 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // This tells Google where to send the user after a successful login
         redirectTo: `${window.location.origin}/dashboard`,
       },
     });
@@ -61,28 +78,25 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
         
-        {/* Header */}
         <div className="text-center">
           <Link href="/" className="text-2xl font-bold text-blue-700">
             {siteConfig.brand.logoText}
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-slate-900">
-            Welcome back
+            {isSignUp ? "Create an account" : "Welcome back"}
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Please sign in to access your student portal.
+            {isSignUp ? "Sign up to access your student portal." : "Please sign in to access your student portal."}
           </p>
         </div>
 
-        {/* Status Message */}
         {message && (
-          <div className="rounded-lg bg-blue-50 p-3 text-center text-sm text-blue-700 font-medium">
+          <div className={`rounded-lg p-3 text-center text-sm font-medium ${message.includes("Success") || message.includes("created") ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>
             {message}
           </div>
         )}
 
-        {/* Login Form */}
-        <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
+        <form className="mt-8 space-y-6" onSubmit={handleEmailAuth}>
           <div className="space-y-4 rounded-md shadow-sm">
             <div>
               <label htmlFor="email" className="sr-only">Email address</label>
@@ -105,7 +119,7 @@ export default function LoginPage() {
                 type="password"
                 required
                 className="relative block w-full rounded-b-md border border-slate-300 px-3 py-3 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                placeholder="Password"
+                placeholder="Password (minimum 6 characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -118,10 +132,26 @@ export default function LoginPage() {
               disabled={loading}
               className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
             >
-              {loading ? "Signing in..." : "Sign in"}
+              {loading ? "Processing..." : (isSignUp ? "Sign Up" : "Sign In")}
             </button>
           </div>
         </form>
+
+        {/* TOGGLE BETWEEN SIGN IN AND SIGN UP */}
+        <div className="text-center text-sm">
+          <span className="text-slate-600">
+            {isSignUp ? "Already have an account?" : "Don't have an account?"}
+          </span>
+          <button 
+            onClick={() => {
+              setIsSignUp(!isSignUp);
+              setMessage(""); // Clear any old errors
+            }} 
+            className="ml-1 font-medium text-blue-600 hover:text-blue-500"
+          >
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </button>
+        </div>
 
         <div className="mt-6">
           <div className="relative">
@@ -136,9 +166,9 @@ export default function LoginPage() {
           <div className="mt-6">
             <button
               onClick={handleGoogleLogin}
+              type="button"
               className="flex w-full items-center justify-center gap-3 rounded-md border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              {/* Google G Logo SVG */}
               <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
                 <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
                   <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>

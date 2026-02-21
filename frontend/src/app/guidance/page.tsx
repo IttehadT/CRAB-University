@@ -9,7 +9,7 @@ export default function GuidancePage() {
           Fresher's Guidance
         </h1>
         <p className="text-lg text-slate-600">
-          Everything you need to survive and thrive at {siteConfig.name}.
+          Everything you need to survive and thrive at {siteConfig.brand.name}.
         </p>
       </div>
 
