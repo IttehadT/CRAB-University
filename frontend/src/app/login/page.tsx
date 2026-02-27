@@ -129,10 +129,17 @@ export default function LoginPage() {
     setLoading(true);
     setMessage("Redirecting to Microsoft...");
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'azure', // Supabase uses 'azure' for Microsoft accounts
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      provider: 'azure', 
+      options: { 
+        scopes: 'email profile', // <-- ADD THIS LINE: Forces Microsoft to send the email
+        redirectTo: `${window.location.origin}/dashboard` 
+      },
     });
-    if (error) { setMessage(error.message); setLoading(false); }
+
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+    }
   };
 
 
