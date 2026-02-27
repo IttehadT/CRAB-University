@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [fullName, setFullName] = useState("");
   
   // NEW: State to toggle between Sign In and Sign Up
   const [isSignUp, setIsSignUp] = useState(false);
@@ -51,9 +52,18 @@ export default function LoginPage() {
         return; // Stop the signup process here
       }
 
+      // Generate a default avatar using their name (or email if name is missing)
+      const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || email)}&background=2563eb&color=fff&size=128`;
+
       const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
+        options: {
+          data: {
+            full_name: fullName,
+            avatar_url: defaultAvatar, // Save the generated picture
+          }
+        }
       });
 
       if (error) {
@@ -144,6 +154,21 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleEmailAuth}>
           <div className="space-y-4 rounded-md shadow-sm">
+            {isSignUp && (
+              <div>
+                <label htmlFor="fullName" className="sr-only">Full Name</label>
+                <input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  required={isSignUp}
+                  className="relative block w-full rounded-t-md border border-slate-300 px-3 py-3 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                  placeholder="Full Name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                />
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="sr-only">Email address</label>
               <input

@@ -17,18 +17,26 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
   const supabase = createClient();
   
   // State to hold the logged-in user's email
-  const [userEmail, setUserEmail] = useState<string | null>("Loading...");
+  // State to hold the logged-in user's profile data
+  const [userProfile, setUserProfile] = useState({ name: "Loading...", avatar: "" });
 
-  // Fetch the user when the sidebar loads
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUserEmail(user.email ?? "Student");
+        // Fallback logic: If they don't have a name (old accounts), use the first part of their email
+        const rawName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Student";
+        // Fallback logic: If they don't have a Google avatar, generate a blue initials avatar
+        const rawAvatar = user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
+        
+        setUserProfile({
+          name: rawName,
+          avatar: rawAvatar
+        });
       }
     };
     getUser();
-  }, []);
+  }, [supabase]);
 
   // Secure Sign Out function
   const handleSignOut = async () => {
@@ -88,14 +96,27 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
         </div>
 
         {/* UPDATED: Dynamic User Profile & Sign Out Button */}
+        {/* UPDATED: Dynamic User Profile & Sign Out Button */}
         <div className="absolute bottom-0 w-full border-t border-slate-200 p-4 bg-white flex flex-col gap-2">
           <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 overflow-hidden">
-            <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold uppercase">
-              {userEmail ? userEmail.charAt(0) : "U"}
-            </div>
+            
+            {/* Display the Avatar Picture */}
+            {userProfile.avatar ? (
+              <img 
+                src={userProfile.avatar} 
+                alt="Profile" 
+                className="h-10 w-10 flex-shrink-0 rounded-full border border-slate-200 object-cover"
+              />
+            ) : (
+              <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                {userProfile.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            
+            {/* Display the Full Name */}
             <div className="truncate">
-              <p className="text-sm font-semibold text-slate-900 truncate" title={userEmail || ""}>
-                {userEmail}
+              <p className="text-sm font-semibold text-slate-900 truncate" title={userProfile.name}>
+                {userProfile.name}
               </p>
               <p className="text-xs text-slate-500">Student</p>
             </div>
