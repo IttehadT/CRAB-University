@@ -105,6 +105,19 @@ export default function LoginPage() {
     }
   };
 
+
+  // NEW: Intercept the render if we are transitioning to the dashboard
+  if (isRedirecting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4 animate-pulse">
+          <span className="text-4xl">🦀</span>
+          <p className="text-slate-600 font-medium">Authenticating...</p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
