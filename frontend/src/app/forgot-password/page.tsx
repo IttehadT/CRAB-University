@@ -139,8 +139,8 @@ export default function ForgotPasswordPage() {
                 type="text"
                 required
                 maxLength={8}
-                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-center tracking-widest text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-lg"
-                placeholder="••••••••"
+                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-center tracking-widest text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                placeholder="Enter Code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} // Only allow numbers
               />
