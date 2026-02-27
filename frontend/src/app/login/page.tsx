@@ -111,13 +111,15 @@ export default function LoginPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4 animate-pulse">
-          <span className="text-4xl">🦀</span>
+          <span className="text-4xl font-bold text-blue-700">
+            {siteConfig.brand.logoText}
+          </span>
           <p className="text-slate-600 font-medium">Authenticating...</p>
         </div>
       </div>
     );
   }
-  
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
