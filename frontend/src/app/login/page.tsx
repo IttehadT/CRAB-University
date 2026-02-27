@@ -14,6 +14,7 @@ export default function LoginPage() {
   
   // NEW: State to toggle between Sign In and Sign Up
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   const supabase = createClient();
   const router = useRouter(); // Initialize the router
@@ -22,6 +23,7 @@ export default function LoginPage() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
+        setIsRedirecting(true);
         router.push("/dashboard");
         router.refresh(); // Forces Next.js to update the server cookies instantly
       }
@@ -59,6 +61,7 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         setMessage("Account created successfully! Redirecting...");
+        setIsRedirecting(true);
         router.push("/dashboard");
         router.refresh();
       }
@@ -78,6 +81,7 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         setMessage("Success! Redirecting...");
+        setIsRedirecting(true);
         router.push("/dashboard");
         router.refresh();
       }
