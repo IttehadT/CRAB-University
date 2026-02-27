@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react"; // Added useEffect
+import { useRouter } from "next/navigation"; // Added Next.js router
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
@@ -15,6 +16,21 @@ export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   
   const supabase = createClient();
+  const router = useRouter(); // Initialize the router
+
+  // NEW: Listen for background auth changes (like Google OAuth or OTP returning)
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        router.push("/dashboard");
+        router.refresh(); // Forces Next.js to update the server cookies instantly
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase, router]);
 
   // COMBINED: Handles both signing in and signing up
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -22,8 +38,17 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(isSignUp ? "Creating your account..." : "Verifying credentials...");
     
+
+
     if (isSignUp) {
-      // --- SIGN UP LOGIC ---
+      // --- NEW: STRICT PASSWORD VALIDATION ---
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      if (!passwordRegex.test(password)) {
+        setMessage("Weak password: Must be 8+ chars with an uppercase, lowercase, number, and symbol.");
+        setLoading(false);
+        return; // Stop the signup process here
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
@@ -34,7 +59,8 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         setMessage("Account created successfully! Redirecting...");
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
+        router.refresh();
       }
     } else {
       // --- SIGN IN LOGIC ---
@@ -52,7 +78,8 @@ export default function LoginPage() {
         setLoading(false);
       } else {
         setMessage("Success! Redirecting...");
-        window.location.href = "/dashboard";
+        router.push("/dashboard");
+        router.refresh();
       }
     }
   };
@@ -106,7 +133,7 @@ export default function LoginPage() {
                 type="email"
                 required
                 className="relative block w-full rounded-t-md border border-slate-300 px-3 py-3 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                placeholder="Student Email Address"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -119,7 +146,7 @@ export default function LoginPage() {
                 type="password"
                 required
                 className="relative block w-full rounded-b-md border border-slate-300 px-3 py-3 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
-                placeholder="Password (minimum 6 characters)"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
