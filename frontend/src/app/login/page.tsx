@@ -66,9 +66,11 @@ const handleEmailAuth = async (e: React.FormEvent) => {
         email: email,
         password: password,
         options: {
+          // Send them to the checkpoint first, and tell the checkpoint to send them to the dashboard after!
+          emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`, 
           data: {
             full_name: fullName,
-            avatar_url: defaultAvatar, // Save the generated picture
+            avatar_url: defaultAvatar, 
           }
         }
       });
