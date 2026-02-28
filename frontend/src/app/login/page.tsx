@@ -13,6 +13,8 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const [fullName, setFullName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   // NEW: State to toggle between Sign In and Sign Up
   const [isSignUp, setIsSignUp] = useState(false);
@@ -43,6 +45,12 @@ const handleEmailAuth = async (e: React.FormEvent) => {
     setMessage(isSignUp ? "Creating your account..." : "Verifying credentials...");
 
     if (isSignUp) {
+      // --- NEW: MATCHING PASSWORD CHECK ---
+      if (password !== confirmPassword) {
+        setMessage("Passwords do not match. Please try again.");
+        setLoading(false);
+        return; // Stop the signup process here
+      }
       // --- NEW: STRICT PASSWORD VALIDATION ---
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
       if (!passwordRegex.test(password)) {
@@ -256,6 +264,43 @@ const handleEmailAuth = async (e: React.FormEvent) => {
               </button>
             </div>
           </div>
+
+          {/* Confirm Password Input Block (Only shows during Sign Up) */}
+          {isSignUp && (
+            <div>
+              <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  required={isSignUp}
+                  minLength={8}
+                  className="relative block w-full rounded-md border border-slate-300 px-3 py-3 pr-10 text-slate-900 placeholder-slate-500 focus:z-10 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                  placeholder="Retype Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700 focus:outline-none z-20"
+                >
+                  {showConfirmPassword ? (
+                    <svg className="h-5 w-5" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-5 w-5" fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.61-3.092M15 12a3 3 0 00-3-3m0 0a3 3 0 00-3 3m0 0a3 3 0 003 3m0-3h.01M21.542 12a10.05 10.05 0 01-1.61 3.092m-4.522 1.943A10.05 10.05 0 0012 5c-4.478 0-8.268 2.943-9.542 7" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Forgot Password Link - Left Aligned */}
           {!isSignUp && (
