@@ -143,7 +143,7 @@ const handleEmailAuth = async (e: React.FormEvent) => {
   };
 
   const handleGithubLogin = async () => {
-    setLoading(true);
+    setLoading(true); 
     setMessage("Redirecting to GitHub...");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'github',
