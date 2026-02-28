@@ -37,12 +37,10 @@ export default function LoginPage() {
   }, [supabase, router]);
 
   // COMBINED: Handles both signing in and signing up
-  const handleEmailAuth = async (e: React.FormEvent) => {
+const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(isSignUp ? "Creating your account..." : "Verifying credentials...");
-    
-
 
     if (isSignUp) {
       // --- NEW: STRICT PASSWORD VALIDATION ---
@@ -71,10 +69,20 @@ export default function LoginPage() {
         setMessage(error.message);
         setLoading(false);
       } else {
-        setMessage("Account created successfully! Redirecting...");
-        setIsRedirecting(true);
-        router.push("/dashboard");
-        router.refresh();
+        // --- SMART REDIRECT LOGIC ---
+        // Check if Supabase gave us a session, or if it's waiting for email confirmation
+        if (data.session) {
+          setMessage("Account created successfully! Redirecting...");
+          setIsRedirecting(true);
+          router.push("/dashboard");
+          router.refresh();
+        } else {
+          // Email confirmation is ON in Supabase
+          setMessage("Registration successful! Please check your email to verify your account.");
+          setLoading(false);
+          setIsSignUp(false); // Automatically flip the UI back to "Sign In"
+          setPassword("");    // Clear the password field for security
+        }
       }
     } else {
       // --- SIGN IN LOGIC ---
