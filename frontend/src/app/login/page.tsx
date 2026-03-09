@@ -120,11 +120,16 @@ const handleEmailAuth = async (e: React.FormEvent) => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setMessage("Redirecting to Google...");
-    
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
+        scopes: 'openid email profile',
+        queryParams: {
+          access_type: 'online',
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -132,7 +137,7 @@ const handleEmailAuth = async (e: React.FormEvent) => {
       setMessage(error.message);
       setLoading(false);
     }
-  };  
+  };
   
   
   const handleMicrosoftLogin = async () => {
