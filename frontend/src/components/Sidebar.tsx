@@ -16,7 +16,6 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
   const router = useRouter();
   const supabase = createClient();
   
-  // State to hold the logged-in user's email
   // State to hold the logged-in user's profile data
   const [userProfile, setUserProfile] = useState({ name: "Loading...", avatar: "" });
 
@@ -26,7 +25,7 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
       if (user) {
         // Fallback logic: If they don't have a name (old accounts), use the first part of their email
         const rawName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Student";
-        // Fallback logic: If they don't have a Google avatar, generate a blue initials avatar
+        // Fallback logic: If they don't have an avatar URL, generate a blue initials avatar
         const rawAvatar = user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
         
         setUserProfile({
@@ -96,16 +95,19 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
         </div>
 
         {/* UPDATED: Dynamic User Profile & Sign Out Button */}
-        {/* UPDATED: Dynamic User Profile & Sign Out Button */}
         <div className="absolute bottom-0 w-full border-t border-slate-200 p-4 bg-white flex flex-col gap-2">
           <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 overflow-hidden">
             
-            {/* Display the Avatar Picture */}
+            {/* Display the Avatar Picture with onError fallback */}
             {userProfile.avatar ? (
               <img 
                 src={userProfile.avatar} 
                 alt="Profile" 
                 className="h-10 w-10 flex-shrink-0 rounded-full border border-slate-200 object-cover"
+                onError={(e) => {
+                  // If the image link is broken, instantly swap to the generated initials!
+                  e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=2563eb&color=fff`;
+                }}
               />
             ) : (
               <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
