@@ -74,7 +74,7 @@ export function Navbar() {
                 className="block text-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
                 onClick={() => setIsOpen(false)}
               >
-                Login to Portal
+                Dashboard
               </Link>
             </div>
           </div>
