@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     // This clever trick splits "🦀 CRAB University" to grab just the first character (the emoji) for the tab icon!
     icon: `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${siteConfig.brand.logoText.split(' ')[0]}</text></svg>`,
   },
+
+  verification: {
+    google: "lX-ZWLJRzO1V3CudEyBKXFmKnlSZ4fUhbV6wj79s4Qk",
+  },
 };
 
 export default function RootLayout({
