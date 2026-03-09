@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+// import { api } from "@/lib/api";
 
 export default function DashboardPage() {
   const [serverStatus, setServerStatus] = useState<string>("Checking...");
 
   // Check server connection on load
-  useEffect(() => {
-    api.getHealth().then((data) => {
-      if (data && data.status === "active") {
-        setServerStatus("Online 🟢");
-      } else {
-        setServerStatus("Offline 🔴");
-      }
-    });
-  }, []);
+  // useEffect(() => {
+  //   api.getHealth().then((data) => {
+  //     if (data && data.status === "active") {
+  //       setServerStatus("Online 🟢");
+  //     } else {
+  //       setServerStatus("Offline 🔴");
+  //     }
+  //   });
+  // }, []);
 
   return (
     <div className="space-y-6">
