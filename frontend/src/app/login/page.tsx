@@ -189,28 +189,46 @@ export default function LoginPage() {
   }
 
   // ── Webview block screen ────────────────────────────────────────────────────
+  // ── Webview block screen ────────────────────────────────────────────────────
   if (webviewDetected) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
-        <div className="w-full max-w-sm rounded-2xl bg-white shadow-lg border border-slate-100 p-8 text-center space-y-5">
-          <div className="text-5xl">🌐</div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-900">Open in your browser</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Google sign-in doesn&apos;t work inside Gmail, Messenger, or Instagram due to
-              Google&apos;s security policy. Please open CRABU in Chrome or Safari to sign in.
-            </p>
+      <div className="flex min-h-screen items-center justify-center bg-slate-900 px-6 font-sans">
+        {/* Background Glow */}
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/40 via-slate-900 to-slate-900"></div>
+        
+        <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+          <div className="bg-blue-600 p-6 text-center text-white">
+            <span className="text-3xl font-bold tracking-tight">{siteConfig.brand.logoText}</span>
           </div>
-          <button
-            onClick={() => openInBrowser("https://crabu.itausif.tech/login")}
-            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 transition-colors"
-          >
-            Open in Browser
-          </button>
-          <p className="text-xs text-slate-400">
-            Or copy:{" "}
-            <span className="font-medium text-slate-600">crabu.itausif.tech/login</span>
-          </p>
+          
+          <div className="p-8 text-center space-y-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-8 w-8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+              </svg>
+            </div>
+            
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900">Action Required</h2>
+              <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                To keep your account secure, Google requires you to sign in using a standard web browser. Please tap the button below to continue securely.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => openInBrowser("https://crabu.itausif.tech/login")}
+              className="w-full rounded-xl bg-slate-900 px-4 py-4 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02] active:scale-95"
+            >
+              Open securely in Browser
+            </button>
+            
+            <div className="rounded-lg bg-slate-50 p-4 border border-slate-100 text-left">
+               <p className="text-xs font-semibold text-slate-700 mb-1">Having trouble?</p>
+               <p className="text-xs text-slate-500">
+                 Tap the <span className="font-bold">three dots (...)</span> in the top corner of this screen and select <span className="font-bold text-slate-800">"Open in system browser"</span>.
+               </p>
+            </div>
+          </div>
         </div>
       </div>
     );
