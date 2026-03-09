@@ -137,6 +137,7 @@ export default function LoginPage() {
         queryParams: {
           access_type: "online",
           prompt: "select_account",
+          fedcm_enabled: "false",
         },
       },
     });
