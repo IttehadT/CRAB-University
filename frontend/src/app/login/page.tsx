@@ -6,14 +6,21 @@ import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 
-// ─── Webview Detection Utility ───────────────────────────────────────────────
+// ─── Webview Detection Utility (iOS ONLY) ────────────────────────────────
 function isWebview(): boolean {
   if (typeof window === "undefined") return false;
   const ua = navigator.userAgent;
-  return (
-    /FBAN|FBAV|Instagram|Messenger|WebView|\bwv\b|GSA/.test(ua) ||
-    (/iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua))
-  );
+
+  // 1. First, check if the device is Apple iOS
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+
+  // If it's Android, Windows, or Mac, let them pass straight through!
+  if (!isIOS) return false;
+
+  // 2. If it IS iOS, check if it's trapped in an in-app browser.
+  // Standard iOS browsers (Safari, Chrome for iOS) always include "Safari" in the user agent.
+  // In-app browsers (Messenger, Instagram) strip "Safari" out or add their own tags.
+  return !/Safari/.test(ua) || /FBAN|FBAV|Instagram|Messenger/.test(ua);
 }
 
 function openInBrowser(url: string) {
@@ -188,7 +195,6 @@ export default function LoginPage() {
     );
   }
 
-  // ── Webview block screen ────────────────────────────────────────────────────
   // ── Webview block screen ────────────────────────────────────────────────────
   if (webviewDetected) {
     return (
