@@ -1,10 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react"; // Added useEffect
-import { useRouter } from "next/navigation"; // Added Next.js router
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
+
+// ─── Webview Detection Utility ───────────────────────────────────────────────
+function isWebview(): boolean {
+  if (typeof window === "undefined") return false;
+  const ua = navigator.userAgent;
+  return (
+    /FBAN|FBAV|Instagram|Messenger|WebView|\bwv\b|GSA/.test(ua) ||
+    (/iPhone|iPad|iPod/.test(ua) && !/Safari/.test(ua))
+  );
+}
+
+function openInBrowser(url: string) {
+  if (/Android/.test(navigator.userAgent)) {
+    window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
+  } else {
+    window.location.href = url;
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,98 +34,88 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  // NEW: State to toggle between Sign In and Sign Up
   const [isSignUp, setIsSignUp] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  
-  const supabase = createClient();
-  const router = useRouter(); // Initialize the router
+  const [webviewDetected, setWebviewDetected] = useState(false);
 
-  // NEW: Listen for background auth changes (like Google OAuth or OTP returning)
+  const supabase = createClient();
+  const router = useRouter();
+
+  // Detect webview on mount (must be client-side)
+  useEffect(() => {
+    setWebviewDetected(isWebview());
+  }, []);
+
+  // Listen for background auth changes (Google OAuth / OTP callback)
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
         setIsRedirecting(true);
         router.push("/dashboard");
-        router.refresh(); // Forces Next.js to update the server cookies instantly
+        router.refresh();
       }
     });
-
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, [supabase, router]);
 
-  // COMBINED: Handles both signing in and signing up
-const handleEmailAuth = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(isSignUp ? "Creating your account..." : "Verifying credentials...");
 
     if (isSignUp) {
-      // --- NEW: MATCHING PASSWORD CHECK ---
       if (password !== confirmPassword) {
         setMessage("Passwords do not match. Please try again.");
         setLoading(false);
-        return; // Stop the signup process here
+        return;
       }
-      // --- NEW: STRICT PASSWORD VALIDATION ---
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
       if (!passwordRegex.test(password)) {
         setMessage("Weak password: Must be 8+ chars with an uppercase, lowercase, number, and symbol.");
         setLoading(false);
-        return; // Stop the signup process here
+        return;
       }
 
-      // Generate a default avatar using their name (or email if name is missing)
       const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || email)}&background=2563eb&color=fff&size=128`;
 
       const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
+        email,
+        password,
         options: {
-          // Send them to the checkpoint first, and tell the checkpoint to send them to the dashboard after!
           emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             full_name: fullName,
-            avatar_url: defaultAvatar, 
-          }
-        }
+            avatar_url: defaultAvatar,
+          },
+        },
       });
 
       if (error) {
         setMessage(error.message);
         setLoading(false);
       } else {
-        // --- SMART REDIRECT LOGIC ---
-        // Check if Supabase gave us a session, or if it's waiting for email confirmation
         if (data.session) {
           setMessage("Account created successfully! Redirecting...");
           setIsRedirecting(true);
           router.push("/dashboard");
           router.refresh();
         } else {
-          // Email confirmation is ON in Supabase
           setMessage("Registration successful! Please check your email to verify your account.");
           setLoading(false);
-          setIsSignUp(false); // Automatically flip the UI back to "Sign In"
-          setPassword("");    // Clear the password field for security
+          setIsSignUp(false);
+          setPassword("");
         }
       }
     } else {
-      // --- SIGN IN LOGIC ---
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
-
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-           setMessage("Invalid credentials. Please Sign Up or try again.");
-        } else {
-           setMessage(error.message);
-        }
+        setMessage(
+          error.message.includes("Invalid login credentials")
+            ? "Invalid credentials. Please Sign Up or try again."
+            : error.message
+        );
         setLoading(false);
       } else {
         setMessage("Success! Redirecting...");
@@ -120,37 +129,33 @@ const handleEmailAuth = async (e: React.FormEvent) => {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setMessage("Redirecting to Google...");
-
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         redirectTo: `${window.location.origin}/dashboard`,
-        scopes: 'openid email profile',
+        scopes: "openid email profile",
         queryParams: {
-          access_type: 'online',
-          prompt: 'select_account',
+          access_type: "online",
+          prompt: "select_account",
         },
       },
     });
-
     if (error) {
       setMessage(error.message);
       setLoading(false);
     }
   };
-  
-  
+
   const handleMicrosoftLogin = async () => {
     setLoading(true);
     setMessage("Redirecting to Microsoft...");
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'azure', 
-      options: { 
-        scopes: 'email profile', // <-- ADD THIS LINE: Forces Microsoft to send the email
-        redirectTo: `${window.location.origin}/dashboard` 
+      provider: "azure",
+      options: {
+        scopes: "email profile",
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
-
     if (error) {
       setMessage(error.message);
       setLoading(false);
@@ -158,33 +163,63 @@ const handleEmailAuth = async (e: React.FormEvent) => {
   };
 
   const handleGithubLogin = async () => {
-    setLoading(true); 
+    setLoading(true);
     setMessage("Redirecting to GitHub...");
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
+      provider: "github",
       options: { redirectTo: `${window.location.origin}/dashboard` },
-    });  
-    if (error) { setMessage(error.message); setLoading(false); }
-  };    
+    });
+    if (error) {
+      setMessage(error.message);
+      setLoading(false);
+    }
+  };
 
-  // NEW: Intercept the render if we are transitioning to the dashboard
+  // ── Redirecting screen ──────────────────────────────────────────────────────
   if (isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4 animate-pulse">
-          <span className="text-4xl font-bold text-blue-700">
-            {siteConfig.brand.logoText}
-          </span>
+          <span className="text-4xl font-bold text-blue-700">{siteConfig.brand.logoText}</span>
           <p className="text-slate-600 font-medium">Authenticating...</p>
         </div>
       </div>
     );
   }
 
+  // ── Webview block screen ────────────────────────────────────────────────────
+  if (webviewDetected) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
+        <div className="w-full max-w-sm rounded-2xl bg-white shadow-lg border border-slate-100 p-8 text-center space-y-5">
+          <div className="text-5xl">🌐</div>
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Open in your browser</h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Google sign-in doesn&apos;t work inside Gmail, Messenger, or Instagram due to
+              Google&apos;s security policy. Please open CRABU in Chrome or Safari to sign in.
+            </p>
+          </div>
+          <button
+            onClick={() => openInBrowser("https://crabu.itausif.tech/login")}
+            className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white hover:bg-blue-700 transition-colors"
+          >
+            Open in Browser
+          </button>
+          <p className="text-xs text-slate-400">
+            Or copy:{" "}
+            <span className="font-medium text-slate-600">crabu.itausif.tech/login</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Main login page ─────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
-        
+
         <div className="text-center">
           <Link href="/" className="text-2xl font-bold text-blue-700">
             {siteConfig.brand.logoText}
@@ -193,19 +228,25 @@ const handleEmailAuth = async (e: React.FormEvent) => {
             {isSignUp ? "Create an account" : "Welcome back"}
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            {isSignUp ? "Sign up to access your student portal." : "Please sign in to access your student portal."}
+            {isSignUp
+              ? "Sign up to access your student portal."
+              : "Please sign in to access your student portal."}
           </p>
         </div>
 
         {message && (
-          <div className={`rounded-lg p-3 text-center text-sm font-medium ${message.includes("Success") || message.includes("created") ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>
+          <div
+            className={`rounded-lg p-3 text-center text-sm font-medium ${
+              message.includes("Success") || message.includes("created")
+                ? "bg-green-50 text-green-700"
+                : "bg-blue-50 text-blue-700"
+            }`}
+          >
             {message}
           </div>
         )}
 
         <form className="mt-8 space-y-4" onSubmit={handleEmailAuth}>
-          
-          {/* Full Name field only shows during Sign Up */}
           {isSignUp && (
             <div>
               <label htmlFor="fullName" className="sr-only">Full Name</label>
@@ -222,7 +263,6 @@ const handleEmailAuth = async (e: React.FormEvent) => {
             </div>
           )}
 
-          {/* Email Input */}
           <div>
             <label htmlFor="email" className="sr-only">Email address</label>
             <input
@@ -236,8 +276,7 @@ const handleEmailAuth = async (e: React.FormEvent) => {
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          
-          {/* Password Input Block */}
+
           <div>
             <label htmlFor="password" className="sr-only">Password</label>
             <div className="relative">
@@ -272,7 +311,6 @@ const handleEmailAuth = async (e: React.FormEvent) => {
             </div>
           </div>
 
-          {/* Confirm Password Input Block (Only shows during Sign Up) */}
           {isSignUp && (
             <div>
               <label htmlFor="confirmPassword" className="sr-only">Confirm Password</label>
@@ -309,7 +347,6 @@ const handleEmailAuth = async (e: React.FormEvent) => {
             </div>
           )}
 
-          {/* Forgot Password Link - Left Aligned */}
           {!isSignUp && (
             <div className="flex justify-start">
               <Link href="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-500">
@@ -324,21 +361,17 @@ const handleEmailAuth = async (e: React.FormEvent) => {
               disabled={loading}
               className="group relative flex w-full justify-center rounded-md border border-transparent bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400"
             >
-              {loading ? "Processing..." : (isSignUp ? "Sign Up" : "Sign In")}
+              {loading ? "Processing..." : isSignUp ? "Sign Up" : "Sign In"}
             </button>
           </div>
         </form>
 
-        {/* TOGGLE BETWEEN SIGN IN AND SIGN UP */}
         <div className="text-center text-sm">
           <span className="text-slate-600">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}
           </span>
-          <button 
-            onClick={() => {
-              setIsSignUp(!isSignUp);
-              setMessage(""); // Clear any old errors
-            }} 
+          <button
+            onClick={() => { setIsSignUp(!isSignUp); setMessage(""); }}
             className="ml-1 font-medium text-blue-600 hover:text-blue-500"
           >
             {isSignUp ? "Sign In" : "Sign Up"}
@@ -355,7 +388,8 @@ const handleEmailAuth = async (e: React.FormEvent) => {
             </div>
           </div>
 
-            <div className="mt-6 space-y-3">
+          <div className="mt-6 space-y-3">
+
             {/* Google Button */}
             <button
               onClick={handleGoogleLogin}
@@ -372,6 +406,15 @@ const handleEmailAuth = async (e: React.FormEvent) => {
               </svg>
               Continue with Google
             </button>
+
+            {/* Reassurance note — shown only when NOT in webview */}
+            <div className="flex items-start gap-2 rounded-lg bg-slate-50 border border-slate-200 p-3">
+              <span className="text-sm">🔒</span>
+              <p className="text-xs text-slate-500">
+                CRABU only accesses your <strong className="text-slate-700">name and email</strong>.
+                No access to Gmail, Drive, or any other data.
+              </p>
+            </div>
 
             {/* Microsoft Button */}
             <button
@@ -398,7 +441,7 @@ const handleEmailAuth = async (e: React.FormEvent) => {
                 <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
               </svg>
               Continue with GitHub
-            </button> 
+            </button>
           </div>
         </div>
       </div>
