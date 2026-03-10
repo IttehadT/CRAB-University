@@ -13,9 +13,18 @@ export async function POST(request: Request) {
     // email_data contains the OTP code or the magic link
     const { token, email_action_type } = email_data;
 
-    // We only want to handle signup and login OTPs for now
-    if (email_action_type !== "signup" && email_action_type !== "login") {
+    // 2. Define the exact actions we want to send emails for
+    const allowedActions = ["signup", "login", "magiclink", "recovery"];
+    
+    if (!allowedActions.includes(email_action_type)) {
+      console.log(`Ignoring action type: ${email_action_type}`);
       return NextResponse.json({ message: "Action ignored" });
+    }
+
+    // 3. Dynamically set the subject line based on what they are doing
+    let emailSubject = "Your CRABU Login Code";
+    if (email_action_type === "recovery") {
+      emailSubject = "Reset Your CRABU Password";
     }
 
     // HTML Template for the email
@@ -35,7 +44,7 @@ export async function POST(request: Request) {
       await resend.emails.send({
         from: "CRAB University <verify@crabu.app>",
         to: user.email,
-        subject: "Your CRABU Login Code",
+        subject: emailSubject, // Using the dynamic subject!
         html: htmlContent,
       });
       console.log("✅ Sent securely via Resend");
@@ -58,7 +67,7 @@ export async function POST(request: Request) {
       await transporter.sendMail({
         from: '"CRABU Backup Server" <services.crabu@gmail.com>',
         to: user.email,
-        subject: "Your CRABU Login Code (Backup Route)",
+        subject: `${emailSubject} (Backup Route)`, // Dynamic subject here too!
         html: htmlContent,
       });
       
