@@ -432,7 +432,9 @@ export default function LoginPage() {
               </svg>
               <p className="text-xs text-slate-500">
                 CRABU only accesses your{" "}
-                <span className="font-semibold text-slate-700">Name, Email, and Photo</span>
+                <span className="font-semibold text-slate-700">Name, Email,</span>
+                {" "}and{" "}
+                <span className="font-semibold text-slate-700">Photo</span>
                 . No other data is accessed.
               </p>
               {/* No additional data or permissions are accessed or stored. */}
