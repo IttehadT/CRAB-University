@@ -53,11 +53,28 @@ export default function LoginPage() {
     setWebviewDetected(isWebview());
   }, []);
 
+  // Fix Bug #4: Reset loading states if user hits "Back" from a social login
+  useEffect(() => {
+    setLoading(false);
+    setMessage("");
+    setIsRedirecting(false);
+  }, []);
+
   // Listen for background auth changes (Google OAuth / OTP callback)
   useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
         setIsRedirecting(true);
+        
+        // --- THE AUTH BRIDGE TRIGGER ---
+        // Fire and forget the sync request before redirecting
+        try {
+          await fetch("/api/auth/sync-user", { method: "POST" });
+        } catch (e) {
+          console.error("Failed to trigger sync", e);
+        }
+        // -------------------------------
+
         router.push("/dashboard");
         router.refresh();
       }
@@ -78,7 +95,9 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+      
+      // Fix Bug #2: Updated Regex to include periods/full-stops and all symbols
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
       if (!passwordRegex.test(password)) {
         setMessage("Weak password: Must be 8+ chars with an uppercase, lowercase, number, and symbol.");
         setLoading(false);
@@ -188,7 +207,7 @@ export default function LoginPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4 animate-pulse">
-          <span className="text-4xl font-bold text-blue-700">{siteConfig.brand.logoText}</span>
+          <span className="text-4xl font-bold text-blue-700">{siteConfig.brand?.logoText || siteConfig.name}</span>
           <p className="text-slate-600 font-medium">Authenticating...</p>
         </div>
       </div>
@@ -204,7 +223,7 @@ export default function LoginPage() {
         
         <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
           <div className="bg-blue-600 p-6 text-center text-white">
-            <span className="text-3xl font-bold tracking-tight">{siteConfig.brand.logoText}</span>
+            <span className="text-3xl font-bold tracking-tight">{siteConfig.brand?.logoText || siteConfig.name}</span>
           </div>
           
           <div className="p-8 text-center space-y-6">
@@ -247,7 +266,7 @@ export default function LoginPage() {
 
         <div className="text-center">
           <Link href="/" className="text-2xl font-bold text-blue-700">
-            {siteConfig.brand.logoText}
+            {siteConfig.brand?.logoText || siteConfig.name}
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-slate-900">
             {isSignUp ? "Create an account" : "Welcome back"}
@@ -414,13 +433,6 @@ export default function LoginPage() {
           </div>
 
           <div className="mt-6 space-y-3">
-
-            {/* Google Button */}
-            {/* Reassurance note — shown only when NOT in webview */}
-
-            {/* Any sort of warning msg box */}
-
-
             <div className="flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -437,9 +449,7 @@ export default function LoginPage() {
                 <span className="font-semibold text-slate-700">Photo</span>
                 . No other data is accessed.
               </p>
-              {/* No additional data or permissions are accessed or stored. */}
             </div>
-            
             
             <button
               onClick={handleGoogleLogin}
@@ -457,7 +467,6 @@ export default function LoginPage() {
               Continue with Google
             </button>
 
-            {/* Microsoft Button */}
             <button
               onClick={handleMicrosoftLogin}
               type="button"
@@ -472,7 +481,6 @@ export default function LoginPage() {
               Continue with Microsoft
             </button>
 
-            {/* GitHub Button */}
             <button
               onClick={handleGithubLogin}
               type="button"

@@ -21,15 +21,35 @@ export default function ForgotPasswordPage() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage("Sending 8-digit code...");
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    
-    if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage("Code sent! Please check your email.");
-      setStep(2);
+    setMessage("Checking account...");
+
+    try {
+      // Fix Bug #1: Check our database first before sending Supabase OTP
+      const res = await fetch("/api/auth/check-user", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setMessage(data.error || "Account not found. Please sign up.");
+        setLoading(false);
+        return;
+      }
+
+      setMessage("Sending 8-digit code...");
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      
+      if (error) {
+        setMessage(error.message);
+      } else {
+        setMessage("Code sent! Please check your email.");
+        setStep(2);
+      }
+    } catch (err) {
+      setMessage("An error occurred. Please try again later.");
     }
     setLoading(false);
   };
@@ -60,8 +80,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Enforce your strict password rules!
-    // This requires at least: 1 uppercase, 1 lowercase, 1 number, 1 special character (including .)
+    // Fix Bug #2: Updated Regex to include periods/full-stops and all symbols
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       setMessage("Weak password: Must be 8+ chars with an uppercase, lowercase, number, and symbol.");
@@ -91,7 +110,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
         <div className="text-center">
           <Link href="/" className="text-2xl font-bold text-blue-700">
-            {siteConfig.brand.logoText}
+            {siteConfig.brand?.logoText || siteConfig.name}
           </Link>
           <h2 className="mt-6 text-3xl font-extrabold text-slate-900">
             Reset Password
@@ -104,7 +123,7 @@ export default function ForgotPasswordPage() {
         </div>
 
         {message && (
-          <div className={`rounded-lg p-3 text-center text-sm font-medium ${message.includes("Success") || message.includes("sent") || message.includes("verified") ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>
+          <div className={`rounded-lg p-3 text-center text-sm font-medium ${message.includes("Success") || message.includes("sent") || message.includes("verified") ? "bg-green-50 text-green-700" : "bg-error-50 text-error-foreground bg-red-100 text-red-700"}`}>
             {message}
           </div>
         )}

@@ -32,16 +32,16 @@ class UserService {
     return await this.repository.findByEmail(email);
   }
 
-  // ── Create a new user record ───────────────────────────────────────────────
-  // Called after Supabase auth signup to mirror the user in MySQL
-  async createUser(id: string, email: string, fullName: string | null) {
-    await this.repository.create({
-      id,
-      email,
-      full_name: fullName,
-      created_at: new Date(),
-    });
+  async findByEmail(email: string) {
+    return await this.repository.findByEmail(email);
   }
+
+  async syncUser(user: any) {
+    // We are adding this right now for the Auth Bridge!
+    return await this.repository.upsert(user);
+  }
+
+  
 }
 
 // Export a single shared instance — the whole app uses this one object
