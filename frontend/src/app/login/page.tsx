@@ -53,11 +53,19 @@ export default function LoginPage() {
     setWebviewDetected(isWebview());
   }, []);
 
-  // Fix Bug #4: Reset loading states if user hits "Back" from a social login
+  // Fix Bug #3: The bfcache (Back-Forward Cache) circuit breaker
   useEffect(() => {
-    setLoading(false);
-    setMessage("");
-    setIsRedirecting(false);
+    const handlePageShow = (event: PageTransitionEvent) => {
+      // event.persisted is TRUE if the browser restored the page from the Back button
+      if (event.persisted) {
+        setLoading(false);
+        setIsRedirecting(false);
+        setMessage("");
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
   // Listen for background auth changes (Google OAuth / OTP callback)
