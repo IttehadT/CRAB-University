@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { useState } from "react";
+import { ThemeLanguageToggle } from "@/components/ThemeLanguageToggle";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false); // State to track if menu is open
@@ -29,7 +30,8 @@ export function Navbar() {
               </Link>
             ))}
           </div>
-
+          
+          <ThemeLanguageToggle />  
           {/* 3. Login Button (Desktop) */}
           <div className="hidden md:block">
             <Link 
