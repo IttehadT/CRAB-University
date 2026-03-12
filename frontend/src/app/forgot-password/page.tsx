@@ -61,7 +61,8 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     // Enforce your strict password rules!
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    // This requires at least: 1 uppercase, 1 lowercase, 1 number, 1 special character (including .)
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
     if (!passwordRegex.test(newPassword)) {
       setMessage("Weak password: Must be 8+ chars with an uppercase, lowercase, number, and symbol.");
       setLoading(false);
