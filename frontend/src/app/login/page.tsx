@@ -60,7 +60,7 @@ export default function LoginPage() {
       if (event.persisted) {
         setLoading(false);
         setIsRedirecting(false);
-        setMessage("");
+        setMessage(""); 
       }
     };
 
