@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "Welcome back",
+    "login": "Sign In",
+    "logout": "Sign Out",
+    "dashboard": "Dashboard",
+    "loading": "Loading...",
+    "error": "Something went wrong"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "features": "Features"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "email": "Email Address",
+    "password": "Password",
+    "fullName": "Full Name",
+    "retypePassword": "Retype Password",
+    "continueWithGoogle": "Continue with Google",
+    "continueWithMicrosoft": "Continue with Microsoft",
+    "continueWithGithub": "Continue with GitHub",
+    "processing": "Processing...",
+    "redirecting": "Authenticating..."
+  },
+  "dashboard": {
+    "overview": "Student Overview",
+    "semester": "Spring 2026",
+    "cgpa": "Current CGPA",
+    "credits": "Credits Completed",
+    "nextClass": "Next Class"
+  }
+}

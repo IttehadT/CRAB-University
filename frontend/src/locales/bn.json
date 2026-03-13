@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "স্বাগতম",
+    "login": "লগ ইন করুন",
+    "logout": "লগ আউট",
+    "dashboard": "ড্যাশবোর্ড",
+    "loading": "লোড হচ্ছে...",
+    "error": "কিছু একটা ভুল হয়েছে"
+  },
+  "nav": {
+    "home": "হোম",
+    "about": "আমাদের সম্পর্কে",
+    "features": "বৈশিষ্ট্যসমূহ"
+  },
+  "auth": {
+    "signIn": "লগ ইন করুন",
+    "signUp": "নিবন্ধন করুন",
+    "forgotPassword": "পাসওয়ার্ড ভুলে গেছেন?",
+    "noAccount": "অ্যাকাউন্ট নেই?",
+    "hasAccount": "ইতিমধ্যে অ্যাকাউন্ট আছে?",
+    "email": "ইমেইল ঠিকানা",
+    "password": "পাসওয়ার্ড",
+    "fullName": "পুরো নাম",
+    "retypePassword": "পাসওয়ার্ড পুনরায় লিখুন",
+    "continueWithGoogle": "Google দিয়ে চালিয়ে যান",
+    "continueWithMicrosoft": "Microsoft দিয়ে চালিয়ে যান",
+    "continueWithGithub": "GitHub দিয়ে চালিয়ে যান",
+    "processing": "প্রক্রিয়া করা হচ্ছে...",
+    "redirecting": "যাচাই করা হচ্ছে..."
+  },
+  "dashboard": {
+    "overview": "শিক্ষার্থী সংক্ষিপ্ত বিবরণ",
+    "semester": "বসন্ত ২০২৬",
+    "cgpa": "বর্তমান সিজিপিএ",
+    "credits": "সম্পন্ন ক্রেডিট",
+    "nextClass": "পরবর্তী ক্লাস"
+  }
+}

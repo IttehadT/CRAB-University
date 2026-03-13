@@ -1,87 +1,62 @@
-"use client"; // <--- This is REQUIRED for buttons to work!
+// Server Component — reads Supabase session securely on the server.
+// No loading flash, no client-side auth state juggling.
 
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/server";
 import { siteConfig } from "@/config/site";
-import { useState } from "react";
 import { ThemeLanguageToggle } from "@/components/ThemeLanguageToggle";
 
-export function Navbar() {
-  const [isOpen, setIsOpen] = useState(false); // State to track if menu is open
+export async function Navbar() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Student";
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/90 backdrop-blur-md">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
-          
-          {/* 1. Logo */}
-          <Link href="/" className="text-xl font-bold text-blue-700">
-            {siteConfig.brand.logoText}
-          </Link>
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4">
 
-          {/* 2. Desktop Menu (Hidden on Mobile) */}
-          <div className="hidden gap-8 md:flex">
-            {siteConfig.navItems.map((item) => (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className="text-sm font-medium text-slate-600 transition hover:text-blue-600"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-          
-          <ThemeLanguageToggle />  
-          {/* 3. Login Button (Desktop) */}
-          <div className="hidden md:block">
-            <Link 
-              href="/login"
-              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+        {/* Logo */}
+        <Link href="/" className="text-xl font-bold text-blue-700 dark:text-blue-500">
+          {siteConfig.brand?.logoText || siteConfig.name}
+        </Link>
+
+        {/* Desktop Nav Links */}
+        <nav className="hidden gap-8 md:flex">
+          {siteConfig.navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="text-sm font-medium text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
             >
-              Login
+              {item.label}
             </Link>
-          </div>
+          ))}
+        </nav>
 
-          {/* 4. Mobile Hamburger Button (Visible ONLY on Mobile) */}
-          <button 
-            className="text-slate-700 md:hidden"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {/* Show X if open, Hamburger if closed */}
-            {isOpen ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-            )}
-          </button>
+        {/* Right Side Controls */}
+        <div className="flex items-center gap-3">
+          <ThemeLanguageToggle />
+
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="hidden rounded-md bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900 md:block"
+            >
+              👋 {firstName}
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="hidden rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 md:block"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
-
-        {/* 5. Mobile Menu Dropdown (Conditionally Rendered) */}
-        {isOpen && (
-          <div className="border-t border-slate-100 py-4 md:hidden">
-            <div className="flex flex-col space-y-4">
-              {siteConfig.navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-base font-medium text-slate-600 hover:text-blue-600"
-                  onClick={() => setIsOpen(false)} // Close menu when clicked
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <hr />
-              <Link 
-                href="/dashboard"
-                className="block text-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white"
-                onClick={() => setIsOpen(false)}
-              >
-                Dashboard
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
-    </nav>
+    </header>
   );
 }
