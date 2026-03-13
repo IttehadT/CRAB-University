@@ -39,6 +39,7 @@ export default function RootLayout({
     <html lang={siteConfig.theme.defaultLanguage} suppressHydrationWarning>
       <body 
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50`}
+        suppressHydrationWarning
       >
         <ThemeProvider
           attribute="class"

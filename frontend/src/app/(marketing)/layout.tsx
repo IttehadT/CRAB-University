@@ -5,7 +5,6 @@ import Link from "next/link";
 function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-
       {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
@@ -87,23 +86,8 @@ function Footer() {
           </div>
         </div>
       </div>
-
-      {/* Bottom Bar */}
-      <div className="border-t border-slate-100 bg-slate-50 py-5 dark:border-slate-800 dark:bg-slate-900">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-3 px-4 sm:flex-row">
-          <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} {siteConfig.brand.name}. All rights reserved.
-          </p>
-          <p className="text-xs text-slate-400">
-            Designed & built by{" "}
-            <a href={siteConfig.developer.portfolioUrl} target="_blank" rel="noopener noreferrer"
-              className="font-semibold text-blue-600 transition hover:text-blue-700 dark:text-blue-400">
-              {siteConfig.developer.name}
-            </a>{" "}
-            · Dept. of CSE · BRAC University
-          </p>
-        </div>
-      </div>
+      
+      {/* Note: Bottom Bar was removed because it is now securely handled by GlobalCopyright in RootLayout */}
     </footer>
   );
 }
@@ -114,10 +98,12 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <>
       <Navbar />
-      <main className="flex-1">{children}</main>
+      <div className="flex-1 flex flex-col">
+        {children}
+      </div>
       <Footer />
-    </div>
+    </>
   );
 }
