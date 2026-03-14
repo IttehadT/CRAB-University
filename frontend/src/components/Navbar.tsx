@@ -15,11 +15,11 @@ export async function Navbar() {
   const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Student";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-card/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
 
         {/* Logo */}
-        <Link href="/" className="text-xl font-bold text-blue-700 dark:text-blue-500">
+        <Link href="/" className="text-xl font-bold text-primary dark:text-blue-500">
           {siteConfig.brand?.logoText || siteConfig.name}
         </Link>
 
@@ -29,7 +29,7 @@ export async function Navbar() {
             <Link
               key={item.href}
               href={item.href}
-              className="text-sm font-medium text-slate-600 transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
+              className="text-sm font-medium text-muted-foreground transition hover:text-blue-600 dark:text-slate-300 dark:hover:text-blue-400"
             >
               {item.label}
             </Link>
@@ -43,7 +43,7 @@ export async function Navbar() {
           {user ? (
             <Link
               href="/dashboard"
-              className="hidden rounded-md bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900 md:block"
+              className="hidden rounded-md bg-primary-muted px-4 py-2 text-sm font-semibold text-primary transition hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900 md:block"
             >
               👋 {firstName}
             </Link>

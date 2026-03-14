@@ -106,16 +106,16 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg border border-slate-100">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md space-y-8 rounded-2xl bg-card p-8 shadow-lg border border-slate-100">
         <div className="text-center">
-          <Link href="/" className="text-2xl font-bold text-blue-700">
+          <Link href="/" className="text-2xl font-bold text-primary">
             {siteConfig.brand?.logoText || siteConfig.name}
           </Link>
-          <h2 className="mt-6 text-3xl font-extrabold text-slate-900">
+          <h2 className="mt-6 text-3xl font-extrabold text-foreground">
             Reset Password
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             {step === 1 && "Enter your email to receive an 8-digit reset code."}
             {step === 2 && "Enter the 8-digit code sent to your email."}
             {step === 3 && "Create a new, strong password."}
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
               <input
                 type="email"
                 required
-                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-foreground placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                 placeholder="Student Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -159,7 +159,7 @@ export default function ForgotPasswordPage() {
                 type="text"
                 required
                 maxLength={8}
-                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-center tracking-widest text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-center tracking-widest text-foreground placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                 placeholder="Enter Code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} // Only allow numbers
@@ -183,7 +183,7 @@ export default function ForgotPasswordPage() {
                 type="password"
                 required
                 minLength={8}
-                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
+                className="relative block w-full rounded-md border border-slate-300 px-3 py-3 text-foreground placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm"
                 placeholder="New Password (8+ chars, mix of A-z, 0-9, !@#)"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
@@ -200,7 +200,7 @@ export default function ForgotPasswordPage() {
         )}
 
         <div className="text-center text-sm mt-4">
-          <Link href="/login" className="font-medium text-slate-600 hover:text-blue-500">
+          <Link href="/login" className="font-medium text-muted-foreground hover:text-blue-500">
             Return to Login
           </Link>
         </div>

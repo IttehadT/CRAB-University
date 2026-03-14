@@ -3,19 +3,19 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="bg-slate-50 font-sans text-slate-900 dark:bg-slate-950 dark:text-slate-50">
+    <div className="bg-background font-sans text-foreground dark:bg-slate-950 dark:text-slate-50">
       
       <section className="relative flex flex-col items-center justify-center px-4 py-24 text-center md:py-32">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-slate-50 to-slate-50 opacity-70 dark:from-blue-900/20 dark:via-slate-950 dark:to-slate-950"></div>
-        <div className="mb-6 inline-block rounded-full bg-blue-100 px-4 py-1.5 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+        <div className="mb-6 inline-block rounded-full bg-blue-100 px-4 py-1.5 text-sm font-semibold text-primary dark:bg-blue-900/30 dark:text-blue-400">
           🚀 Version 1.0 is Live
         </div>
         
-        <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-slate-900 sm:text-7xl dark:text-white">
+        <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-foreground sm:text-7xl dark:text-white">
           Everything a Student Needs, <br />
           <span className="text-blue-600 dark:text-blue-500">All in One Place.</span>
         </h1>
-        <p className="mt-6 max-w-2xl text-lg text-slate-600 dark:text-slate-400">
+        <p className="mt-6 max-w-2xl text-lg text-muted-foreground dark:text-slate-400">
           {siteConfig.brand?.description || "The ultimate automated platform for students."} Manage courses, track buses, simulate circuits, 
           and challenge friends—without leaving the tab.
         </p>
@@ -24,7 +24,7 @@ export default function Home() {
           <Link href="/login" className="rounded-xl bg-blue-600 px-8 py-4 font-bold text-white shadow-lg transition hover:bg-blue-700 hover:shadow-xl">
             Go to Dashboard
           </Link>
-          <Link href="#mission" className="rounded-xl border border-slate-200 bg-white px-8 py-4 font-bold text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+          <Link href="#mission" className="rounded-xl border border-border bg-card px-8 py-4 font-bold text-slate-700 transition hover:bg-background dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
             Why I Built This
           </Link>
         </div>
@@ -38,11 +38,11 @@ export default function Home() {
             <Link 
               href={feature.href} 
               key={index}
-              className="min-w-[280px] snap-center rounded-2xl border border-slate-100 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-w-[320px] dark:border-slate-800 dark:bg-slate-900"
+              className="min-w-[280px] snap-center rounded-2xl border border-slate-100 bg-card p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-w-[320px] dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="mb-4 text-4xl">{feature.icon}</div>
-              <h3 className="mb-2 text-xl font-bold text-slate-900 dark:text-white">{feature.label}</h3>
-              <p className="text-slate-600 dark:text-slate-400">Access your {feature.label.toLowerCase()} tool here.</p>
+              <h3 className="mb-2 text-xl font-bold text-foreground dark:text-white">{feature.label}</h3>
+              <p className="text-muted-foreground dark:text-slate-400">Access your {feature.label.toLowerCase()} tool here.</p>
             </Link>
           ))}
         </div>
@@ -66,7 +66,7 @@ export default function Home() {
             </p>
           </div>
           <div className="aspect-video rounded-2xl bg-slate-800 p-8 flex items-center justify-center border border-slate-700">
-            <p className="text-slate-500 font-mono">System Architecture Diagram</p>
+            <p className="text-muted-foreground font-mono">System Architecture Diagram</p>
           </div>
         </div>
       </section>

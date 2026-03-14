@@ -42,7 +42,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body 
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col bg-card dark:bg-slate-950 text-foreground dark:text-slate-50`}
         suppressHydrationWarning
       >
         <ThemeProvider

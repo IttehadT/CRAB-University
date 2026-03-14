@@ -2,35 +2,63 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ─── Global Semantic Color System ─── */
 :root {
-  --background: #ffffff;
-  --foreground: #0F172A;
+  /* Surface Colors */
+  --background: #f8fafc; /* slate-50 */
+  --foreground: #0f172a; /* slate-900 */
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  
+  /* UI Elements */
+  --border: #e2e8f0; /* slate-200 */
+  --muted: #f1f5f9; /* slate-100 */
+  --muted-foreground: #64748b; /* slate-500 */
+  
+  /* Brand Colors */
+  --primary: #2563eb; /* blue-600 */
+  --primary-foreground: #ffffff;
+  --primary-muted: #eff6ff; /* blue-50 */
 }
 
 .dark {
-  --background: #0F172A;
-  --foreground: #f1f5f9;
+  /* Surface Colors */
+  --background: #020617; /* slate-950 */
+  --foreground: #f8fafc; /* slate-50 */
+  --card: #0f172a; /* slate-900 */
+  --card-foreground: #f8fafc;
+  
+  /* UI Elements */
+  --border: #1e293b; /* slate-800 */
+  --muted: #1e293b; /* slate-800 */
+  --muted-foreground: #94a3b8; /* slate-400 */
+  
+  /* Brand Colors */
+  --primary: #3b82f6; /* blue-500 */
+  --primary-foreground: #ffffff;
+  --primary-muted: #1e3a8a; /* blue-900 (darker muted blue) */
 }
 
+/* ─── Tailwind v4 Theme Mapping ─── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted: var(--primary-muted);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-success: #16a34a;
-  --color-success-foreground: #ffffff;
-  --color-error: #dc2626;
-  --color-error-foreground: #ffffff;
-  --color-warning: #eab308;
-  --color-warning-foreground: #000000;
-  --color-info: #3b82f6;
-  --color-info-foreground: #ffffff;
-  --color-brand: #0F172A;
-  --color-accent: #38BDF8;
 }
 
+/* ─── Base Styles ─── */
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;

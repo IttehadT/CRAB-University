@@ -147,17 +147,17 @@ const sections = [
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen bg-background text-foreground font-sans transition-colors">
 
       {/* ── Top Nav ── */}
-      <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
+      <nav className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md transition-colors">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-6">
-          <Link href="/" className="text-xl font-bold text-blue-700">
+          <Link href="/" className="text-xl font-bold text-primary">
             {siteConfig.brand.logoText}
           </Link>
           <Link
             href="/login"
-            className="rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            className="rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition hover:opacity-80"
           >
             Sign In
           </Link>
@@ -165,20 +165,20 @@ export default function TermsPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <div className="border-b border-slate-200 bg-white">
+      <div className="border-b border-border bg-card transition-colors">
         <div className="mx-auto max-w-5xl px-6 py-16">
-          <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-blue-600 mb-6">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary-muted px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary mb-6">
             Legal
           </div>
-          <h1 className="text-5xl font-extrabold tracking-tight text-slate-900">
+          <h1 className="text-5xl font-extrabold tracking-tight text-foreground">
             Terms of Conditions
           </h1>
-          <p className="mt-4 max-w-2xl text-lg text-slate-500">
+          <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
             The rules of the road for using CRABU. Written to be read, not ignored.
           </p>
-          <p className="mt-6 text-sm text-slate-400">
+          <p className="mt-6 text-sm text-muted-foreground">
             Last updated:{" "}
-            <span className="font-medium text-slate-600">March 2026</span>
+            <span className="font-medium text-foreground">March 2026</span>
           </p>
         </div>
       </div>
@@ -190,14 +190,14 @@ export default function TermsPage() {
           {/* Sidebar TOC — desktop only */}
           <aside className="hidden lg:block">
             <div className="sticky top-24 space-y-1">
-              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">
+              <p className="mb-3 text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 Contents
               </p>
               {sections.map((s) => (
                 <a
                   key={s.id}
                   href={`#${s.id}`}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
                 >
                   <span>{s.icon}</span>
                   {s.title}
@@ -212,29 +212,29 @@ export default function TermsPage() {
               <section
                 key={s.id}
                 id={s.id}
-                className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm"
+                className="scroll-mt-24 rounded-2xl border border-border bg-card p-8 shadow-sm transition-colors"
               >
                 <div className="mb-5 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-xl">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-muted text-xl">
                     {s.icon}
                   </span>
-                  <h2 className="text-xl font-bold text-slate-900">{s.title}</h2>
+                  <h2 className="text-xl font-bold text-foreground">{s.title}</h2>
                 </div>
 
                 {s.content && (
-                  <p className="text-sm leading-relaxed text-slate-600 mb-4">{s.content}</p>
+                  <p className="text-sm leading-relaxed text-muted-foreground mb-4">{s.content}</p>
                 )}
 
                 {s.items && (
                   <ul className="space-y-4">
                     {s.items.map((item) => (
                       <li key={item.label} className="flex gap-3">
-                        <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center">
-                          <span className="block h-1.5 w-1.5 rounded-full bg-blue-600" />
+                        <span className="mt-0.5 h-5 w-5 flex-shrink-0 rounded-full bg-primary-muted flex items-center justify-center">
+                          <span className="block h-1.5 w-1.5 rounded-full bg-primary" />
                         </span>
                         <div>
-                          <p className="text-sm font-semibold text-slate-800">{item.label}</p>
-                          <p className="text-sm text-slate-500">{item.detail}</p>
+                          <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                          <p className="text-sm text-muted-foreground">{item.detail}</p>
                         </div>
                       </li>
                     ))}
@@ -244,15 +244,15 @@ export default function TermsPage() {
             ))}
 
             {/* Agreement banner */}
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
+            <div className="rounded-2xl border border-primary-muted bg-primary-muted/50 p-6 transition-colors">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-semibold text-blue-900">
+                  <p className="text-sm font-semibold text-primary">
                     By using CRABU, you agree to these terms.
                   </p>
-                  <p className="text-xs text-blue-600 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Also read our{" "}
-                    <Link href="/privacy" className="font-semibold underline hover:text-blue-800">
+                    <Link href="/privacy" className="font-semibold text-primary underline hover:opacity-80">
                       Privacy Policy
                     </Link>{" "}
                     to understand how we handle your data.
@@ -260,7 +260,7 @@ export default function TermsPage() {
                 </div>
                 <Link
                   href="/login"
-                  className="flex-shrink-0 rounded-full bg-blue-600 px-6 py-2.5 text-sm font-bold text-white hover:bg-blue-700 transition"
+                  className="flex-shrink-0 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90 transition"
                 >
                   Sign In to CRABU →
                 </Link>
@@ -271,12 +271,12 @@ export default function TermsPage() {
       </div>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-400">
+      <footer className="border-t border-border bg-card py-8 text-center text-xs text-muted-foreground transition-colors">
         © {new Date().getFullYear()} {siteConfig.brand.name} · Built with ❤️ at BRAC University ·{" "}
-        <Link href="/privacy" className="underline hover:text-slate-600 mr-3">
+        <Link href="/privacy" className="underline hover:text-foreground mr-3">
           Privacy Policy
         </Link>
-        <Link href="/terms" className="underline hover:text-slate-600">
+        <Link href="/terms" className="underline hover:text-foreground">
           Terms of Conditions
         </Link>
       </footer>

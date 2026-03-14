@@ -47,15 +47,15 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
       />
 
       <aside 
-        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-border dark:border-slate-800 bg-card dark:bg-slate-900 transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6">
-          <Link href="/" className="text-xl font-bold text-blue-700 dark:text-blue-500">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-border dark:border-slate-800 px-6">
+          <Link href="/" className="text-xl font-bold text-primary dark:text-blue-500">
             {siteConfig.brand.logoText}
           </Link>
-          <button onClick={closeMobileMenu} className="text-slate-500 dark:text-slate-400 hover:text-red-500 md:hidden">
+          <button onClick={closeMobileMenu} className="text-muted-foreground dark:text-slate-400 hover:text-red-500 md:hidden">
             ✕
           </button>
         </div>
@@ -70,8 +70,8 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                 onClick={closeMobileMenu}
                 className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                    ? "bg-primary-muted text-primary dark:bg-blue-900/30 dark:text-blue-400"
+                    : "text-muted-foreground hover:bg-background hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -88,34 +88,34 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
           })}
         </div>
 
-        <div className="mt-auto shrink-0 w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col gap-2">
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800 p-3 overflow-hidden">
+        <div className="mt-auto shrink-0 w-full border-t border-border dark:border-slate-800 bg-card dark:bg-slate-900 p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-3 rounded-lg bg-background dark:bg-slate-800 p-3 overflow-hidden">
             {userProfile.avatar ? (
               <img 
                 src={userProfile.avatar} 
                 alt="Profile" 
-                className="h-10 w-10 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
+                className="h-10 w-10 shrink-0 rounded-full border border-border dark:border-slate-700 object-cover"
                 onError={(e) => {
                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=2563eb&color=fff`;
                 }}
               />
             ) : (
-              <div className="h-10 w-10 shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-primary dark:text-blue-400 font-bold">
                 {userProfile.name.charAt(0).toUpperCase()}
               </div>
             )}
             
             <div className="truncate">
-              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={userProfile.name}>
+              <p className="text-sm font-semibold text-foreground dark:text-slate-100 truncate" title={userProfile.name}>
                 {userProfile.name}
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Student</p>
+              <p className="text-xs text-muted-foreground dark:text-slate-400">Student</p>
             </div>
           </div>
           
           <button 
             onClick={handleSignOut}
-            className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/30"
+            className="w-full rounded-md border border-border dark:border-slate-700 bg-card dark:bg-slate-800 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             Sign Out
           </button>
