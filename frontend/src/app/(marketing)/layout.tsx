@@ -86,7 +86,6 @@ function Footer() {
           </div>
         </div>
       </div>
-      
       {/* Note: Bottom Bar was removed because it is now securely handled by GlobalCopyright in RootLayout */}
     </footer>
   );
