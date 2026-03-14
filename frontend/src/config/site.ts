@@ -1,98 +1,100 @@
 // ─── CENTRAL CONFIGURATION — SINGLE SOURCE OF TRUTH ─────────────────────────
-// All layout files, SEO metadata, navbars, footers, and sidebars import from here.
-// Never hardcode strings in components.
+
+export type FeatureItem = {
+  label: string;
+  href: string;
+  icon: string;
+  isDisabled?: boolean;
+  isBeta?: boolean;
+  isNew?: boolean;
+  isAi?: boolean;
+};
+
+export type SidebarCategory = {
+  title: string;
+  items: FeatureItem[];
+};
 
 export const siteConfig = {
-
-  // ── Identity ──────────────────────────────────────────────────────────────
   name: "CRAB University",
   shortName: "CRABU",
   description: "The ultimate academic portal and toolkit for university students.",
 
-  // ── Legacy brand aliases (used by existing Navbar, Sidebar, Layout) ───────
   brand: {
     name: "CRAB University",
     shortName: "CRABU",
     description: "The ultimate automated platform for students.",
     logoText: "🦀 CRAB University",
-    colors: {
-      primary: "blue-600",
-      primaryHover: "blue-700",
-      background: "slate-50",
-    },
   },
 
-  // ── Developer Credits ─────────────────────────────────────────────────────
-  developer: {
-    name: "Ittehad Ahmed Tausif",
-    portfolioUrl: "https://itausif.tech",
-    githubUrl: "https://github.com/tausiflabs",
-  },
-
-  // ── External Links ────────────────────────────────────────────────────────
   links: {
-    supportEmail: "support@crabu.app",
-    githubRepo: "https://github.com/tausiflabs/CRAB-University",
     bracu: "https://www.bracu.ac.bd",
     usis: "https://usis.bracu.ac.bd",
   },
 
-  // ── Theme Defaults ────────────────────────────────────────────────────────
-  theme: {
-    defaultTheme: "light" as const, // 'light' | 'dark' | 'system'
-    defaultLanguage: "en" as const, // 'en' | 'bn'
-  },
-
-  // ── SEO / PWA Meta ────────────────────────────────────────────────────────
   meta: {
     themeColorLight: "#ffffff",
     themeColorDark: "#0F172A",
   },
 
-  // ── Public Navbar Links ───────────────────────────────────────────────────
+  // ── Public Navbar Links ──
   navItems: [
-    { label: "Home",     href: "/",         is_enabled: true, is_beta: false },
-    { label: "About",    href: "/#mission",  is_enabled: true, is_beta: false },
-    { label: "Features", href: "/#features", is_enabled: true, is_beta: false },
+    { label: "Home", href: "/" },
+    { label: "About", href: "/#mission" },
+    { label: "Features", href: "/#features" },
   ],
 
-  // ── Landing Page Feature Cards ────────────────────────────────────────────
-  features: [
+  // ── GLOBAL FEATURE REGISTRY (Populates Sidebar & Footer) ──
+  // To remove a feature from the website, simply comment it out here!
+  sidebarCategories: [
+    {
+      title: "Dashboard",
+      items: [
+        { label: "Overview", href: "/dashboard", icon: "🏠" },
+        { label: "Grade Sheet", href: "/dashboard/grades", icon: "📊" },
+        { label: "My Routine", href: "/dashboard/routine", icon: "📅" },
+      ]
+    },
     {
       title: "Academic Tools",
-      desc:  "CGPA Calculator, Converters, and Logic Simulators.",
-      icon:  "📚",
-      href:  "/courses",
+      items: [
+        { label: "Base Converter", href: "/dashboard/converter", icon: "🔢", isNew: true },
+        { label: "Signal Grapher (MLT3)", href: "/dashboard/signals", icon: "📈", isDisabled: true },
+        { label: "Web IDE & Snippets", href: "/dashboard/ide", icon: "💻", isBeta: true },
+        { label: "Circuit Simulator", href: "/dashboard/circuits", icon: "🔌", isDisabled: true },
+      ]
     },
     {
       title: "Campus Life",
-      desc:  "Bus schedules, Map navigation, and Club info.",
-      icon:  "🚌",
-      href:  "/guidance",
+      items: [
+        { label: "Friend Matcher", href: "/dashboard/friend-matcher", icon: "🤝", isBeta: true },
+        { label: "FYAT Routine Matcher", href: "/dashboard/fyat", icon: "👥", isNew: true },
+        { label: "Course Swap", href: "/dashboard/swap", icon: "🔄", isDisabled: true },
+        { label: "Bus Schedule", href: "/dashboard/bus", icon: "🚌" },
+        { label: "Faculty Reviews", href: "/dashboard/reviews", icon: "⭐", isBeta: true },
+      ]
     },
     {
-      title: "AI Mentor",
-      desc:  "24/7 Academic assistant powered by custom AI.",
-      icon:  "🤖",
-      href:  "/dashboard/chat",
+      title: "Resources & Career",
+      items: [
+        { label: "Course Materials", href: "/dashboard/materials", icon: "📚" },
+        { label: "Tech Roadmaps", href: "/dashboard/roadmap", icon: "🗺️", isNew: true },
+        { label: "CV Builder (LaTeX)", href: "/dashboard/cv", icon: "📄", isDisabled: true },
+      ]
     },
     {
-      title: "Student Lounge",
-      desc:  "Multiplayer games and routine matcher.",
-      icon:  "🎮",
-      href:  "/games",
+      title: "AI & Lounge",
+      items: [
+        { label: "AI Peer Mentor", href: "/dashboard/mentor", icon: "🤖", isAi: true },
+        { label: "Gaming Lounge", href: "/dashboard/games", icon: "🎮", isBeta: true },
+      ]
     },
-  ],
-
-  // ── Dashboard Sidebar Features ────────────────────────────────────────────
-  dashboardFeatures: [
-    { label: "Overview",      href: "/dashboard",          icon: "🏠", is_enabled: true,  is_beta: false },
-    { label: "Class Schedule",href: "/dashboard/schedule", icon: "📅", is_enabled: true,  is_beta: false },
-    { label: "Advising Panel",href: "/dashboard/advising", icon: "🎓", is_enabled: true,  is_beta: true  },
-    { label: "Grade Sheet",   href: "/dashboard/grades",   icon: "📊", is_enabled: true,  is_beta: false },
-    { label: "Mentor",        href: "/dashboard/chat",     icon: "🤖", is_enabled: true,  is_beta: true  },
-    { label: "Bus Tracker",   href: "/dashboard/bus",      icon: "🚌", is_enabled: true,  is_beta: false },
-  ],
+    {
+      title: "Support",
+      items: [
+        { label: "Report a Bug", href: "/dashboard/bug", icon: "🐛" },
+        { label: "Developer Profile", href: "/dashboard/developer", icon: "👨‍💻" },
+      ]
+    }
+  ] as SidebarCategory[],
 };
-
-export type SiteConfig = typeof siteConfig;

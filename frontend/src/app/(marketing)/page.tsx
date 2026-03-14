@@ -2,12 +2,17 @@ import { siteConfig } from "@/config/site";
 import Link from "next/link";
 
 export default function Home() {
+  // Extract all features from all categories into a single array, 
+  // and filter out the disabled ones so they don't show on the public homepage
+  const allActiveFeatures = siteConfig.sidebarCategories
+    .flatMap(category => category.items)
+    .filter(feature => !feature.isDisabled);
+
   return (
-    // Replaced all hardcoded slate/blue with dynamic semantic variables
     <div className="bg-background font-sans text-foreground transition-colors duration-300">
       
+      {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center px-4 py-24 text-center md:py-32">
-        {/* Dynamic gradient that respects light/dark mode automatically */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-100"></div>
         
         <div className="mb-6 inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-semibold text-primary">
@@ -37,15 +42,20 @@ export default function Home() {
       <section id="features" className="container mx-auto py-20 px-4">
         <h2 className="mb-10 text-center text-3xl font-bold text-foreground">Explore Features</h2>
         <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide snap-x">
-          {siteConfig.dashboardFeatures.map((feature, index) => (
+          {allActiveFeatures.map((feature, index) => (
             <Link 
               href={feature.href} 
               key={index}
-              className="min-w-[280px] snap-center rounded-2xl border border-border bg-card p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md md:min-w-[320px]"
+              className="group min-w-[280px] snap-center rounded-2xl border border-border bg-card p-8 shadow-sm transition hover:-translate-y-1 hover:border-primary/50 hover:shadow-md md:min-w-[320px]"
             >
               <div className="mb-4 text-4xl">{feature.icon}</div>
-              <h3 className="mb-2 text-xl font-bold text-card-foreground">{feature.label}</h3>
-              <p className="text-muted-foreground">Access your {feature.label.toLowerCase()} tool here.</p>
+              <h3 className="mb-2 flex items-center gap-2 text-xl font-bold text-card-foreground group-hover:text-primary transition-colors">
+                {feature.label}
+                {feature.isBeta && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">BETA</span>}
+                {feature.isNew && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold text-blue-700 dark:bg-blue-900/50 dark:text-blue-400">NEW</span>}
+                {feature.isAi && <span className="text-xs">✨</span>}
+              </h3>
+              <p className="text-muted-foreground">Access the {feature.label.toLowerCase()} tool.</p>
             </Link>
           ))}
         </div>
