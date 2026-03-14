@@ -12,31 +12,26 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      
+    <div className="flex min-h-screen w-full bg-slate-50 dark:bg-slate-950 transition-colors">
       <Sidebar 
         isOpen={isSidebarOpen} 
         closeMobileMenu={() => setIsSidebarOpen(false)} 
       />
 
-      <main className="transition-all md:ml-64">
-        
-        {/* Mobile Header */}
-        <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-white px-4 shadow-sm md:hidden">
-          
-          <span className="font-bold text-blue-700">
-            {siteConfig.brand.logoText} {/* <-- Updated to use the new architecture */}
+      <main className="flex-1 flex flex-col w-full min-w-0">
+        <div className="sticky top-0 z-30 flex h-16 items-center justify-between bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 md:hidden transition-colors">
+          <span className="font-bold text-blue-700 dark:text-blue-500">
+            {siteConfig.brand.logoText}
           </span>
-
           <button 
             onClick={() => setIsSidebarOpen(true)}
-            className="rounded p-2 text-slate-600 hover:bg-slate-100 active:bg-slate-200"
+            className="rounded p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
           </button>
         </div>
 
-        <div className="p-6 md:p-10">
+        <div className="p-6 md:p-10 flex-1">
           {children}
         </div>
       </main>

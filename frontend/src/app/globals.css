@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-/* ─── Base Variables ──────────────────────────────────────────────────────── */
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #0F172A;
@@ -11,35 +12,23 @@
   --foreground: #f1f5f9;
 }
 
-/* ─── Tailwind v4 Theme ───────────────────────────────────────────────────── */
 @theme inline {
-  /* Base */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
-  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-
-  /* ── Semantic Alert Colors ── */
-  --color-success:             #16a34a;
-  --color-success-foreground:  #ffffff;
-
-  --color-error:               #dc2626;
-  --color-error-foreground:    #ffffff;
-
-  --color-warning:             #eab308;
-  --color-warning-foreground:  #000000;
-
-  --color-info:                #3b82f6;
-  --color-info-foreground:     #ffffff;
-
-  /* ── Brand Colors ── */
-  --color-brand:               #0F172A;
-  --color-accent:              #38BDF8;
+  --color-success: #16a34a;
+  --color-success-foreground: #ffffff;
+  --color-error: #dc2626;
+  --color-error-foreground: #ffffff;
+  --color-warning: #eab308;
+  --color-warning-foreground: #000000;
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+  --color-brand: #0F172A;
+  --color-accent: #38BDF8;
 }
 
-/* ─── Base Styles ────────────────────────────────────────────────────────── */
 body {
   background: var(--background);
   color: var(--foreground);
@@ -47,6 +36,5 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* ─── Scrollbar (hide utility) ───────────────────────────────────────────── */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

@@ -16,32 +16,25 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
   const router = useRouter();
   const supabase = createClient();
   
-  // State to hold the logged-in user's profile data
   const [userProfile, setUserProfile] = useState({ name: "Loading...", avatar: "" });
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Fallback logic: If they don't have a name (old accounts), use the first part of their email
         const rawName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Student";
-        // Fallback logic: If they don't have an avatar URL, generate a blue initials avatar
         const rawAvatar = user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
         
-        setUserProfile({
-          name: rawName,
-          avatar: rawAvatar
-        });
+        setUserProfile({ name: rawName, avatar: rawAvatar });
       }
     };
     getUser();
   }, [supabase]);
 
-  // Secure Sign Out function
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    router.push("/login"); // Send them back to the gate
-    router.refresh();      // Force Next.js to clear its cache
+    router.push("/login");
+    router.refresh();
   };
 
   const activeFeatures = siteConfig.dashboardFeatures.filter(feature => feature.is_enabled);
@@ -54,19 +47,20 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
       />
 
       <aside 
-        className={`fixed left-0 top-0 z-50 h-screen w-64 border-r border-slate-200 bg-white transition-transform duration-300 ease-in-out 
-          ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
+        className={`fixed left-0 top-0 z-50 flex h-screen w-64 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        <div className="flex h-16 items-center justify-between border-b border-slate-200 px-6">
-          <Link href="/" className="text-xl font-bold text-blue-700">
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 dark:border-slate-800 px-6">
+          <Link href="/" className="text-xl font-bold text-blue-700 dark:text-blue-500">
             {siteConfig.brand.logoText}
           </Link>
-          <button onClick={closeMobileMenu} className="text-slate-500 hover:text-red-500 md:hidden">
+          <button onClick={closeMobileMenu} className="text-slate-500 dark:text-slate-400 hover:text-red-500 md:hidden">
             ✕
           </button>
         </div>
 
-        <div className="flex flex-col gap-1 p-4 overflow-y-auto" style={{ height: "calc(100vh - 180px)" }}>
+        <div className="flex flex-col gap-1 overflow-y-auto p-4 flex-1 scrollbar-hide">
           {activeFeatures.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -76,8 +70,8 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                 onClick={closeMobileMenu}
                 className={`flex items-center justify-between rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -85,7 +79,7 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                   {link.label}
                 </div>
                 {link.is_beta && (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-700">
+                  <span className="rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-700 dark:text-amber-500">
                     BETA
                   </span>
                 )}
@@ -94,39 +88,34 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
           })}
         </div>
 
-        {/* UPDATED: Dynamic User Profile & Sign Out Button */}
-        <div className="absolute bottom-0 w-full border-t border-slate-200 p-4 bg-white flex flex-col gap-2">
-          <div className="flex items-center gap-3 rounded-lg bg-slate-50 p-3 overflow-hidden">
-            
-            {/* Display the Avatar Picture with onError fallback */}
+        <div className="mt-auto shrink-0 w-full border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-3 rounded-lg bg-slate-50 dark:bg-slate-800 p-3 overflow-hidden">
             {userProfile.avatar ? (
               <img 
                 src={userProfile.avatar} 
                 alt="Profile" 
-                className="h-10 w-10 flex-shrink-0 rounded-full border border-slate-200 object-cover"
+                className="h-10 w-10 shrink-0 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
                 onError={(e) => {
-                  // If the image link is broken, instantly swap to the generated initials!
                   e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=2563eb&color=fff`;
                 }}
               />
             ) : (
-              <div className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+              <div className="h-10 w-10 shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-700 dark:text-blue-400 font-bold">
                 {userProfile.name.charAt(0).toUpperCase()}
               </div>
             )}
             
-            {/* Display the Full Name */}
             <div className="truncate">
-              <p className="text-sm font-semibold text-slate-900 truncate" title={userProfile.name}>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate" title={userProfile.name}>
                 {userProfile.name}
               </p>
-              <p className="text-xs text-slate-500">Student</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Student</p>
             </div>
           </div>
           
           <button 
             onClick={handleSignOut}
-            className="w-full rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+            className="w-full rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-500 transition hover:bg-red-50 dark:hover:bg-red-950/30"
           >
             Sign Out
           </button>

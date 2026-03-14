@@ -4,6 +4,7 @@ import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "@/components/theme-provider";
 import GlobalCopyright from "@/components/GlobalCopyright";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,13 +31,16 @@ export const metadata: Metadata = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get("NEXT_LOCALE")?.value || siteConfig.theme.defaultLanguage;
+
   return (
-    <html lang={siteConfig.theme.defaultLanguage} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body 
         className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-50`}
         suppressHydrationWarning
@@ -47,12 +51,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange={false}
         >
-          {/* flex-1 makes the main content expand, pushing the copyright to the bottom */}
-          <main className="flex-1 flex flex-col">
+          <main className="flex-1 flex flex-col min-w-0">
             {children}
           </main>
           
-          {/* Universal Copyright Bar - Visible on every page */}
           <GlobalCopyright />
         </ThemeProvider>
       </body>
