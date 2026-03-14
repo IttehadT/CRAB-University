@@ -2,16 +2,15 @@ import { siteConfig } from "@/config/site";
 import Link from "next/link";
 
 export default function Home() {
-  // Extract all features from all categories into a single array, 
-  // and filter out the disabled ones so they don't show on the public homepage
-  const allActiveFeatures = siteConfig.sidebarCategories
+  // Extract ONLY features that are active AND marked as isExclusive for the slider
+  const exclusiveFeatures = siteConfig.sidebarCategories
     .flatMap(category => category.items)
-    .filter(feature => !feature.isDisabled);
+    .filter(feature => !feature.isDisabled && feature.isExclusive);
 
   return (
     <div className="bg-background font-sans text-foreground transition-colors duration-300">
       
-      {/* Hero Section */}
+      {/* ── Hero Section ── */}
       <section className="relative flex flex-col items-center justify-center px-4 py-24 text-center md:py-32">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background opacity-100"></div>
         
@@ -38,11 +37,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Sliding Features Section */}
+      {/* ── Sliding Features Section ── */}
       <section id="features" className="container mx-auto py-20 px-4">
         <h2 className="mb-10 text-center text-3xl font-bold text-foreground">Explore Features</h2>
-        <div className="flex gap-6 overflow-x-auto pb-8 scrollbar-hide snap-x">
-          {allActiveFeatures.map((feature, index) => (
+        
+        {/* FIX: The max-md classes hide the scrollbar on mobile, but leave it visible and usable on PC */}
+        <div className="flex gap-6 overflow-x-auto pb-8 snap-x scroll-smooth max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden">
+          {exclusiveFeatures.map((feature, index) => (
             <Link 
               href={feature.href} 
               key={index}
@@ -61,7 +62,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Mission Section */}
+      {/* ── Mission Section ── */}
       <section id="mission" className="bg-foreground py-24 text-background">
         <div className="container mx-auto grid gap-12 px-4 md:grid-cols-2 md:items-center">
           <div>

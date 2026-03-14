@@ -4,7 +4,7 @@ export default function GlobalCopyright() {
       <div className="container mx-auto flex flex-col items-center justify-between gap-2 px-4 sm:flex-row">
         <p>© 2026 CRAB University. All rights reserved.</p>
         <p>
-          Designed & built by <span className="font-semibold text-blue-600 dark:text-blue-400">Ittehad Ahmed Tausif</span> · Dept. of CSE · BRAC University
+          Designed & built by <span className="font-semibold text-blue-600 dark:text-blue-400">Ittehad Ahmed Tausif</span>
         </p>
       </div>
     </div>
