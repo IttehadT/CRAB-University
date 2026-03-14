@@ -1,39 +1,33 @@
-"use client";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { ServerStatusBadge } from "@/components/ServerStatusBadge";
 
-import { useState } from "react";
-
-export default function DashboardPage() {
-  const [serverStatus, setServerStatus] = useState<string>("Checking...");
+export default async function DashboardPage() {
+  const dict = await getDictionary();
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Student Overview</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Spring 2026</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{dict.dashboard.overview}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{dict.dashboard.semester}</p>
         </div>
         
-        <div className="flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1 text-sm font-medium shadow-sm">
-          <span className="text-slate-500 dark:text-slate-400">System:</span>
-          <span className={serverStatus.includes("Online") ? "text-green-600 dark:text-green-400" : "text-red-500 dark:text-red-400"}>
-            {serverStatus}
-          </span>
-        </div>
+        <ServerStatusBadge />
       </div>
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Current CGPA</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{dict.dashboard.cgpa}</p>
           <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">3.85</p>
         </div>
         
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Credits Completed</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{dict.dashboard.credits}</p>
           <p className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">85</p>
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Next Class</p>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{dict.dashboard.nextClass}</p>
           <p className="mt-2 text-xl font-bold text-slate-900 dark:text-slate-100">CSE420 @ UB2040</p>
           <p className="text-xs text-blue-600 dark:text-blue-400">Starts in 45 mins</p>
         </div>
