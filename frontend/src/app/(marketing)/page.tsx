@@ -29,16 +29,33 @@ export default function Home() {
 
   const sliderRef = useRef<HTMLDivElement>(null);
   const scrollSlider = (direction: "left" | "right") => {
-    if (sliderRef.current) {
-      sliderRef.current.scrollBy({ left: direction === "left" ? -350 : 350, behavior: "smooth" });
+    if (!sliderRef.current) return;
+    const slider = sliderRef.current;
+    
+    // 1. Force the browser to allow instant jumping
+    slider.style.scrollBehavior = "auto";
+    const singleSetWidth = slider.scrollWidth / 2;
+
+    // 2. The Silent Reset: Jump seamlessly to the opposite side
+    if (direction === "right" && slider.scrollLeft >= singleSetWidth - 50) {
+      slider.scrollLeft -= singleSetWidth;
+    } else if (direction === "left" && slider.scrollLeft <= 50) {
+      slider.scrollLeft += singleSetWidth;
     }
+
+    // 3. Turn smooth scrolling back on and execute the visual slide
+    // Using setTimeout forces the browser to register the jump before animating
+    setTimeout(() => {
+      slider.style.scrollBehavior = "smooth";
+      slider.scrollLeft += direction === "left" ? -350 : 350;
+    }, 10);
   };
 
   return (
     <div className="bg-background text-foreground overflow-hidden">
 
       {/* ── HERO ── */}
-      <section className="relative flex flex-col items-center justify-center px-4 pt-24 pb-10 text-center md:pt-32">
+      <section className="relative flex flex-col items-center justify-center px-4 pt-16 pb-10 text-center md:pt-20">
 
         {/* Layered background */}
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
@@ -179,8 +196,9 @@ export default function Home() {
             </div>
           </div>
 
-          <div ref={sliderRef} className="flex gap-5 overflow-x-auto pb-6 snap-x scroll-smooth scrollbar-hide">
-            {sliderFeatures.map((feature, index) => (
+          <div ref={sliderRef} className="flex gap-5 overflow-x-auto pb-6 snap-x scrollbar-hide max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden">
+            {/* Double the array to create the infinite loop track */}
+            {[...sliderFeatures, ...sliderFeatures].map((feature, index) => (
               <Link
                 href={feature.href}
                 key={index}
