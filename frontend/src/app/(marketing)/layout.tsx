@@ -14,52 +14,40 @@ function AppStoreSection() {
 
         <div className="flex flex-wrap gap-3">
           {/* App Store */}
-          <a
-            href="#"
-            aria-label="Download on App Store"
-            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition hover:border-blue-300 hover:shadow-sm dark:hover:border-blue-700"
-          >
+          <button disabled className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 opacity-60 cursor-not-allowed">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 shrink-0 text-foreground">
               <path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.1 22C7.78 22.05 6.8 20.68 5.96 19.47C4.25 17 2.94 12.45 4.7 9.39C5.57 7.87 7.13 6.91 8.82 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z" />
             </svg>
-            <div>
+            <div className="text-left">
               <p className="text-[9px] font-medium uppercase tracking-widest text-muted-foreground">Coming Soon To</p>
               <p className="text-xs font-bold text-foreground">App Store</p>
             </div>
-          </a>
+          </button>
 
           {/* Google Play */}
-          <a
-            href="#"
-            aria-label="Get it on Google Play"
-            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition hover:border-blue-300 hover:shadow-sm dark:hover:border-blue-700"
-          >
+          <button disabled className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 opacity-60 cursor-not-allowed">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6 shrink-0 text-foreground">
               <path d="M3.18 23.76C3.06 23.68 3 23.54 3 23.38V0.62C3 0.46 3.06 0.32 3.18 0.24L3.22 0.2L12.76 9.74V9.84L3.22 19.38L3.18 23.76Z" fill="#00D2FF"/>
               <path d="M15.96 13.02L12.76 9.84V9.74L15.96 6.56L16 6.58L19.84 8.78C20.94 9.4 20.94 10.42 19.84 11.04L16 13.24L15.96 13.02Z" fill="#FFD700"/>
               <path d="M16 13.24L12.76 9.84L3.18 19.38C3.54 19.76 4.14 19.8 4.8 19.42L16 13.24Z" fill="#FF3D00"/>
               <path d="M16 6.58L4.8 0.4C4.14 0.02 3.54 0.06 3.18 0.44L12.76 9.74L16 6.58Z" fill="#00E676"/>
             </svg>
-            <div>
+            <div className="text-left">
               <p className="text-[9px] font-medium uppercase tracking-widest text-muted-foreground">Coming Soon To</p>
               <p className="text-xs font-bold text-foreground">Google Play</p>
             </div>
-          </a>
+          </button>
 
           {/* Windows */}
-          <a
-            href="#"
-            aria-label="Get it for Windows"
-            className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 transition hover:border-blue-300 hover:shadow-sm dark:hover:border-blue-700"
-          >
+          <button disabled className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-2.5 opacity-60 cursor-not-allowed">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-6 w-6 shrink-0">
               <path fill="#0078D4" d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6H9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
             </svg>
-            <div>
+            <div className="text-left">
               <p className="text-[9px] font-medium uppercase tracking-widest text-muted-foreground">Coming Soon For</p>
               <p className="text-xs font-bold text-foreground">Windows</p>
             </div>
-          </a>
+          </button>
         </div>
       </div>
     </div>

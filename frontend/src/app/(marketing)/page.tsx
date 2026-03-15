@@ -14,6 +14,7 @@ export default function Home() {
     .filter(feature => !feature.isDisabled && feature.showInSlider);
 
   const [activeHero, setActiveHero] = useState(Math.floor(heroFeatures.length / 2));
+  const [touchStartX, setTouchStartX] = useState<number | null>(null); // Add this line
   
   // ── HYDRATION SAFE WINDOW STATE ──
   const [isMobile, setIsMobile] = useState(false);
@@ -96,11 +97,11 @@ export default function Home() {
           simulate circuits, and challenge friends—without leaving the tab.
         </p>
 
-        {/* CTA row */}
-        <div className="mt-9 mb-20 flex flex-wrap items-center justify-center gap-3">
+        {/* CTA row (Buttons identical size) */}
+        <div className="mt-9 mb-20 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25"
+            className="flex w-full sm:w-[220px] justify-center items-center gap-2 rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/25"
           >
             Go to Dashboard
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="h-4 w-4">
@@ -109,14 +110,31 @@ export default function Home() {
           </Link>
           <Link
             href="#mission"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-8 py-3.5 text-sm font-bold text-slate-700 backdrop-blur transition-all hover:bg-white hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="flex w-full sm:w-[220px] justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white/90 px-8 py-3.5 text-sm font-bold text-slate-700 backdrop-blur transition-all hover:bg-white hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Why I Built This
           </Link>
         </div>
 
-        {/* 3D Carousel */}
-        <div className="relative h-[290px] w-full max-w-5xl md:h-[370px]">
+        {/* 3D Carousel (Now with Touch Slide) */}
+        <div 
+          className="relative h-[290px] w-full max-w-5xl md:h-[370px] touch-pan-y"
+          onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+          onTouchMove={(e) => {
+            if (touchStartX === null) return;
+            const touchCurrentX = e.touches[0].clientX;
+            const diff = touchStartX - touchCurrentX;
+            
+            if (diff > 40) { // Swiped left
+              if (activeHero < heroFeatures.length - 1) setActiveHero(activeHero + 1);
+              setTouchStartX(null); // Reset to require a new swipe gesture
+            } else if (diff < -40) { // Swiped right
+              if (activeHero > 0) setActiveHero(activeHero - 1);
+              setTouchStartX(null);
+            }
+          }}
+          onTouchEnd={() => setTouchStartX(null)}
+        >
           {heroFeatures.map((feature, index) => {
             const offset = index - activeHero;
             const absOffset = Math.abs(offset);
