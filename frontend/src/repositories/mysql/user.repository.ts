@@ -19,25 +19,30 @@ export class MySQLUserRepository implements IUserRepository {
     return rows.length > 0 ? (rows[0] as User) : null;
   }
 
-  async upsert(user: User): Promise<void> {
+  async upsert(user: any): Promise<void> {
+    // Extract role from Supabase's metadata, fallback to user.role, or default to 'student'
+    const rawRole = user.user_metadata?.role || user.role || 'student';
+
     const query = `
-      INSERT INTO users (id, email, full_name, avatar_url, phone, provider, last_sign_in_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, email, full_name, avatar_url, phone, provider, last_sign_in_at, role)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE 
         full_name = VALUES(full_name),
         avatar_url = VALUES(avatar_url),
         phone = VALUES(phone),
-        last_sign_in_at = VALUES(last_sign_in_at)
+        last_sign_in_at = VALUES(last_sign_in_at),
+        role = VALUES(role)
     `;
     
     await mysqlPool.execute(query, [
       user.id,
       user.email,
-      user.full_name || null,
-      user.avatar_url || null,
+      user.full_name || user.user_metadata?.full_name || null,
+      user.avatar_url || user.user_metadata?.avatar_url || null,
       user.phone || null,
       user.provider || 'email',
-      user.last_sign_in_at || new Date()
+      user.last_sign_in_at || new Date(),
+      rawRole // Injecting the role we extracted above
     ]);
   }
 }
