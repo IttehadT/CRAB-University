@@ -7,6 +7,7 @@ export interface User {
   provider: string | null;
   last_sign_in_at: Date | null;
   created_at?: Date;
+  role?: string;
 }
 
 export interface IUserRepository {
