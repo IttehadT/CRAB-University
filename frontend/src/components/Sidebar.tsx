@@ -136,9 +136,9 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                 <div className={`flex flex-col gap-1 overflow-hidden transition-all duration-300 ease-in-out ${isCategoryOpen ? 'mt-1 max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   {category.items.map((link) => {
                     const isActive = pathname === link.href;
-                    const isAiStyling = link.isAi ? "bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300" : "border border-transparent";
+                    const isAiStyling = link.badges?.includes("AI") ? "bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300" : "border border-transparent";
                     const disabledStyling = link.isDisabled ? "opacity-50 pointer-events-none grayscale" : "hover:bg-muted";
-                    const activeStyling = isActive && !link.isAi ? "bg-primary/10 text-primary font-bold" : "text-card-foreground";
+                    const activeStyling = isActive && !link.badges?.includes("AI") ? "bg-primary/10 text-primary font-bold" : "text-card-foreground";
 
                     return (
                       <Link
@@ -153,9 +153,9 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0">
-                          {link.isAi && <span className="text-xs">✨</span>}
-                          {link.isBeta && !link.isDisabled && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">BETA</span>}
-                          {link.isNew && !link.isDisabled && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-blue-700 dark:bg-blue-900/50 dark:text-blue-400">NEW</span>}
+                          {link.badges?.includes("AI") && <span className="text-xs">✨</span>}
+                          {link.badges?.includes("BETA") && !link.isDisabled && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">BETA</span>}
+                          {link.badges?.includes("NEW") && !link.isDisabled && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-blue-700 dark:bg-blue-900/50 dark:text-blue-400">NEW</span>}
                           {link.isDisabled && <span className="text-xs opacity-50">🔒</span>}
                         </div>
                       </Link>

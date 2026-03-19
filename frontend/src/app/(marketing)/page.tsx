@@ -7,11 +7,11 @@ import { useState, useRef, useEffect } from "react";
 export default function Home() {
   const heroFeatures = siteConfig.sidebarCategories
     .flatMap(category => category.items)
-    .filter(feature => !feature.isDisabled && feature.showInHero);
+    .filter(feature => !feature.isDisabled && feature.placements.includes("HERO"));
 
   const sliderFeatures = siteConfig.sidebarCategories
     .flatMap(category => category.items)
-    .filter(feature => !feature.isDisabled && feature.showInSlider);
+    .filter(feature => !feature.isDisabled && feature.placements.includes("SLIDER"));
 
   const [activeHero, setActiveHero] = useState(Math.floor(heroFeatures.length / 2));
   const [touchStartX, setTouchStartX] = useState<number | null>(null); // Add this line
@@ -227,9 +227,9 @@ export default function Home() {
                   <div className="mb-5 text-5xl transition-transform duration-300 group-hover:scale-110">{feature.icon}</div>
                   <h3 className="mb-3 text-lg font-bold text-card-foreground transition-colors duration-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">{feature.label}</h3>
                   <div className="mb-4 flex flex-wrap gap-1.5">
-                    {feature.isBeta && <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 dark:text-amber-400">BETA</span>}
-                    {feature.isNew && <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-600 dark:text-emerald-400">NEW</span>}
-                    {feature.isAi && <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-purple-600 dark:text-purple-400">✨ AI</span>}
+                    {feature.badges?.includes("BETA") && <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 dark:text-amber-400">BETA</span>}
+                    {feature.badges?.includes("NEW") && <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-600 dark:text-emerald-400">NEW</span>}
+                    {feature.badges?.includes("AI") && <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-purple-600 dark:text-purple-400">✨ AI</span>}
                   </div>
                   <p className="flex items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors group-hover:text-blue-500">
                     Access module
