@@ -1,3 +1,5 @@
+// src/app/api/auth/sync-user/route.ts
+
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { userService } from "@/services/user.service";
@@ -17,6 +19,9 @@ export async function POST() {
     const provider = user.app_metadata?.provider || 'email';
     const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : new Date();
 
+    // --- ADDED ROLE PARSING HERE ---
+    const role = user.user_metadata?.role || 'student';
+
     // Map Supabase metadata to our MySQL interface
     const userData = {
       id: user.id,
@@ -25,7 +30,8 @@ export async function POST() {
       avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
       phone: user.phone || null,
       provider: provider,
-      last_sign_in_at: lastSignIn
+      last_sign_in_at: lastSignIn,
+      role: role // <-- Passing the role explicitly to MySQL
     };
 
     // Send it to the MySQL Service!
