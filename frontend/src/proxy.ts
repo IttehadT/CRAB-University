@@ -1,74 +1,82 @@
+// src/proxy.ts
+
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { siteConfig } from '@/config/site'
 
 export async function proxy(request: NextRequest) {
-  // 1. Create a response object that we can modify
   let supabaseResponse = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+    request: { headers: request.headers },
   })
 
-  // 2. Initialize the Supabase Server Client
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
+        get(name: string) { return request.cookies.get(name)?.value },
         set(name: string, value: string, options: CookieOptions) {
           request.cookies.set({ name, value, ...options })
-          supabaseResponse = NextResponse.next({
-            request: { headers: request.headers },
-          })
+          supabaseResponse = NextResponse.next({ request: { headers: request.headers } })
           supabaseResponse.cookies.set({ name, value, ...options })
         },
         remove(name: string, options: CookieOptions) {
           request.cookies.set({ name, value: '', ...options })
-          supabaseResponse = NextResponse.next({
-            request: { headers: request.headers },
-          })
+          supabaseResponse = NextResponse.next({ request: { headers: request.headers } })
           supabaseResponse.cookies.set({ name, value: '', ...options })
         },
       },
     }
   )
 
-  // 3. Securely check if the user is logged in
   const { data: { user } } = await supabase.auth.getUser()
+  const currentPath = request.nextUrl.pathname
 
-  // 4. THE BOUNCER LOGIC
-  const isAccessingDashboard = request.nextUrl.pathname.startsWith('/dashboard')
-  const isAccessingLogin = request.nextUrl.pathname === '/login'
-
-  // KICK OUT: If trying to access dashboard without being logged in
-  if (!user && isAccessingDashboard) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  // 1. Redirect logged-in users away from the login page
+  if (user && currentPath === '/login') {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  // LET IN: If already logged in, skip the login page and go straight to dashboard
-  if (user && isAccessingLogin) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
+  // 2. Find the requested route in your Single Source of Truth
+  const allFeatures = siteConfig.sidebarCategories.flatMap(cat => cat.items)
+  
+  // We check if the current URL starts with any of our configured feature hrefs
+  const requestedFeature = allFeatures.find(f => currentPath.startsWith(f.href))
+
+  // 3. THE MASTER BOUNCER LOGIC
+  if (requestedFeature) {
+    
+    // A. Requires Auth Check
+    if (requestedFeature.requiresAuth && !user) {
+      const loginUrl = new URL('/login', request.url)
+      // Optional: Save where they were trying to go so you can send them back after login
+      loginUrl.searchParams.set('next', currentPath) 
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // B. Role-Based Access Control (RBAC) Check
+    if (user && requestedFeature.allowedRoles) {
+      // Extract the role from Supabase's secure token (Default to 'student' if missing)
+      const userRole = user.user_metadata?.role || 'student'
+      
+      // If the user's role is not in the allowed list, boot them back to the dashboard
+      if (!requestedFeature.allowedRoles.includes(userRole)) {
+        console.warn(`Access Denied: ${userRole} attempted to access ${currentPath}`)
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    }
+  }
+
+  // 4. Fallback: Protect the entire dashboard domain just in case a sub-route isn't in config
+  if (!user && currentPath.startsWith('/dashboard') && !requestedFeature) {
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   return supabaseResponse
 }
 
-// 5. Tell the bouncer which routes to monitor (Ignore static files and images)
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
