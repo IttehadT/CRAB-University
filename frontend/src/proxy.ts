@@ -32,44 +32,54 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const currentPath = request.nextUrl.pathname
 
-  // 1. Redirect logged-in users away from the login page
-  if (user && currentPath === '/login') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // ─── THE MAGIC REDIRECT HELPER ───
+  // This ensures Supabase cookies are never destroyed during a redirect
+  const safeRedirect = (path: string) => {
+    const url = request.nextUrl.clone()
+    url.pathname = path
+    if (path === '/login') url.searchParams.set('next', currentPath)
+    
+    const redirectResponse = NextResponse.redirect(url)
+    
+    // Copy all cookies from the Supabase response to the new Redirect response
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value, cookie)
+    })
+    return redirectResponse
   }
 
-  // 2. Find the requested route in your Single Source of Truth
-  const allFeatures = siteConfig.sidebarCategories.flatMap(cat => cat.items)
-  
-  // We check if the current URL starts with any of our configured feature hrefs
-  const requestedFeature = allFeatures.find(f => currentPath.startsWith(f.href))
+  // 1. Let in: Skip login page if already authenticated
+  if (user && currentPath === '/login') {
+    return safeRedirect('/dashboard')
+  }
 
-  // 3. THE MASTER BOUNCER LOGIC
+  // 2. Find the requested feature (Sorted by length to prevent URL overlaps)
+  const allFeatures = siteConfig.sidebarCategories.flatMap(cat => cat.items)
+  const sortedFeatures = [...allFeatures].sort((a, b) => b.href.length - a.href.length)
+  const requestedFeature = sortedFeatures.find(f => currentPath.startsWith(f.href))
+
+  // 3. THE BOUNCER LOGIC
   if (requestedFeature) {
     
     // A. Requires Auth Check
     if (requestedFeature.requiresAuth && !user) {
-      const loginUrl = new URL('/login', request.url)
-      // Optional: Save where they were trying to go so you can send them back after login
-      loginUrl.searchParams.set('next', currentPath) 
-      return NextResponse.redirect(loginUrl)
+      return safeRedirect('/login')
     }
 
     // B. Role-Based Access Control (RBAC) Check
     if (user && requestedFeature.allowedRoles) {
-      // Extract the role from Supabase's secure token (Default to 'student' if missing)
       const userRole = user.user_metadata?.role || 'student'
       
-      // If the user's role is not in the allowed list, boot them back to the dashboard
       if (!requestedFeature.allowedRoles.includes(userRole)) {
-        console.warn(`Access Denied: ${userRole} attempted to access ${currentPath}`)
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+        console.warn(`Access Denied: User role '${userRole}' blocked from ${currentPath}`)
+        return safeRedirect('/dashboard')
       }
     }
   }
 
-  // 4. Fallback: Protect the entire dashboard domain just in case a sub-route isn't in config
+  // 4. Fallback: Catch-all for dashboard domain
   if (!user && currentPath.startsWith('/dashboard') && !requestedFeature) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return safeRedirect('/login')
   }
 
   return supabaseResponse
