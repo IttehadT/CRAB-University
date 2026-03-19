@@ -1,7 +1,9 @@
 // src/services/middleMan.service.ts
 
 import { dbConfig } from "@/config/db.config";
-import { ConnectCDNService } from "@/db/connectCDNService"; // UPDATED IMPORT
+import { ConnectCDNService } from "@/db/connectCDNService";
+import { SupabaseJsonDb } from "@/db/supabaseJsonDb"; 
+import { MysqlDb } from "@/db/mysqlDb";
 import { CourseMold } from "@/types/data.mold";
 
 export class MiddleManService {
@@ -13,24 +15,34 @@ export class MiddleManService {
     // 1. Check Config & Route to Tier 1 (CDN)
     if (dbConfig.useTier1_CDN) {
       try {
-        // UPDATED CALL
         const data = await ConnectCDNService.getSpecificData(parameters);
         return { source: "Tier 1: CDN JSON", data };
       } catch (error) {
-        console.warn("Tier 1 failed, falling back...");
+        console.warn("Tier 1 failed, routing to Tier 2...");
       }
     }
 
-    // ... (Keep the rest of your Tier 2 and Tier 3 logic exactly the same)
-    
+    // 2. Check Config & Route to Tier 2 (Supabase Storage Bucket)
     if (dbConfig.useTier2_SupabaseJSON) {
-      console.warn("Tier 2 not implemented yet.");
+      try {
+        const data = await SupabaseJsonDb.getSpecificData(parameters);
+        return { source: "Tier 2: Supabase JSON Backup", data };
+      } catch (error) {
+        console.warn("Tier 2 failed, routing to Tier 3...");
+      }
     }
 
+    // 3. Check Config & Route to Tier 3 (Aiven MySQL)
     if (dbConfig.useTier3_MySQL) {
-       console.warn("Tier 3 not implemented yet.");
+      try {
+        const data = await MysqlDb.getSpecificData(parameters);
+        return { source: "Tier 3: Aiven MySQL", data };
+      } catch (error) {
+        console.error("Tier 3 failed. All academic databases are down.", error);
+      }
     }
 
+    // If everything fails (or everything is disabled in config)
     throw new Error("Critical Failure: All databases are down or disabled in config.");
   }
 }
