@@ -20,9 +20,6 @@ export class MySQLUserRepository implements IUserRepository {
   }
 
   async upsert(user: any): Promise<void> {
-    // Extract role from Supabase's metadata, fallback to user.role, or default to 'student'
-    const rawRole = user.user_metadata?.role || user.role || 'student';
-
     const query = `
       INSERT INTO users (id, email, full_name, avatar_url, phone, provider, last_sign_in_at, role)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -37,12 +34,12 @@ export class MySQLUserRepository implements IUserRepository {
     await mysqlPool.execute(query, [
       user.id,
       user.email,
-      user.full_name || user.user_metadata?.full_name || null,
-      user.avatar_url || user.user_metadata?.avatar_url || null,
+      user.full_name || null,
+      user.avatar_url || null,
       user.phone || null,
       user.provider || 'email',
       user.last_sign_in_at || new Date(),
-      rawRole // Injecting the role we extracted above
+      user.role || 'student' 
     ]);
   }
 }

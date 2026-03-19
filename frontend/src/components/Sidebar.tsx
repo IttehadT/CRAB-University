@@ -15,7 +15,7 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
-  const [userProfile, setUserProfile] = useState({ name: "Loading...", avatar: "" });
+  const [userProfile, setUserProfile] = useState({ name: "Loading...", avatar: "", role: "Student" });
 
   // ── UI INTERACTIVITY STATES ──
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -28,8 +28,10 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const rawName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Student";
-        const rawAvatar = user.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
-        setUserProfile({ name: rawName, avatar: rawAvatar });
+        // FIX: Added check for user_metadata?.picture (For Google/Microsoft users)
+        const rawAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
+        const rawRole = user.user_metadata?.role || "Student";
+        setUserProfile({ name: rawName, avatar: rawAvatar, role: rawRole });
       }
     };
     getUser();
@@ -171,16 +173,23 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
         <div className="shrink-0 border-t border-border bg-card p-3 flex flex-col gap-2 pb-8">
           <div className={`flex items-center rounded-lg bg-muted p-2 overflow-hidden ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
             {userProfile.avatar ? (
-              <img src={userProfile.avatar} alt="Profile" className="h-9 w-9 flex-shrink-0 rounded-full border border-border object-cover" />
+              <img 
+                src={userProfile.avatar} 
+                alt="Profile" 
+                // FIX: If the Google image link expires or breaks, silently hide it and show the CSS fallback
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=2563eb&color=fff` }}
+                className="h-9 w-9 flex-shrink-0 rounded-full border border-border object-cover" 
+              />
             ) : (
               <div className="h-9 w-9 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
                 {userProfile.name.charAt(0).toUpperCase()}
               </div>
             )}
+            
             {!isCollapsed && (
               <div className="truncate">
                 <p className="text-sm font-semibold text-card-foreground truncate">{userProfile.name}</p>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Student</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{userProfile.role}</p>
               </div>
             )}
           </div>
