@@ -10,7 +10,10 @@ export async function Navbar() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const firstName = user?.user_metadata?.full_name?.split(" ")[0] || "Student";
+  // Robust Profile & Avatar Extraction
+  const rawName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Student";
+  const firstName = rawName.split(" ")[0];
+  const avatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur">
@@ -42,9 +45,14 @@ export async function Navbar() {
           {user ? (
             <Link
               href="/dashboard"
-              className="hidden rounded-xl bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-500/20 dark:text-blue-400 md:block"
+              className="hidden items-center gap-2 rounded-xl bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-600 transition hover:bg-blue-500/20 dark:text-blue-400 md:flex"
             >
-              👋 {firstName}
+              <img 
+                src={avatar} 
+                alt="Profile" 
+                className="h-6 w-6 rounded-full border border-blue-200 object-cover dark:border-blue-800"
+              />
+              <span>{firstName}</span>
             </Link>
           ) : (
             <Link
@@ -56,7 +64,7 @@ export async function Navbar() {
           )}
 
           {/* Mobile Interactive Menu */}
-          <MobileNav user={user} firstName={firstName} />
+          <MobileNav user={user} firstName={firstName} fullName={rawName} avatar={avatar} />
         </div>
         
       </div>

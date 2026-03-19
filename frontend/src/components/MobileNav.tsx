@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 
-export function MobileNav({ user, firstName }: { user: any; firstName: string }) {
+export function MobileNav({ user, firstName, fullName, avatar }: { user: any; firstName: string; fullName?: string; avatar?: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -42,8 +42,19 @@ export function MobileNav({ user, firstName }: { user: any; firstName: string })
             ))}
             <hr className="border-border" />
             {user ? (
-              <Link href="/dashboard" onClick={() => setIsOpen(false)} className="rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-blue-700">
-                Dashboard (👋 {firstName})
+              <Link 
+                href="/dashboard" 
+                onClick={() => setIsOpen(false)} 
+                className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700"
+              >
+                {avatar && (
+                  <img 
+                    src={avatar} 
+                    alt="Profile" 
+                    className="h-5 w-5 rounded-full border border-white/20 object-cover" 
+                  />
+                )}
+                <span>{fullName || firstName}</span>
               </Link>
             ) : (
               <Link href="/login" onClick={() => setIsOpen(false)} className="rounded-xl bg-blue-600 px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-blue-700">
