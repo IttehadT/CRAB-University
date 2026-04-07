@@ -249,12 +249,6 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      {/* HEADER */}
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Finder</h1>
-        <p className="text-sm text-muted-foreground">Search, filter, and build your perfect routine.</p>
-      </div>
-
       {/* TOP CONTROLS (B.O.R.A.C.L.E Style) */}
       <div className="flex gap-2 relative z-30">
         <div className="relative flex-1">
@@ -354,14 +348,14 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-muted/50 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground select-none">
               <tr>
-                <th className="py-3 px-2 w-[140px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('courseCode')}>
+                <th className="py-3 px-2 w-[160px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('courseCode')}>
                   <div className="flex items-center">Course Code {renderSortIcon('courseCode')}</div>
                 </th>
                 <th className="py-3 px-2 min-w-[100px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('faculties')}>
                   <div className="flex items-center">Fac. Init. {renderSortIcon('faculties')}</div>
                 </th>
                 <th className="py-3 px-2 w-[150px]">Prereq</th>
-                <th className="py-3 px-2 text-center min-w-[120px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('capacity')}>
+                <th className="py-3 px-2 text-center min-w-[190px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('capacity')}>
                   <div className="flex items-center justify-center">Seat / Booked {renderSortIcon('capacity')}</div>
                 </th>
                 <th className="py-3 px-2 min-w-[160px]">Class Schedule</th>
@@ -380,17 +374,17 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
                 return (
                   <tr key={course.sectionId} className={`transition-colors hover:bg-muted/40 ${isSelected ? "bg-emerald-500/10 dark:bg-emerald-500/10" : ""}`}>
                     <td className="py-3 px-2 font-medium text-foreground align-middle leading-tight">
-                      {course.courseCode} <span className="block text-[11px] font-normal text-muted-foreground">[{course.sectionName}]</span>
+                        {course.courseCode} <span className="text-[11px] font-normal text-muted-foreground">[{course.sectionName}]</span>
                     </td>
-                    <td className="py-3 px-2 font-medium text-primary align-middle">{course.faculties || "TBA"}</td>
+                    <td className="py-3 px-2 font-medium align-middle">{course.faculties || "TBA"}</td>
                     <td className="py-3 px-2 text-muted-foreground text-[11px] max-w-[150px] whitespace-normal break-words align-middle">{course.prerequisiteCourses || "None"}</td>
                     <td className="py-3 px-2 text-center align-middle">
-                      <div className="flex flex-col items-center justify-center leading-tight">
-                        <span className="text-sm font-medium">{capacity} / {booked}</span>
-                        <span className={`text-[11px] font-bold mt-0.5 ${available > 0 ? "text-emerald-500" : available < 0 ? "text-destructive" : "text-foreground"}`}>
-                          ({available > 0 ? `+${available}` : available})
-                        </span>
-                      </div>
+                        <div className="flex items-center justify-center gap-1">
+                            <span className="text-sm font-medium">{capacity} / {booked}</span>
+                            <span className={`text-[11px] font-bold ${available > 0 ? "text-emerald-500" : available < 0 ? "text-red-500" : "text-foreground"}`}>
+                            ({available > 0 ? `+${available}` : available})
+                            </span>
+                        </div>
                     </td>
                     <td className="py-3 px-2 align-middle">{renderScheduleCell(course.sectionSchedule?.classSchedules)}</td>
                     <td className="py-3 px-2 align-middle">{renderScheduleCell(course.labSchedules)}</td>
