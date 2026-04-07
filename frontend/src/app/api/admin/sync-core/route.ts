@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { mysqlPool } from "@/lib/db/mysql";
-import { CourseMold } from "@/types/data.mold";
+import { CourseMold } from "@/lib/db/mold";
 
 export const dynamic = 'force-dynamic'; // Prevent caching
 

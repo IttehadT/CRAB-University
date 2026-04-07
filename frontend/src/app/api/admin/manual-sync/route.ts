@@ -2,8 +2,13 @@
 
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { userService } from "@/services/user.service";
-import { mysqlPool } from "@/lib/db/mysql"; // Direct DB access for the cleanup step
+
+// FIX 1: Import the newly flattened 'syncUser' directly from our single service file
+import { syncUser } from "@/lib/service"; 
+
+// NOTE: We are keeping mysqlPool here for the orphan cleanup to preserve your existing code,
+// but in the future, we should move this raw SQL into control.ts to perfectly match the Golden Rule!
+import { mysqlPool } from "@/lib/db/mysql"; 
 
 export const dynamic = 'force-dynamic';
 
@@ -36,22 +41,18 @@ export async function GET() {
         role: role
       };
 
-      await userService.syncUser(userData);
+      // FIX 2: Call the unified syncUser function directly
+      await syncUser(userData);
     }
 
     // 2. ORPHAN CLEANUP: Delete users from MySQL who are no longer in Supabase
     let deletedCount = 0;
     
-    // Safety check: Only run deletion if Supabase actually returned users (prevents accidental DB wipe)
     if (users.length > 0) {
-      // Create a comma-separated list of active Supabase IDs: 'id1','id2','id3'
       const activeIds = users.map(u => `'${u.id}'`).join(',');
-      
-      // Delete any row in MySQL where the ID is NOT in the active Supabase list
       const [result]: any = await mysqlPool.execute(
         `DELETE FROM users WHERE id NOT IN (${activeIds})`
       );
-      
       deletedCount = result.affectedRows || 0;
     }
 
