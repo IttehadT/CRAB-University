@@ -72,13 +72,20 @@ export async function getCourseData<K extends keyof CourseMold>(
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
         // The Master JOIN Query (Moved from mysqlDb.ts)
+        // The Master JOIN Query (Updated to include schedules & exams)
         const sql = `
           SELECT 
             s.id AS sectionId, c.id AS courseId, s.section_name AS sectionName,
             c.credits AS courseCredit, c.course_code AS courseCode, ss.capacity AS capacity,
             ss.consumed_seat AS consumedSeat, s.semester_id AS semesterSessionId,
             f.initials AS faculties, s.room_name AS roomName, c.course_type AS courseType,
-            c.academic_degree AS academicDegree, c.course_name AS courseName
+            c.academic_degree AS academicDegree, c.course_name AS courseName,
+            c.prerequisite_courses AS prerequisiteCourses,
+            s.class_schedule,
+            s.lab_schedule,
+            s.final_exam_date, s.final_exam_start_time, s.final_exam_end_time,
+            s.mid_exam_date, s.mid_exam_start_time, s.mid_exam_end_time
+
           FROM sections s
           JOIN courses c ON s.course_id = c.id
           LEFT JOIN faculties f ON s.faculty_id = f.id
