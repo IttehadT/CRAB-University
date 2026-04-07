@@ -1,14 +1,22 @@
 // src/app/api/auth/sync-user/route.ts
 
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
-import { userService } from "@/services/user.service";
+// FIX: Updated path to the new Supabase lib location
+import { createClient } from "@/lib/supabase/server"; 
+// FIX: We now import the sync logic from our unified service file
+import { syncUser } from "@/lib/service"; 
 
+/**
+ * ── POST-LOGIN SYNC API ─────────────────────────────────────────────────────
+ * This route is silently triggered after a successful login. 
+ * It grabs the fresh Supabase session and pushes updates (like last login time)
+ * into our MySQL database to keep them perfectly mirrored.
+ */
 export async function POST() {
   try {
-    const supabase = await createClient(); // Await is required in Next 15+ for cookies
+    const supabase = await createClient(); 
     
-    // Securely get the user session from the server side cookies
+    // Securely get the user session from the server-side cookies
     const { data: { user }, error } = await supabase.auth.getUser();
 
     if (error || !user) {
@@ -18,11 +26,9 @@ export async function POST() {
     // Extract the exact provider they used (google, email, azure, etc.)
     const provider = user.app_metadata?.provider || 'email';
     const lastSignIn = user.last_sign_in_at ? new Date(user.last_sign_in_at) : new Date();
-
-    // --- ADDED ROLE PARSING HERE ---
     const role = user.user_metadata?.role || 'student';
 
-    // Map Supabase metadata to our MySQL interface
+    // Map Supabase metadata to our MySQL interface mold
     const userData = {
       id: user.id,
       email: user.email!,
@@ -31,11 +37,11 @@ export async function POST() {
       phone: user.phone || null,
       provider: provider,
       last_sign_in_at: lastSignIn,
-      role: role // <-- Passing the role explicitly to MySQL
+      role: role 
     };
 
-    // Send it to the MySQL Service!
-    await userService.syncUser(userData);
+    // Send it to the unified Service to handle the DB upsert!
+    await syncUser(userData);
 
     return NextResponse.json({ success: true, message: "User synced to MySQL" });
 

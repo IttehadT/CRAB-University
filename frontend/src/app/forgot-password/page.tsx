@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function ForgotPasswordPage() {

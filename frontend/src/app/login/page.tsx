@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── Webview Detection Utility (iOS ONLY) ────────────────────────────────
 function isWebview(): boolean {

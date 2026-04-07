@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/config/site";
 import { ThemeLanguageToggle } from "@/components/ThemeLanguageToggle";
 import { MobileNav } from "@/components/MobileNav";
