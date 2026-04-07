@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
+import { getUserDisplayName, getUserAvatar } from "@/lib/utils";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -27,9 +28,9 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const rawName = user.user_metadata?.full_name || user.email?.split('@')[0] || "Student";
+        const rawName = getUserDisplayName(user);
         // FIX: Added check for user_metadata?.picture (For Google/Microsoft users)
-        const rawAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
+        const rawAvatar = getUserAvatar(user, rawName);
         const rawRole = user.user_metadata?.role || "Student";
         setUserProfile({ name: rawName, avatar: rawAvatar, role: rawRole });
       }

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/config/site";
 import { ThemeLanguageToggle } from "@/components/ThemeLanguageToggle";
 import { MobileNav } from "@/components/MobileNav";
+import { getUserDisplayName, getUserAvatar } from "@/lib/utils";
 
 export async function Navbar() {
   const supabase = await createClient();
@@ -11,7 +12,7 @@ export async function Navbar() {
   } = await supabase.auth.getUser();
 
   // Robust Profile & Avatar Extraction
-  const rawName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Student";
+  const rawName = getUserDisplayName(user);
   const firstName = rawName.split(" ")[0];
   const avatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(rawName)}&background=2563eb&color=fff`;
 
