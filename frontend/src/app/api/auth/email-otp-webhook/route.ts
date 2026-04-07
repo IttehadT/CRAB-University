@@ -1,3 +1,18 @@
+// src/app/api/auth/email-otp-webhook/route.ts
+
+/**
+ * ── THE PRIMARY EMAIL OTP WEBHOOK ───────────────────────────────────────────
+ * WARNING: Despite its old name, this is NOT a backup file. This is the 
+ * PRIMARY email sender for the entire application.
+ * * HOW IT WORKS:
+ * 1. A user tries to log in or sign up via the UI.
+ * 2. Supabase generates an OTP (One Time Password).
+ * 3. Supabase fires a webhook directly to this URL containing the OTP.
+ * 4. This route attempts to send the email via Resend (Enterprise Tier 1).
+ * 5. If Resend fails, it safely falls back to a custom Gmail SMTP server.
+ * * * Remember to update the Supabase Dashboard Webhook URL to point to this new path!
+ */
+
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
@@ -44,7 +59,7 @@ export async function POST(request: Request) {
       await resend.emails.send({
         from: "CRAB University <verify@crabu.app>",
         to: user.email,
-        subject: emailSubject, // Using the dynamic subject!
+        subject: emailSubject,
         html: htmlContent,
       });
       console.log("✅ Sent securely via Resend");
@@ -67,7 +82,7 @@ export async function POST(request: Request) {
       await transporter.sendMail({
         from: '"CRABU Backup Server" <services.crabu@gmail.com>',
         to: user.email,
-        subject: `${emailSubject} (Backup Route)`, // Dynamic subject here too!
+        subject: `${emailSubject} (Backup Route)`,
         html: htmlContent,
       });
       

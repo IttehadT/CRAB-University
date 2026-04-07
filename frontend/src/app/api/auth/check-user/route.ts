@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { findUserByEmail } from "@/lib/service"; 
 
 /**
+ * Pre-login check — Ensures the email exists before sending OTP
  * ── PRE-FLIGHT CHECK API ────────────────────────────────────────────────────
  * This route is called by the UI *before* sending an OTP email. 
  * It ensures the email actually exists in our MySQL database.
