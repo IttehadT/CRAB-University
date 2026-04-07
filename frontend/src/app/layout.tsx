@@ -1,18 +1,16 @@
+// src/app/layout.tsx
+
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/config/site";
 import { ThemeProvider } from "@/components/theme-provider";
 import GlobalCopyright from "@/components/GlobalCopyright";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// 1. Initialize the Inter font
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap", // Ensures text stays visible while the font loads
 });
 
 export const metadata: Metadata = {
@@ -41,7 +39,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body 
-        className={`${geistSans.variable} ${geistMono.variable} antialiased flex min-h-screen flex-col bg-background text-foreground transition-colors duration-300`}
+        // 2. Inject inter.className directly so it applies to EVERYTHING
+        className={`${inter.className} antialiased flex min-h-screen flex-col bg-background text-foreground transition-colors duration-300`}
         suppressHydrationWarning
       >
         <ThemeProvider

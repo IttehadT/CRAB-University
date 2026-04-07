@@ -43,7 +43,7 @@ export default async function FinderPage() {
   return (
     <main className="min-h-screen bg-background text-foreground p-4 md:p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-primary tracking-tight">Course Finder</h1>
+        <h1 className="text-3xl font-bold text-primary tracking-tight">Finder</h1>
         <p className="text-muted-foreground mt-1">Search, filter, and build your perfect routine.</p>
       </div>
 

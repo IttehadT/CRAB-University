@@ -272,11 +272,6 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div>
-        <h1 className="text-2xl font-bold text-primary">Finder</h1>
-        <p className="text-sm text-muted-foreground">Search, filter, and build your perfect routine.</p>
-      </div>
-
       {/* SEARCH & FILTER BAR */}
       <div className="rounded-lg border border-border bg-card p-3 shadow-sm space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
@@ -339,9 +334,7 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
                 <th className="px-3 py-2.5">Course Code</th>
                 <th className="px-3 py-2.5">Fac. Init.</th>
                 <th className="px-3 py-2.5">Prereq</th>
-                <th className="px-3 py-2.5 text-center">Seat Cap.</th>
-                <th className="px-3 py-2.5 text-center">Booked</th>
-                <th className="px-3 py-2.5 text-center">Available</th>
+                <th className="px-3 py-2.5 text-center">Seat / Booked</th>
                 <th className="px-3 py-2.5">Class Schedule</th>
                 <th className="px-3 py-2.5">Lab Schedule</th>
                 <th className="px-3 py-2.5">Exam Day</th>
@@ -362,10 +355,21 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
                     </td>
                     <td className="px-3 py-2 text-primary font-semibold">{course.faculties || "TBA"}</td>
                     <td className="px-3 py-2 text-muted-foreground text-xs max-w-[140px] whitespace-normal">{course.prerequisiteCourses || "None"}</td>
-                    <td className="px-3 py-2 text-center text-sm">{capacity}</td>
-                    <td className="px-3 py-2 text-center text-sm">{booked}</td>
-                    <td className="px-3 py-2 text-center">
-                      <span className={`text-sm font-bold ${available > 0 ? "text-emerald-500" : "text-destructive"}`}>{available > 0 ? `+${available}` : available}</span>
+                    <td className="px-3 py-2 text-center text-sm">
+                    <div className="flex flex-col items-center justify-center leading-tight">
+                        <span>{booked} / {capacity}</span>
+                        <span
+                        className={`text-[11px] font-bold mt-0.5 ${
+                            available > 0
+                            ? "text-emerald-500"
+                            : available < 0
+                            ? "text-destructive"
+                            : "text-foreground"
+                        }`}
+                        >
+                        ({available > 0 ? `+${available}` : available})
+                        </span>
+                    </div>
                     </td>
                     <td className="px-3 py-2">{renderScheduleCell(course.sectionSchedule?.classSchedules)}</td>
                     <td className="px-3 py-2">{renderScheduleCell(course.labSchedules)}</td>
