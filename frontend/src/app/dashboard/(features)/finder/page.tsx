@@ -16,17 +16,20 @@ export const dynamic = "force-dynamic";
 
 export default async function FinderPage() {
   // 1. Ask the unified service for ONLY the columns we need for the UI to save memory
-  const keysToFetch: (keyof CourseMold)[] = [
-    "sectionId",
-    "courseCode",
-    "sectionName",
-    "courseCredit",
+  const keysToFetch: any[] = [
+    // Standard keys
+    "sectionId", "id",
+    "courseCode", "course_code",
+    "sectionName", "section_name",
+    "courseCredit", "credits",
     "capacity",
-    "consumedSeat",
+    "consumedSeat", "consumed_seat",
     "faculties",
-    "prerequisiteCourses",
-    "sectionSchedule",
-    "labSchedules",
+    "prerequisiteCourses", "prerequisite_courses",
+    "sectionSchedule", "class_schedule",
+    "final_exam_date", "final_exam_start_time", "final_exam_end_time",
+    "mid_exam_date", "mid_exam_start_time", "mid_exam_end_time",
+    "labSchedules", "lab_schedule"
   ];
 
   let courses: Pick<CourseMold, keyof CourseMold>[] = [];

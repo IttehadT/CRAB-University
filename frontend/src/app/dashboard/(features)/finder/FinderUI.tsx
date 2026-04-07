@@ -95,6 +95,7 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
   const [sortConfig, setSortConfig] = useState({ key: null as string | null, direction: 'asc' });
   const [selectedCourses, setSelectedCourses] = useState<Partial<CourseMold>[]>([]);
   const [displayCount, setDisplayCount] = useState(50);
+  const [page, setPage] = useState(1);
   
   // UI Toggles
   const [showFilterModal, setShowFilterModal] = useState(false);
@@ -127,7 +128,7 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
 
   // Filtering & Sorting
   const filteredCourses = useMemo(() => {
-    let filtered = courses;
+    let filtered = [...courses];
 
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
@@ -144,21 +145,47 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
     if (filters.onlySelected) filtered = filtered.filter(c => selectedCourses.some(sc => sc.sectionId === c.sectionId));
 
     if (sortConfig.key) {
-      filtered.sort((a, b) => {
-        let aVal: any = a[sortConfig.key as keyof Partial<CourseMold>];
-        let bVal: any = b[sortConfig.key as keyof Partial<CourseMold>];
-        if (sortConfig.key === 'available') {
-          aVal = (a.capacity || 0) - (a.consumedSeat || 0); bVal = (b.capacity || 0) - (b.consumedSeat || 0);
-        }
-        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
+        const key = sortConfig.key;
+        filtered = [...filtered].sort((a, b) => {
+            let aVal: any;
+            let bVal: any;
+            if (key === 'available') {
+            aVal = (a.capacity || 0) - (a.consumedSeat || 0);
+            bVal = (b.capacity || 0) - (b.consumedSeat || 0);
+            } else if (key === 'courseCode') {
+            const parseCode = (code: string = '') => {
+                const match = code.match(/^([A-Za-z]+)(\d+)/);
+                return match ? [match[1].toUpperCase(), parseInt(match[2], 10)] : [code, 0];
+            };
+            const [aPrefix, aNum] = parseCode(a.courseCode);
+            const [bPrefix, bNum] = parseCode(b.courseCode);
+            if (aPrefix !== bPrefix) {
+                aVal = aPrefix; bVal = bPrefix;
+            } else {
+                aVal = aNum; bVal = bNum;
+            }
+            } else if (key === 'capacity') {
+            aVal = (a.capacity || 0) - (a.consumedSeat || 0);
+            bVal = (b.capacity || 0) - (b.consumedSeat || 0);
+            } else {
+            aVal = a[key as keyof Partial<CourseMold>];
+            bVal = b[key as keyof Partial<CourseMold>];
+            }
+            if (aVal == null) return 1;
+            if (bVal == null) return -1;
+            if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }   
     return filtered;
   }, [courses, searchTerm, filters, sortConfig, selectedCourses]);
 
-  const displayedCourses = useMemo(() => filteredCourses.slice(0, displayCount), [filteredCourses, displayCount]);
+  const displayedCourses = useMemo(() => {
+    const start = (page - 1) * displayCount;
+    return filteredCourses.slice(start, start + displayCount);
+  }, [filteredCourses, displayCount, page]);
+  useEffect(() => { setPage(1); }, [searchTerm, filters, sortConfig]);
   const totalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0);
   const activeFilterCount = (filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0);
 
@@ -344,11 +371,11 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
 
       {/* ── DESKTOP TABLE ─────────────────────────────────────────────────── */}
       <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden shadow-sm mt-2 z-10">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto px-2 py-2">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-border bg-muted/50 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground select-none">
               <tr>
-                <th className="py-3 px-2 w-[160px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('courseCode')}>
+                <th className="py-3 px-2 w-[140px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('courseCode')}>
                   <div className="flex items-center">Course Code {renderSortIcon('courseCode')}</div>
                 </th>
                 <th className="py-3 px-2 min-w-[100px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('faculties')}>
@@ -402,13 +429,23 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
         </div>
 
         {/* Load More Trigger */}
-        {displayCount < filteredCourses.length && (
-          <div className="p-4 border-t border-border flex flex-col items-center justify-center bg-muted/10">
-            <span className="text-xs text-muted-foreground mb-3">Showing {displayCount} of {filteredCourses.length} courses</span>
-            <button onClick={() => setDisplayCount(prev => Math.min(prev + 50, filteredCourses.length))} className="px-6 py-2 bg-muted hover:bg-muted/80 text-foreground font-medium text-sm rounded-lg transition border border-border shadow-sm">
-              Load More
-            </button>
-          </div>
+        {filteredCourses.length > 0 && (
+        <div className="p-4 border-t border-border flex items-center justify-between bg-muted/10">
+            <span className="text-xs text-muted-foreground">
+            Showing {Math.min((page - 1) * displayCount + 1, filteredCourses.length)}–{Math.min(page * displayCount, filteredCourses.length)} of {filteredCourses.length}
+            </span>
+            <div className="flex items-center gap-3">
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-muted disabled:opacity-40 hover:border-primary transition">← Prev</button>
+            <span className="text-xs text-muted-foreground">{page} / {Math.ceil(filteredCourses.length / displayCount)}</span>
+            <button onClick={() => setPage(p => Math.min(Math.ceil(filteredCourses.length / displayCount), p + 1))} disabled={page >= Math.ceil(filteredCourses.length / displayCount)} className="px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-muted disabled:opacity-40 hover:border-primary transition">Next →</button>
+            <select value={displayCount} onChange={e => { setDisplayCount(Number(e.target.value)); setPage(1); }} className="text-xs px-2 py-1.5 rounded-lg border border-border bg-muted text-foreground focus:outline-none focus:border-primary">
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={filteredCourses.length}>All</option>
+            </select>
+            </div>
+        </div>
         )}
       </div>
 
@@ -450,13 +487,6 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
             </div>
           );
         })}
-        {displayCount < filteredCourses.length && (
-          <div className="text-center py-4">
-            <button onClick={() => setDisplayCount(prev => Math.min(prev + 50, filteredCourses.length))} className="px-6 py-2.5 bg-muted border border-border text-foreground text-sm font-medium rounded-lg w-full">
-              Load More Courses
-            </button>
-          </div>
-        )}
       </div>
 
       {/* FILTER MODAL (B.O.R.A.C.L.E Perfect) */}
