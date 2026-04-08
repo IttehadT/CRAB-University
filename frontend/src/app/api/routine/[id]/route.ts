@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { removeUserRoutine } from "@/lib/service";
 
-// Next.js 15+ STRICT REQUIREMENT: params must be typed as a Promise
+// Use NextRequest instead of Request, and explicitly type the context
 export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> } // <-- The fix
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession();
@@ -13,8 +13,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // You MUST await the params before extracting the ID
-    const { id } = await params;
+    // Await the params object from the context
+    const resolvedParams = await context.params;
+    const id = resolvedParams.id;
 
     await removeUserRoutine(id, session.user.email);
     return NextResponse.json({ success: true });
