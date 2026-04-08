@@ -16,15 +16,25 @@ import { getServerSession } from "next-auth"; // Required to get the user sessio
 export const dynamic = "force-dynamic";
 
 export default async function FinderPage() {
-  // 0. Fetch the User Table data using the active session
-  const session = await getServerSession();
+  // 0. Fetch the User Table data safely
+  let session = null;
   let currentUser = null;
+  
+  try {
+    // Wrapped in try/catch to prevent the Vercel 500 crash!
+    // Note: To get the name working, you eventually need to pass your auth config here:
+    // session = await getServerSession(authOptions);
+    session = await getServerSession();
+  } catch (err) {
+    console.warn("NextAuth session skipped due to missing config.");
+  }
   
   if (session?.user?.email) {
     try {
+      // NOW we ask MySQL Aiven for the actual data!
       currentUser = await findUserByEmail(session.user.email);
     } catch (e) {
-      console.warn("Could not fetch user data:", e);
+      console.warn("Could not fetch user data from MySQL:", e);
     }
   }
 
@@ -48,7 +58,6 @@ export default async function FinderPage() {
     "labSchedules",  
   ];
 
-  // Changed type to any[] to accommodate the expanded keys for the fallback
   let courses: any[] = [];
   let errorMsg = null;
 
