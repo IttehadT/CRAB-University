@@ -27,7 +27,7 @@ const TIME_SLOTS = [
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const normalizeCourse = (raw: any): Partial<CourseMold> => {
-  let sectionSchedule = raw.sectionSchedule;
+  let sectionSchedule = raw.sectionSchedule ?? null;
   if (!sectionSchedule && raw.class_schedule) {
     try {
       sectionSchedule = {
@@ -38,10 +38,7 @@ const normalizeCourse = (raw: any): Partial<CourseMold> => {
       };
     } catch {}
   }
-  let labSchedules = raw.labSchedules;
-  if (!labSchedules && raw.lab_schedule) {
-    try { labSchedules = typeof raw.lab_schedule === "string" ? JSON.parse(raw.lab_schedule) : raw.lab_schedule; } catch {}
-  }
+const labSchedules = raw.labSchedules ?? raw.lab_schedule ?? null;
   return {
     ...raw,
     sectionId: raw.sectionId || raw.id,
@@ -52,7 +49,7 @@ const normalizeCourse = (raw: any): Partial<CourseMold> => {
     prerequisiteCourses: raw.prerequisiteCourses || raw.prerequisite_courses || null,
     faculties: raw.faculties,
     capacity: raw.capacity,
-    roomName: raw.roomName || raw.room_name || null,
+    roomName: raw.roomName || raw.room_name || raw.roomNumber || null,
     sectionSchedule,
     labSchedules,
   };
@@ -92,7 +89,7 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
   // State
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({ hideFilled: false, avoidFaculties: [] as string[], labFilter: 'all', onlySelected: false });
-  const [sortConfig, setSortConfig] = useState({ key: null as string | null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'courseCode' as string | null, direction: 'asc' });
   const [selectedCourses, setSelectedCourses] = useState<Partial<CourseMold>[]>([]);
   const [displayCount, setDisplayCount] = useState(50);
   const [page, setPage] = useState(1);
@@ -153,20 +150,16 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
             aVal = (a.capacity || 0) - (a.consumedSeat || 0);
             bVal = (b.capacity || 0) - (b.consumedSeat || 0);
             } else if (key === 'courseCode') {
-            const parseCode = (code: string = '') => {
+              const parseCode = (code: string = '', section: string = '') => {
                 const match = code.match(/^([A-Za-z]+)(\d+)/);
-                return match ? [match[1].toUpperCase(), parseInt(match[2], 10)] : [code, 0];
-            };
-            const [aPrefix, aNum] = parseCode(a.courseCode);
-            const [bPrefix, bNum] = parseCode(b.courseCode);
-            if (aPrefix !== bPrefix) {
-                aVal = aPrefix; bVal = bPrefix;
-            } else {
-                aVal = aNum; bVal = bNum;
-            }
+                const sectionNum = parseInt(section, 10) || 0;
+                return match ? `${match[1].toUpperCase()}_${String(parseInt(match[2], 10)).padStart(6,'0')}_${String(sectionNum).padStart(6,'0')}` : code;
+              };
+              aVal = parseCode(a.courseCode, a.sectionName);
+              bVal = parseCode(b.courseCode, b.sectionName);
             } else if (key === 'capacity') {
-            aVal = (a.capacity || 0) - (a.consumedSeat || 0);
-            bVal = (b.capacity || 0) - (b.consumedSeat || 0);
+            aVal = (b.capacity || 0) - (b.consumedSeat || 0);
+            bVal = (a.capacity || 0) - (a.consumedSeat || 0);
             } else {
             aVal = a[key as keyof Partial<CourseMold>];
             bVal = b[key as keyof Partial<CourseMold>];
@@ -210,9 +203,17 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
     if (!calendarRef.current) return;
     try {
       const { toPng } = await import("html-to-image");
-      const dataUrl = await toPng(calendarRef.current, { quality: 0.95, backgroundColor: "#ffffff" });
+      const isDark = document.documentElement.classList.contains("dark");
+      const bg = isDark ? "#0f172a" : "#ffffff";
+      const dataUrl = await toPng(calendarRef.current, {
+        quality: 0.95,
+        pixelRatio: 3,
+        backgroundColor: bg,
+      });
       const link = document.createElement("a");
-      link.download = "CRABU_Routine.png"; link.href = dataUrl; link.click();
+      link.download = `CRABU_Routine_${new Date().toISOString().split("T")[0]}.png`;
+      link.href = dataUrl;
+      link.click();
     } catch { alert("Failed to export PNG."); }
   };
 
@@ -598,92 +599,145 @@ export default function FinderUI({ initialCourses }: FinderUIProps) {
 
       {/* WEEKLY CALENDAR ROUTINE MODAL (B.O.R.A.C.L.E Visuals) */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-2 md:p-6">
-          <div className="relative flex h-[95vh] w-full max-w-[1400px] flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
-            
-            {/* Modal Header */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border bg-muted/40 px-5 py-4 shrink-0 gap-4">
-              <div>
-                <h2 className="text-xl font-bold text-foreground">My Routine</h2>
-                <p className="text-xs font-medium text-muted-foreground mt-1">
-                  Total Credits: <span className={`font-bold ${totalCredits > 18 ? "text-destructive" : "text-emerald-500"}`}>{totalCredits} / 25</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button onClick={() => alert("Routine Saved!")} className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-sm">
-                  💾 Save Routine
-                </button>
-                <button onClick={handleDownloadPNG} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition shadow-sm">
-                  ⬇ Save as PNG
-                </button>
-                <button onClick={() => setIsModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted bg-background ml-auto sm:ml-2">
-                  ✕
-                </button>
-              </div>
-            </div>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-2 md:p-6">
+        <div className="relative flex h-[95vh] w-full max-w-[1400px] flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
 
-            {/* Calendar Body */}
-            <div className="flex-1 overflow-auto p-4 bg-[#0a0f1c] dark:bg-[#060913]">
-              {selectedCourses.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                  No courses selected. Close this and click + on any course.
-                </div>
-              ) : (
-                <div ref={calendarRef} className="bg-[#0f172a] rounded-xl border border-[#1e293b] overflow-hidden min-w-[900px] shadow-lg text-slate-200">
-                  <table className="w-full text-[11px] border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#1e293b] bg-[#0f172a]">
-                        <th className="w-[110px] px-3 py-3.5 text-left font-bold text-slate-400 border-r border-[#1e293b] text-[10px] uppercase tracking-wider">Time / Day</th>
-                        {DAYS.map((day) => <th key={day} className="px-2 py-3.5 text-center font-bold text-slate-400 border-r border-[#1e293b] last:border-r-0 text-[10px] uppercase tracking-wider">{day}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {TIME_SLOTS.map((slot, slotIdx) => (
-                        <tr key={slot.label} className="border-b border-[#1e293b] last:border-b-0">
-                          <td className="px-3 py-2 align-top border-r border-[#1e293b] text-slate-400 font-medium bg-[#0b1121] text-[10px] leading-tight">
-                            {slot.label.split("–").map((t, i) => <div key={i}>{t}</div>)}
-                          </td>
-                          {DAYS.map((_, dayIdx) => {
-                            const entries = calendarGrid[slotIdx][dayIdx];
-                            return (
-                              <td key={dayIdx} className="px-1.5 py-1.5 align-top border-r border-[#1e293b] last:border-r-0 min-w-[120px]">
-                                {entries.length === 0 ? ( <div className="min-h-[64px]" /> ) : (
-                                  <div className="flex flex-col gap-1.5 h-full">
+          {/* Modal Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border bg-muted/40 px-5 py-4 shrink-0 gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">My Routine</h2>
+              <p className="text-xs font-medium text-muted-foreground mt-1">
+                Total Credits: <span className={`font-bold ${totalCredits > 18 ? "text-red-500" : "text-emerald-500"}`}>{totalCredits} / 25</span>
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleDownloadPNG}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition shadow-sm"
+              >
+                ⬇ Save as PNG
+              </button>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted bg-background ml-auto sm:ml-2"
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Calendar Body */}
+          <div className="flex-1 overflow-auto p-4">
+            {selectedCourses.length === 0 ? (
+              <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
+                No courses selected. Close this and click + on any course.
+              </div>
+            ) : (
+              <div ref={calendarRef} className="bg-card rounded-xl border border-border overflow-hidden min-w-[900px] shadow-sm">
+                <table className="w-full text-[12px] border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="w-[130px] px-4 py-3.5 text-left font-semibold text-muted-foreground border-r border-border text-[11px] uppercase tracking-wider">
+                        TIME / DAY
+                      </th>
+                      {DAYS.map((day) => (
+                        <th key={day} className="px-3 py-3.5 text-center font-semibold text-muted-foreground border-r border-border last:border-r-0 text-[11px] uppercase tracking-wider">
+                          {day}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {TIME_SLOTS.map((slot, slotIdx) => (
+                      <tr key={slot.label} className="border-b border-border last:border-b-0">
+                        <td className="px-4 py-3 align-top border-r border-border text-muted-foreground font-medium bg-muted/20 text-[11px] leading-snug whitespace-nowrap">
+                          {slot.label.split("–").map((t, i) => <div key={i}>{t}</div>)}
+                        </td>
+                        {DAYS.map((_, dayIdx) => {
+                          const entries = calendarGrid[slotIdx][dayIdx];
+                          return (
+                            <td key={dayIdx} className="p-1.5 align-top border-r border-border last:border-r-0 min-w-[120px]">
+                              {entries.length === 0
+                                ? <div className="min-h-[80px]" />
+                                : (
+                                  <div className="flex flex-col gap-1.5">
                                     {entries.map((item, i) => (
-                                      <div key={i} className={`relative rounded-lg p-2.5 shadow-sm border ${
-                                        item.isConflict ? "bg-red-950/40 border-red-900/50 text-red-200" : 
-                                        item.isLab ? "bg-[#2d1b4e] border-[#4c2a85] text-[#d8b4fe]" : 
-                                        "bg-[#1e293b] border-[#334155] text-blue-100"
-                                      }`}>
-                                        <button onClick={() => toggleCourse(item.course)} className="absolute top-1.5 right-1.5 text-[10px] opacity-40 hover:opacity-100 hover:text-red-400 transition bg-black/20 rounded-full w-4 h-4 flex items-center justify-center">✕</button>
-                                        <div className="font-bold pr-4 text-xs tracking-tight">
-                                          {item.course.courseCode} <span className="font-medium opacity-70 ml-0.5">{item.course.sectionName}</span>
+                                      <div
+                                        key={i}
+                                        className={`relative rounded-r-lg rounded-l-[3px] p-2.5 min-h-[80px] flex flex-col justify-center transition-all group
+                                          ${item.isConflict
+                                            ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100 shadow-[0_2px_10px_-3px_rgba(239,68,68,0.2)]'
+                                            : item.isLab
+                                              ? 'bg-purple-50 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100 shadow-[0_2px_10px_-3px_rgba(168,85,247,0.2)]'
+                                              : 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 shadow-[0_2px_10px_-3px_rgba(59,130,246,0.2)]'
+                                          }`}
+                                      >
+                                        <button
+                                          onClick={() => toggleCourse(item.course)}
+                                          className="absolute top-1.5 right-1.5 p-0.5 rounded opacity-0 group-hover:opacity-100 transition text-current hover:text-red-500"
+                                        >
+                                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                          </svg>
+                                        </button>
+
+                                        <div className="font-bold text-[12px] tracking-tight leading-tight flex items-center gap-1.5 pr-4">
+                                          {item.course.courseCode}
+                                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded-sm bg-black/10 dark:bg-white/20">
+                                            {item.course.sectionName}
+                                          </span>
+                                          {item.isLab && (
+                                            <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200">
+                                              LAB
+                                            </span>
+                                          )}
                                         </div>
-                                        <div className="opacity-70 text-[10px] mt-1 flex items-center gap-1 font-medium">📍 {item.course.roomName || "TBA"}</div>
-                                        <div className="opacity-70 text-[10px] mt-0.5 flex items-center gap-1 font-medium">👤 {item.course.faculties || "TBA"}</div>
-                                        {item.isLab && <div className="mt-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-purple-900/50 inline-block text-purple-300">LAB</div>}
+
+                                        <div className="text-[11px] mt-1.5 flex items-start gap-1 opacity-80 font-medium">
+                                          <svg className="w-3 h-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          </svg>
+                                          {item.course.roomName || "TBA"}
+                                        </div>
+
+                                        <div className="text-[11px] mt-0.5 flex items-center gap-1 opacity-70 font-medium">
+                                          <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                          </svg>
+                                          {item.course.faculties || "TBA"}
+                                        </div>
                                       </div>
                                     ))}
                                   </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div className="flex justify-center md:justify-end gap-5 px-5 py-3 border-t border-[#1e293b] bg-[#0b1121]">
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium uppercase tracking-wider"><div className="h-2.5 w-2.5 rounded bg-[#1e293b] border border-[#334155]" />Class</div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium uppercase tracking-wider"><div className="h-2.5 w-2.5 rounded bg-[#2d1b4e] border border-[#4c2a85]" />Lab</div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium uppercase tracking-wider"><div className="h-2.5 w-2.5 rounded bg-red-950/40 border border-red-900/50" />Conflict</div>
+                                )
+                              }
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Legend */}
+                <div className="flex items-center gap-5 px-5 py-3 border-t border-border bg-muted/20">
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                    <div className="h-3 w-3 rounded-sm bg-blue-50 dark:bg-blue-900/30 border-l-2 border-blue-500" />Class
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                    <div className="h-3 w-3 rounded-sm bg-purple-50 dark:bg-purple-900/30 border-l-2 border-purple-500" />Lab
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+                    <div className="h-3 w-3 rounded-sm bg-red-50 dark:bg-red-900/30 border-l-2 border-red-500" />Conflict
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
+    )}
     </div>
   );
 }

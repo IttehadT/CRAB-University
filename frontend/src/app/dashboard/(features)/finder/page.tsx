@@ -7,29 +7,49 @@
  * lib/service.ts, and securely passes the data to the Client UI.
  */
 
-import { fetchCourses } from "@/lib/service";
+import { fetchCourses, findUserByEmail } from "@/lib/service";
 import FinderUI from "./FinderUI";
 import { CourseMold } from "@/lib/db/mold";
+import { getServerSession } from "next-auth"; // Required to get the user session
 
 // Optional: Force dynamic rendering if you want live seat updates every time they refresh
 export const dynamic = "force-dynamic";
 
 export default async function FinderPage() {
+  // 0. Fetch the User Table data using the active session
+  const session = await getServerSession();
+  let currentUser = null;
+  
+  if (session?.user?.email) {
+    try {
+      currentUser = await findUserByEmail(session.user.email);
+    } catch (e) {
+      console.warn("Could not fetch user data:", e);
+    }
+  }
+
   // 1. Ask the unified service for ONLY the columns we need for the UI to save memory
   const keysToFetch: (keyof CourseMold)[] = [
     "sectionId",
+    "courseId",
     "courseCode",
+    "courseName",
     "sectionName",
     "courseCredit",
+    "courseType",
+    "academicDegree",
+    "semesterSessionId",
     "capacity",
     "consumedSeat",
     "faculties",
+    "roomName",
     "prerequisiteCourses",
-    "sectionSchedule",
-    "labSchedules",
+    "sectionSchedule", 
+    "labSchedules",  
   ];
 
-  let courses: Pick<CourseMold, keyof CourseMold>[] = [];
+  // Changed type to any[] to accommodate the expanded keys for the fallback
+  let courses: any[] = [];
   let errorMsg = null;
 
   try {
@@ -45,6 +65,13 @@ export default async function FinderPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-primary tracking-tight">Finder</h1>
         <p className="text-muted-foreground mt-1">Search, filter, and build your perfect routine.</p>
+        
+        {/* Added: Displaying user info if available to confirm it worked */}
+        {currentUser && (
+          <p className="text-sm font-medium text-emerald-600 mt-2">
+            Welcome back, {currentUser.full_name || currentUser.email}!
+          </p>
+        )}
       </div>
 
       {errorMsg ? (

@@ -15,10 +15,10 @@
   --muted: #f1f5f9; /* slate-100 */
   --muted-foreground: #64748b; /* slate-500 */
   
-  /* Brand Colors (Light Mode: Greenish/Emerald Tone) */
-  --primary: #059669; /* emerald-600 */
+  /* Brand Colors */
+  --primary: #2563eb; /* blue-600 */
   --primary-foreground: #ffffff;
-  --primary-muted: #ecfdf5; /* emerald-50 */
+  --primary-muted: #eff6ff; /* blue-50 */
 }
 
 .dark {
@@ -33,10 +33,10 @@
   --muted: #1e293b; /* slate-800 */
   --muted-foreground: #94a3b8; /* slate-400 */
   
-  /* Brand Colors (Dark Mode: Orangish Tone) */
-  --primary: #f97316; /* orange-500 */
+  /* Brand Colors */
+  --primary: #3b82f6; /* blue-500 */
   --primary-foreground: #ffffff;
-  --primary-muted: #7c2d12; /* orange-900 (dark muted orange) */
+  --primary-muted: #1e3a8a; /* blue-900 (darker muted blue) */
 }
 
 /* ─── Tailwind v4 Theme Mapping ─── */
@@ -60,9 +60,8 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  /* Note: If you switched to Inter earlier, you can change this to match! */
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .scrollbar-hide::-webkit-scrollbar { display: none; }

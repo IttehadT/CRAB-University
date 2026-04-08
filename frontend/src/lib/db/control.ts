@@ -73,19 +73,31 @@ export async function getCourseData<K extends keyof CourseMold>(
       fn: async () => {
         // The Master JOIN Query (Moved from mysqlDb.ts)
         // The Master JOIN Query (Updated to include schedules & exams)
+        // The Master JOIN Query (Perfectly aliased to match the JSON CDN)
         const sql = `
           SELECT 
-            s.id AS sectionId, c.id AS courseId, s.section_name AS sectionName,
-            c.credits AS courseCredit, c.course_code AS courseCode, ss.capacity AS capacity,
-            ss.consumed_seat AS consumedSeat, s.semester_id AS semesterSessionId,
-            f.initials AS faculties, s.room_name AS roomName, c.course_type AS courseType,
-            c.academic_degree AS academicDegree, c.course_name AS courseName,
+            s.id AS sectionId, 
+            c.id AS courseId, 
+            s.section_name AS sectionName,
+            c.credits AS courseCredit, 
+            c.course_code AS courseCode, 
+            ss.capacity AS capacity,
+            ss.consumed_seat AS consumedSeat, 
+            s.semester_id AS semesterSessionId,
+            f.initials AS faculties, 
+            s.room_name AS roomName, 
+            c.course_type AS courseType,
+            c.academic_degree AS academicDegree, 
+            c.course_name AS courseName,
             c.prerequisite_courses AS prerequisiteCourses,
-            s.class_schedule,
-            s.lab_schedule,
-            s.final_exam_date, s.final_exam_start_time, s.final_exam_end_time,
-            s.mid_exam_date, s.mid_exam_start_time, s.mid_exam_end_time
-
+            s.class_schedule AS sectionSchedule,
+            s.lab_schedule AS labSchedules,
+            s.final_exam_date AS finalExamDate, 
+            s.final_exam_start_time AS finalExamStartTime, 
+            s.final_exam_end_time AS finalExamEndTime,
+            s.mid_exam_date AS midExamDate, 
+            s.mid_exam_start_time AS midExamStartTime, 
+            s.mid_exam_end_time AS midExamEndTime
           FROM sections s
           JOIN courses c ON s.course_id = c.id
           LEFT JOIN faculties f ON s.faculty_id = f.id
