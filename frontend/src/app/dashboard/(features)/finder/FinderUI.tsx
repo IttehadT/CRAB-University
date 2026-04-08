@@ -101,7 +101,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobileSelectionOpen, setIsMobileSelectionOpen] = useState(false);
-  const [showExamTable, setShowExamTable] = useState(false);
+  const [showExamTable, setShowExamTable] = useState(true);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -290,6 +290,31 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
     });
     return grid;
   }, [selectedCourses]);
+
+  const examRows = useMemo(() => {
+  const rows: { courseCode: string; sectionName: string; type: string; date: string; time: string; rawDate: string; }[] = [];
+  selectedCourses.forEach(c => {
+    const s = c.sectionSchedule as any;
+    if (s?.midExamDate) rows.push({
+      courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "MID",
+      date: new Date(s.midExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
+      time: `${formatTime12h(s.midExamStartTime)} – ${formatTime12h(s.midExamEndTime)}`,
+      rawDate: s.midExamDate,
+    });
+    if (s?.finalExamDate) rows.push({
+      courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "FINAL",
+      date: new Date(s.finalExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
+      time: `${formatTime12h(s.finalExamStartTime)} – ${formatTime12h(s.finalExamEndTime)}`,
+      rawDate: s.finalExamDate,
+    });
+  });
+  rows.sort((a, b) => {
+    const da = new Date(a.rawDate).getTime();
+    const db = new Date(b.rawDate).getTime();
+    return da !== db ? da - db : a.time.localeCompare(b.time);
+  });
+  return rows;
+}, [selectedCourses]);
 
   // Icons & Renderers
   const renderSortIcon = (key: string) => {
@@ -687,7 +712,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 {/* Header info for PNG export */}
                 <div className="flex items-center justify-between px-1">
                   <div>
-                    <p className="text-base font-bold text-foreground">Class Schedule{studentName ? ` — ${studentName}` : ""}</p>
+                    <p className="text-base font-bold text-foreground">{studentName ? `${studentName}'s Routine` : "My Routine"}</p>
                     {semester && <p className="text-xs text-muted-foreground">{semester}</p>}
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{totalCredits} Credits · {selectedCourses.length} Courses</p>
@@ -762,48 +787,44 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 </div>
 
                 {/* Exam Table */}
-                {showExamTable && (() => {
-                  const examRows: { courseCode: string; sectionName: string; type: string; date: string; time: string; }[] = [];
-                  selectedCourses.forEach(c => {
-                    const s = c.sectionSchedule as any;
-                    if (s?.midExamDate) examRows.push({ courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "MID", date: new Date(s.midExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }), time: `${formatTime12h(s.midExamStartTime)} – ${formatTime12h(s.midExamEndTime)}` });
-                    if (s?.finalExamDate) examRows.push({ courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "FINAL", date: new Date(s.finalExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }), time: `${formatTime12h(s.finalExamStartTime)} – ${formatTime12h(s.finalExamEndTime)}` });
-                  });
-                  examRows.sort((a, b) => a.date.localeCompare(b.date));
-                  return (
-                    <div className="bg-card rounded-xl border border-border overflow-hidden min-w-[600px] shadow-sm">
-                      <div className="px-5 py-3 border-b border-border bg-muted/30">
-                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">📋 Exam Schedule</p>
-                      </div>
-                      <table className="w-full text-[12px] border-collapse">
-                        <thead>
-                          <tr className="border-b border-border bg-muted/20 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            <th className="px-4 py-2.5 text-left border-r border-border">Course</th>
-                            <th className="px-4 py-2.5 text-left border-r border-border">Type</th>
-                            <th className="px-4 py-2.5 text-left border-r border-border">Date</th>
-                            <th className="px-4 py-2.5 text-left">Time</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
-                          {examRows.length === 0
-                            ? <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground text-xs">No exam data available.</td></tr>
-                            : examRows.map((row, i) => (
-                              <tr key={i} className="hover:bg-muted/30 transition-colors">
-                                <td className="px-4 py-2.5 font-semibold text-foreground border-r border-border">{row.courseCode} <span className="text-muted-foreground font-normal">[{row.sectionName}]</span></td>
+                {showExamTable && (
+                <div className="bg-card rounded-xl border border-border overflow-hidden min-w-[600px] shadow-sm">
+                  <div className="px-5 py-3 border-b border-border bg-muted/30">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">📋 Exam Schedule</p>
+                  </div>
+                  <table className="w-full text-[12px] border-collapse">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/20 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <th className="px-4 py-2.5 text-left border-r border-border">Course</th>
+                        <th className="px-4 py-2.5 text-left border-r border-border">Type</th>
+                        <th className="px-4 py-2.5 text-left border-r border-border">Date</th>
+                        <th className="px-4 py-2.5 text-left">Time</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {examRows.length === 0
+                        ? <tr><td colSpan={4} className="px-4 py-6 text-center text-muted-foreground text-xs">No exam data available.</td></tr>
+                        : examRows.map((row, i) => {
+                            const isClash = examRows.some((other, j) => j !== i && other.rawDate === row.rawDate && other.time === row.time);
+                            return (
+                              <tr key={i} className={`transition-colors ${isClash ? "bg-red-50 dark:bg-red-900/20" : "hover:bg-muted/30"}`}>
+                                <td className="px-4 py-2.5 font-semibold text-foreground border-r border-border">
+                                  {row.courseCode} <span className="text-muted-foreground font-normal">[{row.sectionName}]</span>
+                                  {isClash && <span className="ml-2 text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/40 px-1.5 py-0.5 rounded-full">⚠ CLASH</span>}
+                                </td>
                                 <td className="px-4 py-2.5 border-r border-border">
                                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.type === "MID" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"}`}>{row.type}</span>
                                 </td>
                                 <td className="px-4 py-2.5 text-muted-foreground border-r border-border">{row.date}</td>
                                 <td className="px-4 py-2.5 text-muted-foreground">{row.time}</td>
                               </tr>
-                            ))
-                          }
-                        </tbody>
-                      </table>
-                    </div>
-                  );
-                })()}
-
+                            );
+                          })
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              )}
               </div>
             )}
           </div>

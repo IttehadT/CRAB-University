@@ -10,32 +10,22 @@
 import { fetchCourses, findUserByEmail } from "@/lib/service";
 import FinderUI from "./FinderUI";
 import { CourseMold } from "@/lib/db/mold";
-import { getServerSession } from "next-auth"; // Required to get the user session
+import { createClient } from "@/lib/supabase/server";
 
 // Optional: Force dynamic rendering if you want live seat updates every time they refresh
 export const dynamic = "force-dynamic";
 
 export default async function FinderPage() {
-  // 0. Fetch the User Table data safely
-  let session = null;
   let currentUser = null;
-  
+
   try {
-    // Wrapped in try/catch to prevent the Vercel 500 crash!
-    // Note: To get the name working, you eventually need to pass your auth config here:
-    // session = await getServerSession(authOptions);
-    session = await getServerSession();
-  } catch (err) {
-    console.warn("NextAuth session skipped due to missing config.");
-  }
-  
-  if (session?.user?.email) {
-    try {
-      // NOW we ask MySQL Aiven for the actual data!
-      currentUser = await findUserByEmail(session.user.email);
-    } catch (e) {
-      console.warn("Could not fetch user data from MySQL:", e);
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email) {
+      currentUser = await findUserByEmail(user.email);
     }
+  } catch (e) {
+    console.warn("Could not fetch user data:", e);
   }
 
   // 1. Ask the unified service for ONLY the columns we need for the UI to save memory
@@ -77,9 +67,13 @@ export default async function FinderPage() {
         
         {/* Added: Displaying user info if available to confirm it worked */}
         {currentUser && (
-          <p className="text-sm font-medium text-emerald-600 mt-2">
-            Welcome back, {currentUser.full_name || currentUser.email}!
-          </p>
+            <span className="inline-flex items-center gap-1.5 text-emerald-500 font-medium">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+               Spring 2026 data is live
+            </span>
         )}
       </div>
 
@@ -91,7 +85,7 @@ export default async function FinderPage() {
         // 2. Pass the raw data to the heavy interactive Client component
         <FinderUI
           initialCourses={courses}
-          studentName={currentUser?.full_name || currentUser?.email || null}
+          studentName={(currentUser as any)?.full_name || (currentUser as any)?.email || null}
           semester="Spring 2026"
         />
       )}
