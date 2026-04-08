@@ -103,6 +103,8 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   const [isMobileSelectionOpen, setIsMobileSelectionOpen] = useState(false);
   const [showExamTable, setShowExamTable] = useState(false);
 
+  const [isSaving, setIsSaving] = useState(false);
+
   // Faculty Search State
   const [facultySearch, setFacultySearch] = useState("");
   const [facultyDropdownOpen, setFacultyDropdownOpen] = useState(false);
@@ -218,6 +220,41 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       link.href = dataUrl;
       link.click();
     } catch { alert("Failed to export PNG."); }
+  };
+
+  const handleSaveRoutine = async () => {
+    if (selectedCourses.length === 0) {
+      alert("Please select some courses first!");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // 1. Extract just the Section IDs and Base64 encode them (just like Boracle)
+      const sectionIds = selectedCourses.map(course => course.sectionId).sort();
+      const routineStr = btoa(JSON.stringify(sectionIds));
+
+      // 2. Send it to our new API
+      const response = await fetch("/api/routine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          routineStr, 
+          routineName: `${semester || "My"} Routine` 
+        }),
+      });
+
+      if (response.ok) {
+        alert("Routine saved successfully! You can view it in 'My Routines'.");
+      } else {
+        alert("Failed to save routine. Are you logged in?");
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("An error occurred while saving.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Calendar Engine
@@ -621,6 +658,13 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition shadow-sm border ${showExamTable ? "bg-amber-500 text-white border-amber-500" : "bg-muted text-foreground border-border hover:border-amber-500 hover:text-amber-500"}`}
               >
                 📋 {showExamTable ? "Hide Exams" : "Show Exams"}
+              </button>
+              <button 
+                  onClick={handleSaveRoutine} 
+                  disabled={isSaving}
+                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-sm disabled:opacity-50"
+                >
+                  💾 {isSaving ? "Saving..." : "Save Routine"}
               </button>
               <button onClick={handleDownloadPNG} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition shadow-sm">
                 ⬇ Save as PNG

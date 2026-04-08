@@ -169,3 +169,55 @@ export async function upsertUser(user: any): Promise<DBResult<void>> {
     }
   ]);
 }
+
+
+// ============================================================
+// ── SAVED ROUTINES (MySQL Only Strategy) ──
+// ============================================================
+
+export async function getSavedRoutinesByUser(email: string): Promise<DBResult<any[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `
+          SELECT id, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt 
+          FROM saved_routines 
+          WHERE user_email = ? 
+          ORDER BY created_at DESC
+        `;
+        return await mysqlQuery<any>(sql, [email]);
+      }
+    }
+  ]);
+}
+
+export async function createSavedRoutine(id: string, email: string, routineName: string, routineData: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `
+          INSERT INTO saved_routines (id, user_email, routine_name, routine_data) 
+          VALUES (?, ?, ?, ?)
+        `;
+        await mysqlQuery(sql, [id, email, routineName, routineData]);
+      }
+    }
+  ]);
+}
+
+export async function deleteSavedRoutine(id: string, email: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `DELETE FROM saved_routines WHERE id = ? AND user_email = ?`;
+        await mysqlQuery(sql, [id, email]);
+      }
+    }
+  ]);
+}

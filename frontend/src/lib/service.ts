@@ -9,6 +9,7 @@
 
 import { getCourseData, getUserById, getUserByEmail, upsertUser } from './db/control';
 import { CourseMold, User } from './db/mold';
+import { getSavedRoutinesByUser, createSavedRoutine, deleteSavedRoutine } from './db/control';
 
 // ============================================================
 // COURSE LOGIC
@@ -51,4 +52,26 @@ export async function findUserById(id: string): Promise<User | null> {
 export async function syncUser(userData: any): Promise<void> {
   const result = await upsertUser(userData);
   if (!result.success) throw new Error(result.error);
+}
+
+// ============================================================
+// SAVED ROUTINE LOGIC
+// ============================================================
+
+export async function fetchUserRoutines(email: string) {
+  const result = await getSavedRoutinesByUser(email);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+export async function saveUserRoutine(id: string, email: string, name: string, data: string) {
+  const result = await createSavedRoutine(id, email, name, data);
+  if (!result.success) throw new Error(result.error);
+  return result;
+}
+
+export async function removeUserRoutine(id: string, email: string) {
+  const result = await deleteSavedRoutine(id, email);
+  if (!result.success) throw new Error(result.error);
+  return result;
 }
