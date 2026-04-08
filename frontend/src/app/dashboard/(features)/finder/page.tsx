@@ -80,7 +80,11 @@ export default async function FinderPage() {
         </div>
       ) : (
         // 2. Pass the raw data to the heavy interactive Client component
-        <FinderUI initialCourses={courses} />
+        <FinderUI
+          initialCourses={courses}
+          studentName={currentUser?.full_name || currentUser?.email || null}
+          semester="Spring 2026"
+        />
       )}
     </main>
   );
