@@ -221,3 +221,29 @@ export async function deleteSavedRoutine(id: string, email: string): Promise<DBR
     }
   ]);
 }
+
+
+/**
+ * ── FETCH PUBLIC ROUTINE BY ID ──────────────────────────────────────────────
+ * Retrieves a single routine from MySQL using its unique UUID.
+ * This does NOT filter by user_email because it is meant for public sharing.
+ */
+export async function getSavedRoutineById(id: string): Promise<DBResult<any>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `
+          SELECT id, user_email AS userEmail, routine_name AS routineName, 
+                 routine_data AS routineStr, created_at AS createdAt 
+          FROM saved_routines 
+          WHERE id = ?
+        `;
+        const rows = await mysqlQuery<any>(sql, [id]);
+        // If the array has items, return the first one. Otherwise, return null.
+        return rows.length > 0 ? rows[0] : null;
+      }
+    }
+  ]);
+}

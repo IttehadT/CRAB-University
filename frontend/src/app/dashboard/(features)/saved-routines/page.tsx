@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PopupModal } from "@/components/ui/PopupModal";
 import { Button } from "@/components/ui/button"; // Imported your custom Button!
+import { ShareModal } from "@/components/ui/ShareModal";
 
 export default function SavedRoutinesPage() {
   const [routines, setRoutines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);  
+  const [routineToShare, setRoutineToShare] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRoutines();
@@ -121,6 +123,7 @@ export default function SavedRoutinesPage() {
                 >
                   Delete
                 </Button>
+                <Button variant="secondary" onClick={() => setRoutineToShare(routine.id)}>Share</Button>
               </div>
             </div>
           ))}
@@ -136,6 +139,12 @@ export default function SavedRoutinesPage() {
         isDestructive={true}
         isLoading={isDeleting}
       />
+      {routineToShare && (
+        <ShareModal 
+          routineId={routineToShare} 
+          onClose={() => setRoutineToShare(null)} 
+        />
+      )}
     </main>
   );
 }

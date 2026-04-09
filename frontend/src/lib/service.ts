@@ -10,6 +10,7 @@
 import { getCourseData, getUserById, getUserByEmail, upsertUser } from './db/control';
 import { CourseMold, User } from './db/mold';
 import { getSavedRoutinesByUser, createSavedRoutine, deleteSavedRoutine } from './db/control';
+import { getSavedRoutineById } from './db/control'; 
 
 // ============================================================
 // COURSE LOGIC
@@ -74,4 +75,14 @@ export async function removeUserRoutine(id: string, email: string) {
   const result = await deleteSavedRoutine(id, email);
   if (!result.success) throw new Error(result.error);
   return result;
+}
+
+/**
+ * Service wrapper to fetch a routine by ID.
+ * Throws a clean error if the routine is not found or DB fails.
+ */
+export async function fetchRoutineById(id: string) {
+  const result = await getSavedRoutineById(id);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
 }
