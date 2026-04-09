@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { X, Check, Copy } from "lucide-react";
 
 interface ShareModalProps {
   routineId: string;
@@ -9,25 +11,20 @@ interface ShareModalProps {
 
 /**
  * ── SHARE MODAL COMPONENT ───────────────────────────────────────────────────
- * A sleek, centered overlay that generates a public URL for the user's routine
- * and provides a 1-click copy-to-clipboard function.
+ * Visually synced to match PopupModal.tsx. Uses standard Shadcn <Button> 
+ * components and global semantic colors.
  */
 export function ShareModal({ routineId, onClose }: ShareModalProps) {
   const [isCopied, setIsCopied] = useState(false);
 
-  // Dynamically generate the full URL based on the current domain
   const shareUrl = typeof window !== "undefined" 
     ? `${window.location.origin}/routine/${routineId}` 
     : "";
 
-  /**
-   * Copies the URL to the user's clipboard and temporarily updates the UI state.
-   */
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setIsCopied(true);
-      // Revert the button text after 3 seconds
       setTimeout(() => setIsCopied(false), 3000);
     } catch (err) {
       console.error("Failed to copy link", err);
@@ -37,7 +34,6 @@ export function ShareModal({ routineId, onClose }: ShareModalProps) {
   return (
     <>
       {/* ── BACKDROP ── */}
-      {/* Using standard Tailwind black with opacity for the dark overlay */}
       <div
         className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
@@ -45,51 +41,60 @@ export function ShareModal({ routineId, onClose }: ShareModalProps) {
 
       {/* ── MODAL CONTAINER ── */}
       <div className="fixed inset-0 z-[70] flex pointer-events-none items-center justify-center p-4">
-        {/* bg-card and border-border ensure perfect light/dark mode syncing */}
+        {/* Exactly matches AlertDialogContent layout rules */}
         <div className="pointer-events-auto w-full max-w-md animate-in zoom-in-95 rounded-2xl border border-border bg-card p-6 shadow-2xl">
           
-          {/* Header */}
-          <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
+          {/* Header Section */}
+          <div className="mb-2 flex items-start justify-between">
             <h2 className="text-xl font-bold text-foreground">Share Routine</h2>
-            <button
+            
+            {/* Ghost button for the close icon */}
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="h-8 w-8 text-muted-foreground hover:bg-muted hover:text-foreground -mt-1 -mr-1 rounded-lg"
             >
-              ✕
-            </button>
+              <X className="h-4 w-4" />
+            </Button>
           </div>
 
-          {/* Body */}
+          {/* Description text matching AlertDialogDescription */}
+          <p className="mb-6 text-sm text-muted-foreground leading-relaxed">
+            Anyone with this link can view your routine schedule.
+          </p>
+
+          {/* Input & Action Area */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Public Link
             </label>
             <div className="flex items-center gap-2">
-              {/* Read-only URL display */}
-              <div className="flex-1 overflow-hidden rounded-lg border border-border bg-muted/50 px-3 py-2.5">
+              
+              {/* Read-only URL display using standard input background */}
+              <div className="flex-1 overflow-hidden rounded-lg border border-input bg-background px-3 py-2.5">
                 <p className="truncate font-mono text-sm text-foreground">
                   {shareUrl}
                 </p>
               </div>
               
-              {/* Copy Button (Uses primary brand color) */}
-              <button
+              {/* Official Shadcn Button Component */}
+              <Button
                 onClick={handleCopy}
-                className={`flex shrink-0 items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-bold text-primary-foreground transition-colors ${
+                // If copied, we override the background to use the Apple Green variable
+                className={`shrink-0 gap-2 rounded-lg h-[42px] px-4 ${
                   isCopied 
-                    ? "bg-emerald-600 hover:bg-emerald-700" // Success state
-                    : "bg-primary hover:bg-primary/90"      // Default brand state
+                    ? "bg-success text-white hover:bg-success/90" 
+                    : ""
                 }`}
               >
-                {isCopied ? "✓ Copied" : "Copy Link"}
-              </button>
+                {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                {isCopied ? "Copied" : "Copy Link"}
+              </Button>
+              
             </div>
           </div>
           
-          {/* Footer Note */}
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            Anyone with this link can view your routine schedule.
-          </p>
         </div>
       </div>
     </>

@@ -2,67 +2,157 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ─── Global Semantic Color System ─── */
+/* * ─── CRABU GLOBAL SEMANTIC COLOR SYSTEM ────────────────────────────────────
+ * Inspired by Apple Human Interface Guidelines (HIG).
+ * Designed to be professional, sleek, and strictly semantic.
+ */
+
 :root {
-  /* Surface Colors */
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #0f172a; /* slate-900 */
-  --card: #ffffff;
-  --card-foreground: #0f172a;
+  /* ── 1. SURFACE & BACKGROUND COLORS (Apple Light Theme) ── */
+  --background: #fbfbfd; /* Apple's signature soft off-white */
+  --foreground: #1d1d1f; /* Apple's soft black for text (easier on eyes than #000) */
+  --card: #ffffff; /* Pure white for elevated cards */
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff; /* Fixes transparent modals/tooltips */
+  --popover-foreground: #1d1d1f;
   
-  /* UI Elements */
-  --border: #e2e8f0; /* slate-200 */
-  --muted: #f1f5f9; /* slate-100 */
-  --muted-foreground: #64748b; /* slate-500 */
+  /* ── 2. UI ELEMENTS & BORDERS ── */
+  --border: #d2d2d7; /* Apple's exact light border color */
+  --input: #d2d2d7; /* For form inputs */
+  --muted: #f5f5f7; /* Apple's secondary background for subtle areas */
+  --muted-foreground: #86868b; /* Apple's secondary text color */
   
-  /* Brand Colors */
-  --primary: #2563eb; /* blue-600 */
+  /* ── 3. BRAND PRIMARY (Apple System Blue) ── */
+  --primary: #0071e3; 
   --primary-foreground: #ffffff;
-  --primary-muted: #eff6ff; /* blue-50 */
+  --primary-muted: #e8f0fe; /* 10% opacity equivalent for soft backgrounds */
+  
+  /* ── 4. THE 5 SEMANTIC COLORS (Professional & Muted) ── */
+  
+  /* Accent: Used for hover states and neutral highlights */
+  --accent: #f5f5f7; 
+  --accent-foreground: #1d1d1f;
+
+  /* Success: Apple System Green */
+  --success: #34c759;
+  --success-muted: #eefbee; /* Soft green for badges */
+
+  /* Warning: Apple System Orange */
+  --warning: #ff9500;
+  --warning-muted: #fff5e5; /* Soft amber for alerts */
+
+  /* Destructive: Apple System Red */
+  --destructive: #ff3b30;
+  --destructive-muted: #ffeceb; /* Soft red for delete buttons/errors */
+
+  /* Info: Apple System Cyan */
+  --info: #32ade6;
+  --info-muted: #ebf7fd; /* Soft cyan for informational highlights */
+
+  /* ── 5. FOCUS RINGS & RADIUS ── */
+  --ring: #0071e3; /* Blue glow when clicking inputs */
+  --radius: 0.75rem; /* Slightly rounder, modern Apple feel (12px) */
 }
 
 .dark {
-  /* Surface Colors */
-  --background: #020617; /* slate-950 */
-  --foreground: #f8fafc; /* slate-50 */
-  --card: #0f172a; /* slate-900 */
-  --card-foreground: #f8fafc;
+  /* ── 1. SURFACE & BACKGROUND COLORS (Apple Dark Theme) ── */
+  --background: #000000; /* True black for OLED screens */
+  --foreground: #f5f5f7; /* Soft white text */
+  --card: #1c1c1e; /* Apple's elevated dark gray for cards */
+  --card-foreground: #f5f5f7;
+  --popover: #1c1c1e; /* Fixes transparent modals/tooltips */
+  --popover-foreground: #f5f5f7;
   
-  /* UI Elements */
-  --border: #1e293b; /* slate-800 */
-  --muted: #1e293b; /* slate-800 */
-  --muted-foreground: #94a3b8; /* slate-400 */
+  /* ── 2. UI ELEMENTS & BORDERS ── */
+  --border: #38383a; /* Apple's dark border color */
+  --input: #38383a;
+  --muted: #2c2c2e; /* Deeper gray for secondary backgrounds */
+  --muted-foreground: #86868b; /* Dimmed text */
   
-  /* Brand Colors */
-  --primary: #3b82f6; /* blue-500 */
+  /* ── 3. BRAND PRIMARY (Apple Dark System Blue) ── */
+  --primary: #2997ff; /* Brighter blue to pop against black */
   --primary-foreground: #ffffff;
-  --primary-muted: #1e3a8a; /* blue-900 (darker muted blue) */
+  --primary-muted: #003366; /* Deep blue for soft backgrounds */
+  
+  /* ── 4. THE 5 SEMANTIC COLORS (Dark Mode Variants) ── */
+  
+  --accent: #2c2c2e; 
+  --accent-foreground: #f5f5f7;
+
+  /* Success: Dark Apple System Green */
+  --success: #30d158;
+  --success-muted: #0b3b17; /* Deep muted green */
+
+  /* Warning: Dark Apple System Orange */
+  --warning: #ff9f0a;
+  --warning-muted: #4d2d00; /* Deep muted amber */
+
+  /* Destructive: Dark Apple System Red */
+  --destructive: #ff453a;
+  --destructive-muted: #4a0f0c; /* Deep muted red */
+
+  /* Info: Dark Apple System Cyan */
+  --info: #64d2ff;
+  --info-muted: #00384d; /* Deep muted cyan */
+
+  /* ── 5. FOCUS RINGS ── */
+  --ring: #2997ff;
 }
 
-/* ─── Tailwind v4 Theme Mapping ─── */
+/* * ─── TAILWIND V4 THEME MAPPING ─────────────────────────────────────────────
+ * This wires up our variables so we can type `bg-success`, `text-info`, etc.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  
   --color-border: var(--border);
+  --color-input: var(--input);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
+  
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-muted: var(--primary-muted);
+  
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  
+  --color-success: var(--success);
+  --color-success-muted: var(--success-muted);
+  
+  --color-warning: var(--warning);
+  --color-warning-muted: var(--warning-muted);
+  
+  --color-destructive: var(--destructive);
+  --color-destructive-muted: var(--destructive-muted);
+  
+  --color-info: var(--info);
+  --color-info-muted: var(--info-muted);
+  
+  --color-ring: var(--ring);
+  --radius: var(--radius);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-/* ─── Base Styles ─── */
+/* ─── BASE HTML STYLES ────────────────────────────────────────────────────── */
 body {
   background-color: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  /* Smooth font rendering for an Apple-like crispness */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hides scrollbars but allows scrolling */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
