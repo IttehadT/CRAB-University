@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { removeUserRoutine, fetchRoutineById } from "@/lib/service";
+import { removeUserRoutine, fetchRoutineById, renameUserRoutine } from "@/lib/service";
 
 /**
  * ── GET: PUBLIC ROUTINE DATA ───────────────────────────────────────────────
@@ -49,5 +49,45 @@ export async function DELETE(
   } catch (error) {
     console.error("Error deleting routine:", error);
     return NextResponse.json({ error: "Failed to delete routine" }, { status: 500 });
+  }
+}
+
+/**
+ * ── PATCH: RENAME ROUTINE ──────────────────────────────────────────────────
+ * Updates the routine name. Requires strict Supabase authentication.
+ */
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    // 1. Verify User Session
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 2. Extract Data
+    const resolvedParams = await context.params;
+    const id = resolvedParams.id;
+    const body = await request.json();
+    const { routineName } = body;
+
+    // 3. Validate
+    if (!routineName || routineName.trim().length === 0 || routineName.length > 40) {
+      return NextResponse.json(
+        { error: "Routine name must be between 1 and 40 characters" },
+        { status: 400 }
+      );
+    }
+
+    // 4. Update Database
+    await renameUserRoutine(id, user.email, routineName.trim());
+
+    return NextResponse.json({ success: true, routineName: routineName.trim() });
+  } catch (error) {
+    console.error("Error updating routine:", error);
+    return NextResponse.json({ error: "Failed to update routine" }, { status: 500 });
   }
 }

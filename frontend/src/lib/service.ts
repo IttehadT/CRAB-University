@@ -11,6 +11,8 @@ import { getCourseData, getUserById, getUserByEmail, upsertUser } from './db/con
 import { CourseMold, User } from './db/mold';
 import { getSavedRoutinesByUser, createSavedRoutine, deleteSavedRoutine } from './db/control';
 import { getSavedRoutineById } from './db/control'; 
+import { updateSavedRoutineName } from './db/control'; // <-- Add this to imports at the top
+
 
 // ============================================================
 // COURSE LOGIC
@@ -65,10 +67,17 @@ export async function fetchUserRoutines(email: string) {
   return result.data;
 }
 
-export async function saveUserRoutine(id: string, email: string, name: string, data: string) {
-  const result = await createSavedRoutine(id, email, name, data);
+// Add the new parameters to the signature
+export async function saveUserRoutine(
+  id: string, email: string, routineName: string, routineData: string,
+  semester: string, courseCount: number, totalCredits: number, totalHours: number, hasClash: boolean
+) {
+  // Pass them straight into the control layer
+  const result = await createSavedRoutine(
+    id, email, routineName, routineData, 
+    semester, courseCount, totalCredits, totalHours, hasClash
+  );
   if (!result.success) throw new Error(result.error);
-  return result;
 }
 
 export async function removeUserRoutine(id: string, email: string) {
@@ -85,4 +94,9 @@ export async function fetchRoutineById(id: string) {
   const result = await getSavedRoutineById(id);
   if (!result.success) throw new Error(result.error);
   return result.data;
+}
+
+export async function renameUserRoutine(id: string, email: string, newName: string) {
+  const result = await updateSavedRoutineName(id, email, newName);
+  if (!result.success) throw new Error(result.error);
 }

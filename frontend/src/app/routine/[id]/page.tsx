@@ -1,143 +1,105 @@
 import Link from "next/link";
 import { fetchCourses, fetchRoutineById } from "@/lib/service";
+import { RoutineGrid } from "@/components/ui/RoutineGrid"; // ── IMPORT THE NEW GRID ──
+import { AlertTriangle, Calendar, Copy, User } from "lucide-react";
 
 /**
  * ── PUBLIC ROUTINE VIEWER (SERVER COMPONENT) ────────────────────────────────
- * This page runs 100% on the server. Because there is no "use client" directive,
- * it is completely safe to import database services here. It fetches all the 
- * required data before the page even loads, resulting in zero loading spinners,
- * perfect SEO, and no 'net' module build errors.
+ * Fetches the database routine, decodes the courses, and renders the gorgeous
+ * Grid component so anyone with the link can view the schedule perfectly.
  */
 export default async function PublicRoutinePage({
   params,
 }: {
-  // Next.js 15+ strict requirement: params must be typed as a Promise
   params: Promise<{ id: string }>; 
 }) {
-  // 1. Await the dynamic URL parameters
   const resolvedParams = await params;
   const id = resolvedParams.id;
 
   try {
-    // 2. Fetch the routine directly from the database service (Backend-to-Backend)
+    // 1. Fetch routine from DB
     const routine = await fetchRoutineById(id);
-    
-    if (!routine) {
-      throw new Error("Routine not found");
-    }
+    if (!routine) throw new Error("Routine not found");
 
-    // 3. Decode the Base64 string back into an array of section IDs
-    // Note: Since we are on a Node.js Server Component, we use `Buffer` instead of the browser's `atob()`
+    // 2. Decode the courses
     const decodedStr = Buffer.from(routine.routineStr, 'base64').toString('utf-8');
     const sectionIds: string[] = JSON.parse(decodedStr);
 
-    // 4. Fetch the full course catalog directly from our service
-    // FIXED: Removed the invalid "id" key. TypeScript is now happy!
+    // 3. Fetch Master Course Catalog & Filter
+    // 3. Fetch Master Course Catalog & Filter
+    // FIXED: Removed the invalid "id" key. TypeScript is now perfectly happy!
     const coursesRes = await fetchCourses([
-      "sectionId", "courseCode", "sectionName", "roomName", "faculties", "sectionSchedule"
+      "sectionId", "courseCode", "sectionName", "roomName", "faculties", "sectionSchedule", "labSchedules"
     ]);
     
-    const allCourses = coursesRes.data;
+    // FIXED: Removed the fallback to c.id since sectionId is strictly typed
+    const courses = coursesRes.data.filter((c: any) => sectionIds.includes(c.sectionId));
 
-    // 5. Filter the catalog down to ONLY the courses in this routine
-    // FIXED: Removed the fallback to c.id
-    const courses = allCourses.filter((c: any) => 
-      sectionIds.includes(c.sectionId)
-    );
-
-    /**
-     * Helper to format 24h time into readable 12h AM/PM strings
-     */
-    const formatTime12h = (time24?: string | null) => {
-      if (!time24) return "";
-      const [hours, minutes] = time24.split(":");
-      let h = parseInt(hours, 10);
-      const ampm = h >= 12 ? "PM" : "AM";
-      h = h % 12 || 12;
-      return `${h}:${minutes} ${ampm}`;
-    };
-
-    // ── RENDER: SUCCESS STATE (PUBLIC VIEW) ──
+    // ── RENDER: SUCCESS ──
     return (
       <main className="min-h-screen bg-background p-4 md:p-8 text-foreground">
-        <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+        <div className="mx-auto max-w-6xl space-y-6">
           
-          {/* Header Container */}
-          <div className="flex flex-col items-start justify-between border-b border-border bg-muted/30 p-6 md:flex-row md:items-center">
-            <div>
-              <h1 className="text-2xl font-black text-primary">{routine.routineName}</h1>
-              <p className="mt-1 text-sm font-medium text-muted-foreground">
-                Shared via CRAB University • {courses.length} Courses
-              </p>
+          {/* Header Banner */}
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-lg p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-start gap-5">
+              <div className="p-4 bg-primary-muted rounded-2xl text-primary shrink-0">
+                <Calendar className="w-8 h-8" />
+              </div>
+              <div>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl md:text-3xl font-black text-foreground">{routine.routineName}</h1>
+                  {routine.hasClash && (
+                    <span className="flex items-center gap-1 bg-destructive-muted text-destructive border border-destructive/20 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
+                      <AlertTriangle className="w-3 h-3" /> Clash
+                    </span>
+                  )}
+                </div>
+                
+                <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground font-medium">
+                  <span className="flex items-center gap-1.5"><User className="w-4 h-4" /> Shared via CRABU</span>
+                  <span>•</span>
+                  <span className="bg-info-muted text-info px-2 py-0.5 rounded-md text-xs uppercase tracking-wider font-bold">
+                    {routine.semester || "Spring 2026"}
+                  </span>
+                  <span>•</span>
+                  <span>{courses.length} Courses</span>
+                  <span>•</span>
+                  <span>{routine.totalCredits || 0} Credits</span>
+                </div>
+              </div>
             </div>
             
             {/* Call to action for public viewers */}
             <Link 
               href="/dashboard/finder" 
-              className="mt-4 shrink-0 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 md:mt-0"
+              className="shrink-0 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 shadow-md"
             >
-              Create My Own
+              Build Your Own Routine
             </Link>
           </div>
 
-          {/* Course List / Mini Grid */}
-          <div className="p-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              {courses.map((course) => (
-                <div 
-                  key={course.sectionId} 
-                  className="flex flex-col gap-2 rounded-xl border border-border bg-background p-4 transition-all hover:border-primary/50"
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold text-foreground">
-                        {course.courseCode}
-                      </h3>
-                      <p className="text-xs font-semibold uppercase text-primary">
-                        Section {course.sectionName} • {course.faculties || "TBA"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Render Class Timings cleanly */}
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {(course.sectionSchedule?.classSchedules || []).map((s: any, i: number) => (
-                      <span 
-                        key={i} 
-                        className="rounded bg-primary/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-primary"
-                      >
-                        {s.day?.substring(0, 3)} {formatTime12h(s.startTime)} - {formatTime12h(s.endTime)}
-                      </span>
-                    ))}
-                  </div>
-                  
-                  {/* Room Location */}
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    📍 Room: {course.roomName || "TBA"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* ── THE NEW GRID INJECTION ── */}
+          <RoutineGrid courses={courses} showExams={true} />
+          
         </div>
       </main>
     );
 
   } catch (err) {
     // ── RENDER: ERROR STATE ──
-    // If the ID is invalid or the DB fails, they see this fallback safely rendered from the server.
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background p-6 text-center text-foreground">
-        <div className="mb-4 rounded-full bg-destructive/10 p-4 text-destructive">
-          <span className="text-4xl">⚠️</span>
+        <div className="mb-4 rounded-full bg-destructive-muted p-5 text-destructive border border-destructive/20">
+          <AlertTriangle className="w-10 h-10" />
         </div>
-        <h1 className="mb-2 text-2xl font-bold text-foreground">Not Found</h1>
-        <p className="mb-8 text-muted-foreground">This routine does not exist or has been deleted.</p>
+        <h1 className="mb-2 text-2xl font-bold text-foreground">Routine Not Found</h1>
+        <p className="mb-8 text-muted-foreground max-w-md">This routine does not exist, has been deleted, or the link is invalid.</p>
         <Link 
           href="/dashboard/finder" 
-          className="rounded-lg bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90"
+          className="rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90"
         >
-          Build Your Own
+          Go to Finder
         </Link>
       </div>
     );

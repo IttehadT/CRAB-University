@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { CourseMold } from "@/lib/db/mold";
+import { useSearchParams, useRouter } from "next/navigation"; 
 
 interface FinderUIProps {
   initialCourses: Partial<CourseMold>[];
@@ -27,6 +28,9 @@ const TIME_SLOTS = [
 ];
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const [isHydrating, setIsHydrating] = useState(false); 
+const searchParams = useSearchParams();
+const router = useRouter();
 
 const normalizeCourse = (raw: any): Partial<CourseMold> => {
   let sectionSchedule = raw.sectionSchedule ?? null;
@@ -111,6 +115,51 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   
   const calendarRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+  // ── 3. ADD THE HYDRATION BRIDGE ───────────────────────────────────────────
+  // If the user arrives with `?edit=ID`, intercept it and load the routine.
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    
+    // Only run if we have an ID to edit and the master course list has loaded
+    if (!editId || courses.length === 0) return;
+
+    const hydrateRoutine = async () => {
+      setIsHydrating(true);
+      try {
+        // 1. Fetch the routine from our database using the public GET route
+        const res = await fetch(`/api/routine/${editId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.routine?.routineStr) {
+            
+            // 2. Decode the Base64 string back into an array of Section IDs
+            const sectionIds: number[] = JSON.parse(atob(data.routine.routineStr));
+
+            // 3. Filter the master catalog to find the exact matching course objects
+            const restoredCourses = courses.filter((c) =>
+              sectionIds.includes(c.sectionId as number)
+            );
+
+            // 4. Forcefully inject them into the active selected session!
+            setSelectedCourses(restoredCourses);
+
+            // 5. Clean up the URL so refreshing doesn't re-trigger hydration
+            router.replace("/dashboard/finder", { scroll: false });
+            
+            // 6. UX Magic: Instantly pop open the calendar so they see their routine
+            setIsModalOpen(true);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load routine for editing:", error);
+      } finally {
+        setIsHydrating(false);
+      }
+    };
+
+    hydrateRoutine();
+  }, [searchParams, courses, router]);
+  // ─────────────────────────────────────────────────────────────────────────────
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -344,7 +393,17 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   };
 
   return (
-    <div className="flex flex-col gap-4 pb-24">
+    <div className="flex flex-col gap-4 pb-24 relative">
+      
+      {/* ── 4. ADD THIS LOADING OVERLAY ── */}
+      {isHydrating && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm rounded-xl">
+          <div className="bg-card border border-border text-foreground px-6 py-3 rounded-full shadow-lg font-bold animate-pulse">
+            Loading Routine Data...
+          </div>
+        </div>
+      )}
+
       {/* TOP CONTROLS (B.O.R.A.C.L.E Style) */}
       <div className="flex gap-2 relative z-30">
         <div className="relative flex-1">

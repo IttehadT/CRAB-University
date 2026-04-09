@@ -1,5 +1,3 @@
-// src/lib/db/control.ts
-
 /**
  * ── THE CONTROL CENTER (THE BRAIN) ──────────────────────────────────────────
  * This file dictates HOW data is fetched. It holds the fallback logic, 
@@ -182,7 +180,10 @@ export async function getSavedRoutinesByUser(email: string): Promise<DBResult<an
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
         const sql = `
-          SELECT id, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt 
+          SELECT 
+            id, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt,
+            semester, course_count AS courseCount, total_credits AS totalCredits, 
+            total_hours AS totalHours, has_clash AS hasClash
           FROM saved_routines 
           WHERE user_email = ? 
           ORDER BY created_at DESC
@@ -193,17 +194,21 @@ export async function getSavedRoutinesByUser(email: string): Promise<DBResult<an
   ]);
 }
 
-export async function createSavedRoutine(id: string, email: string, routineName: string, routineData: string): Promise<DBResult<void>> {
+export async function createSavedRoutine(
+  id: string, email: string, routineName: string, routineData: string,
+  semester: string, courseCount: number, totalCredits: number, totalHours: number, hasClash: boolean
+): Promise<DBResult<void>> {
   return withFallback([
     {
       name: 'mysql',
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
         const sql = `
-          INSERT INTO saved_routines (id, user_email, routine_name, routine_data) 
-          VALUES (?, ?, ?, ?)
+          INSERT INTO saved_routines 
+          (id, user_email, routine_name, routine_data, semester, course_count, total_credits, total_hours, has_clash) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        await mysqlQuery(sql, [id, email, routineName, routineData]);
+        await mysqlQuery(sql, [id, email, routineName, routineData, semester, courseCount, totalCredits, totalHours, hasClash]);
       }
     }
   ]);
@@ -222,6 +227,23 @@ export async function deleteSavedRoutine(id: string, email: string): Promise<DBR
   ]);
 }
 
+/**
+ * ── RENAME ROUTINE ─────────────────────────────────────────────────────────
+ * Updates the name of a specific routine, heavily guarded by user_email 
+ * to prevent unauthorized modifications.
+ */
+export async function updateSavedRoutineName(id: string, email: string, newName: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `UPDATE saved_routines SET routine_name = ? WHERE id = ? AND user_email = ?`;
+        await mysqlQuery(sql, [newName, id, email]);
+      }
+    }
+  ]);
+}
 
 /**
  * ── FETCH PUBLIC ROUTINE BY ID ──────────────────────────────────────────────
@@ -235,8 +257,10 @@ export async function getSavedRoutineById(id: string): Promise<DBResult<any>> {
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
         const sql = `
-          SELECT id, user_email AS userEmail, routine_name AS routineName, 
-                 routine_data AS routineStr, created_at AS createdAt 
+          SELECT 
+            id, user_email AS userEmail, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt,
+            semester, course_count AS courseCount, total_credits AS totalCredits, 
+            total_hours AS totalHours, has_clash AS hasClash
           FROM saved_routines 
           WHERE id = ?
         `;

@@ -92,3 +92,22 @@ export interface IUserRepository {
 export type DBResult<T> =
   | { success: true; data: T; source: 'mysql' | 'cdn' | 'bucket' | 'local' }
   | { success: false; error: string };
+
+
+
+// ============================================================
+// 4. SAVED ROUTINES SHAPES
+// ============================================================
+export interface SavedRoutineMold {
+  id: string;
+  user_email: string;
+  routine_name: string;
+  routine_data: string;
+  created_at: string | Date;
+  // ── NEW PHASE 1 COLUMNS ──
+  semester: string;
+  course_count: number;
+  total_credits: number;
+  total_hours: number;
+  has_clash: boolean;
+}
