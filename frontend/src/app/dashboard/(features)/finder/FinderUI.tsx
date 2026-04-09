@@ -245,9 +245,12 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       });
 
       if (response.ok) {
-        alert("Routine saved successfully! You can view it in 'My Routines'.");
+        setIsModalOpen(false);
+        window.location.href = "/dashboard/saved-routines";
+      } else if (response.status === 401) {
+        window.location.href = "/login";
       } else {
-        alert("Failed to save routine. Are you logged in?");
+        alert("Failed to save routine. Please try again.");
       }
     } catch (error) {
       console.error("Save error:", error);

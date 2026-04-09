@@ -2,10 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { PopupModal } from "@/components/ui/PopupModal";
+import { Button } from "@/components/ui/button"; // Imported your custom Button!
 
 export default function SavedRoutinesPage() {
   const [routines, setRoutines] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [routineToDelete, setRoutineToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);  
 
   useEffect(() => {
     fetchRoutines();
@@ -25,16 +29,24 @@ export default function SavedRoutinesPage() {
     }
   };
 
-  const deleteRoutine = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this routine?")) return;
-    
+  const confirmDelete = (id: string) => {
+    setRoutineToDelete(id);
+  };
+
+  const executeDelete = async () => {
+    if (!routineToDelete) return;
+    setIsDeleting(true);
+
     try {
-      const res = await fetch(`/api/routine/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/routine/${routineToDelete}`, { method: "DELETE" });
       if (res.ok) {
-        setRoutines((prev) => prev.filter((r) => r.id !== id));
+        setRoutines((prev) => prev.filter((r) => r.id !== routineToDelete));
+        setRoutineToDelete(null); // Close the modal
       }
     } catch (error) {
       console.error("Failed to delete", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -59,9 +71,9 @@ export default function SavedRoutinesPage() {
       ) : routines.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 bg-card border border-border rounded-xl shadow-sm">
           <p className="text-muted-foreground mb-4">You haven't saved any routines yet.</p>
-          <Link href="/dashboard/finder" className="px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium transition hover:bg-primary/90">
-            Build a Routine
-          </Link>
+          <Button asChild size="lg" className="rounded-lg font-medium">
+            <Link href="/dashboard/finder">Build a Routine</Link>
+          </Button>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -93,18 +105,37 @@ export default function SavedRoutinesPage() {
                 </div>
               </div>
 
+              {/* REPLACED UGLY BUTTONS WITH SHADCN BUTTONS */}
               <div className="flex gap-2 border-t border-border pt-4">
-                <button onClick={() => navigator.clipboard.writeText(routine.id)} className="flex-1 py-2 bg-muted hover:bg-muted/80 text-foreground text-sm font-medium rounded-lg transition">
+                <Button 
+                  variant="secondary" 
+                  className="flex-1 rounded-lg" 
+                  onClick={() => navigator.clipboard.writeText(routine.id)}
+                >
                   Copy ID
-                </button>
-                <button onClick={() => deleteRoutine(routine.id)} className="flex-1 py-2 bg-destructive/10 hover:bg-destructive/20 text-destructive text-sm font-medium rounded-lg transition">
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  className="flex-1 rounded-lg" 
+                  onClick={() => confirmDelete(routine.id)}
+                >
                   Delete
-                </button>
+                </Button>
               </div>
             </div>
           ))}
         </div>
       )}
+      <PopupModal 
+        isOpen={!!routineToDelete}
+        onClose={() => setRoutineToDelete(null)}
+        onConfirm={executeDelete}
+        title="Delete Routine?"
+        description="Are you absolutely sure you want to delete this routine? This action cannot be undone."
+        confirmText="Yes, delete it"
+        isDestructive={true}
+        isLoading={isDeleting}
+      />
     </main>
   );
 }

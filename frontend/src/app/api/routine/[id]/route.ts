@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { createClient } from "@/lib/supabase/server";
 import { removeUserRoutine } from "@/lib/service";
 
-// Use NextRequest instead of Request, and explicitly type the context
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Await the params object from the context
-    const resolvedParams = await context.params;
-    const id = resolvedParams.id;
-
-    await removeUserRoutine(id, session.user.email);
+    const { id } = await context.params;
+    await removeUserRoutine(id, user.email);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting routine:", error);
