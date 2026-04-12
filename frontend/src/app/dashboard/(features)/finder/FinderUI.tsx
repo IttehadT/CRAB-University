@@ -97,7 +97,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   const [filters, setFilters] = useState({ hideFilled: false, avoidFaculties: [] as string[], labFilter: 'all', onlySelected: false });
   const [sortConfig, setSortConfig] = useState({ key: 'courseCode' as string | null, direction: 'asc' });
   const [selectedCourses, setSelectedCourses] = useState<Partial<CourseMold>[]>([]);
-  const [displayCount, setDisplayCount] = useState(50);
+  const [displayCount, setDisplayCount] = useState(25);
   const [page, setPage] = useState(1);
   
   // UI Toggles
