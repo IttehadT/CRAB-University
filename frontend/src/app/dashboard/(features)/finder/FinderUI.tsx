@@ -28,9 +28,6 @@ const TIME_SLOTS = [
 ];
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const [isHydrating, setIsHydrating] = useState(false); 
-const searchParams = useSearchParams();
-const router = useRouter();
 
 const normalizeCourse = (raw: any): Partial<CourseMold> => {
   let sectionSchedule = raw.sectionSchedule ?? null;
@@ -91,6 +88,9 @@ const getDayIndex = (day: string) => DAYS.findIndex(d => d.toLowerCase().startsW
 // ─────────────────────────────────────────────────────────────────────────────
 export default function FinderUI({ initialCourses, studentName, semester }: FinderUIProps) {
   const courses = useMemo(() => initialCourses.map(normalizeCourse), [initialCourses]);
+  const [isHydrating, setIsHydrating] = useState(false); 
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
