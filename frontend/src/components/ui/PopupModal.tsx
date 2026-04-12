@@ -1,41 +1,27 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { useEffect } from "react";
 
 interface PopupModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  description?: React.ReactNode;
-  
-  // Action Buttons (Used for Confirmations like Delete)
+  icon?: React.ReactNode;
+  description?: string;
   onConfirm?: () => void;
   cancelText?: string;
   confirmText?: string;
   isDestructive?: boolean;
   isLoading?: boolean;
-  
-  // Custom Content (Used for Share Modal input boxes, etc.)
-  children?: React.ReactNode; 
-  hideFooter?: boolean; 
+  children?: React.ReactNode;
+  hideFooter?: boolean;
 }
 
-/**
- * ── UNIVERSAL POPUP MODAL ───────────────────────────────────────────────────
- * Styled to match the clean "Share Modal" design with a divided header, 
- * top-right close button, and perfectly padded content areas.
- */
 export function PopupModal({
   isOpen,
   onClose,
   title,
+  icon,
   description,
   onConfirm,
   cancelText = "Cancel",
@@ -45,67 +31,69 @@ export function PopupModal({
   children,
   hideFooter = false,
 }: PopupModalProps) {
+  // Close on Escape key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    if (isOpen) document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
   return (
-    <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      {/* p-0 because we handle the padding manually in the header/body sections */}
-      <AlertDialogContent className="max-w-md overflow-hidden rounded-2xl border border-border bg-card p-0 shadow-2xl">
-        
-        {/* ── HEADER (With Divider and X Button) ── */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
-          <AlertDialogTitle className="text-lg font-bold text-foreground">
-            {title}
-          </AlertDialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 -mr-2 rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* ── BODY CONTENT ── */}
-        <div className="px-6 py-5">
-          {description && (
-            <AlertDialogDescription 
-              // Only add bottom margin if there is custom children content below it
-              className={`text-sm leading-relaxed text-muted-foreground ${children ? "mb-4" : ""}`}
-            >
-              {description}
-            </AlertDialogDescription>
-          )}
+    <>
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]" onClick={onClose} />
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
+        <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto">
           
-          {/* If a component passes custom children (like the Share input), it renders here */}
-          {children}
-        </div>
-
-        {/* ── FOOTER (Fixed to use standard Buttons) ── */}
-        {!hideFooter && (
-          <div className="flex items-center justify-end gap-3 bg-muted/30 px-6 py-4 border-t border-border">
-            <Button 
-              variant="outline" 
-              onClick={onClose}
-              disabled={isLoading} 
-              className="rounded-lg"
-            >
-              {cancelText}
-            </Button>
-            
-            <Button
-              variant={isDestructive ? "destructive" : "default"}
-              onClick={(e) => {
-                e.preventDefault(); 
-                if (onConfirm) onConfirm();
-              }}
-              disabled={isLoading}
-              className="rounded-lg"
-            >
-              {isLoading ? "Processing..." : confirmText}
-            </Button>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              {icon && <span className={isDestructive ? "text-destructive" : "text-primary"}>{icon}</span>}
+              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+            </div>
+            <button onClick={onClose} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
+              <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-        )}
-      </AlertDialogContent>
-    </AlertDialog>
+
+          {/* Description */}
+          {description && (
+            <p className="text-sm text-muted-foreground mb-5">{description}</p>
+          )}
+
+          {/* Custom Content */}
+          {children && (
+            <div className="mb-5">{children}</div>
+          )}
+
+          {/* Footer */}
+          {!hideFooter && (
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                disabled={isLoading}
+                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition disabled:opacity-50"
+              >
+                {cancelText}
+              </button>
+              <button
+                onClick={onConfirm}
+                disabled={isLoading}
+                className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50 ${
+                  isDestructive
+                    ? "bg-destructive hover:bg-destructive/90 text-white"
+                    : "bg-primary hover:bg-primary/90 text-primary-foreground"
+                }`}
+              >
+                {isLoading ? "Processing..." : confirmText}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
