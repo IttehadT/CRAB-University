@@ -140,14 +140,21 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                   {category.items.map((link) => {
                     const isActive = pathname === link.href;
                     const isAiStyling = link.badges?.includes("AI") ? "bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300" : "border border-transparent";
-                    const disabledStyling = link.isDisabled ? "opacity-50 pointer-events-none grayscale" : "hover:bg-muted";
+                    const disabledStyling = link.isDisabled ? "opacity-50 pointer-events-none grayscale cursor-not-allowed" : "hover:bg-muted";
                     const activeStyling = isActive && !link.badges?.includes("AI") ? "bg-primary/10 text-primary font-bold" : "text-card-foreground";
 
                     return (
                       <Link
                         key={link.href}
-                        href={link.href}
-                        onClick={() => { if (window.innerWidth < 768) closeMobileMenu(); }}
+                        // Replace href with "#" if disabled so keyboard users can't navigate to it
+                        href={link.isDisabled ? "#" : link.href}
+                        onClick={(e) => { 
+                          if (link.isDisabled) {
+                            e.preventDefault();
+                            return;
+                          }
+                          if (window.innerWidth < 768) closeMobileMenu(); 
+                        }}
                         className={`flex items-center justify-between rounded-lg px-3 py-2.5 transition-all ${isAiStyling} ${disabledStyling} ${activeStyling}`}
                       >
                         <div className="flex items-center gap-3">
