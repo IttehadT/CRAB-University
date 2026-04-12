@@ -6,7 +6,6 @@ import { Calendar, Pencil, Copy, Check, Info, Eye, Share2, Trash2, AlertTriangle
 
 import { PopupModal } from "@/components/ui/PopupModal";
 import { Button } from "@/components/ui/button";
-import { ShareModal } from "@/components/ui/ShareModal";
 
 export default function SavedRoutinesPage() {
   const [routines, setRoutines] = useState<any[]>([]);
@@ -24,6 +23,7 @@ export default function SavedRoutinesPage() {
   const [isRenaming, setIsRenaming] = useState(false);  
   
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // ── FETCH DATA ──
   useEffect(() => {
@@ -204,39 +204,125 @@ export default function SavedRoutinesPage() {
         </div>
       )}
 
+      ```tsx
       {/* ── MODALS ── */}
-      {routineToShare && <ShareModal routineId={routineToShare} onClose={() => setRoutineToShare(null)} />}
+      {routineToShare && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]" onClick={() => { setRoutineToShare(null); setShareCopied(false); }} />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Share2 className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">Share Routine</h2>
+                </div>
+                <button onClick={() => { setRoutineToShare(null); setShareCopied(false); }} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Shareable Link</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-2.5 min-w-0">
+                    <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    <span className="text-sm text-foreground truncate font-mono">
+                      {typeof window !== "undefined" ? `${window.location.origin}/routine/${routineToShare}` : ""}
+                    </span>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(`${window.location.origin}/routine/${routineToShare}`);
+                      setShareCopied(true);
+                      setTimeout(() => setShareCopied(false), 3000);
+                    }}
+                    className={`shrink-0 px-3 py-2.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-all ${shareCopied ? "bg-success text-white" : "bg-primary hover:bg-primary/90 text-primary-foreground"}`}
+                  >
+                    {shareCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    {shareCopied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* DELETE MODAL */}
-      <PopupModal 
-        isOpen={!!routineToDelete} onClose={() => setRoutineToDelete(null)}
-        onConfirm={executeDelete} title="Delete Routine?"
-        description="Are you absolutely sure you want to delete this routine? This action cannot be undone."
-        confirmText="Yes, delete it" isDestructive={true} isLoading={isDeleting}
-      />
+      {routineToDelete && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]" onClick={() => setRoutineToDelete(null)} />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-destructive" />
+                  <h2 className="text-lg font-semibold text-foreground">Delete Routine?</h2>
+                </div>
+                <button onClick={() => setRoutineToDelete(null)} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <p className="text-sm text-muted-foreground mb-6">Are you absolutely sure? This action cannot be undone.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setRoutineToDelete(null)} className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition">
+                  Cancel
+                </button>
+                <button
+                  onClick={executeDelete}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-destructive hover:bg-destructive/90 text-white text-sm font-medium transition disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Yes, delete it"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* RENAME MODAL */}
-      <PopupModal 
-        isOpen={!!routineToRename} onClose={() => setRoutineToRename(null)}
-        onConfirm={executeRename} title="Rename Routine"
-        confirmText="Save Name" isLoading={isRenaming}
-      >
-        <div className="space-y-2 mt-2">
-          <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-            New Name
-          </label>
-          <input
-            type="text"
-            value={newRoutineName}
-            onChange={(e) => setNewRoutineName(e.target.value)}
-            placeholder="e.g. My Spring Schedule"
-            // Beautiful, Apple-style glowing focus ring from our new CSS setup
-            className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            maxLength={40}
-            autoFocus
-          />
-        </div>
-      </PopupModal>
+      {routineToRename && (
+        <>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]" onClick={() => setRoutineToRename(null)} />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-2xl pointer-events-auto">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <Pencil className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-semibold text-foreground">Rename Routine</h2>
+                </div>
+                <button onClick={() => setRoutineToRename(null)} className="p-1.5 hover:bg-muted rounded-lg transition-colors">
+                  <svg className="w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="mb-6">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">New Name</label>
+                <input
+                  type="text"
+                  value={newRoutineName}
+                  onChange={(e) => setNewRoutineName(e.target.value)}
+                  placeholder="e.g. My Spring Schedule"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  maxLength={40}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setRoutineToRename(null)} className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground text-sm font-medium hover:bg-muted transition">
+                  Cancel
+                </button>
+                <button
+                  onClick={executeRename}
+                  disabled={isRenaming}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium transition disabled:opacity-50"
+                >
+                  {isRenaming ? "Saving..." : "Save Name"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </main>
   );
 }
