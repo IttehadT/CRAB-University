@@ -280,9 +280,38 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
 
     setIsSaving(true);
     try {
-      // 1. Extract just the Section IDs and Base64 encode them (just like Boracle)
+      // 1. Extract just the Section IDs and Base64 encode them
       const sectionIds = selectedCourses.map(course => course.sectionId).sort();
       const routineStr = btoa(JSON.stringify(sectionIds));
+
+      // ── NEW CALCULATIONS FOR STATS ──
+      const courseCount = selectedCourses.length;
+      const totalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0);
+      
+      const daySet = new Set<string>();
+      selectedCourses.forEach(c => {
+        c.sectionSchedule?.classSchedules?.forEach((s: any) => { if (s.day) daySet.add(s.day); });
+        (c.labSchedules || []).forEach((s: any) => { if (s.day) daySet.add(s.day); });
+      });
+      const totalDays = daySet.size;
+
+      const daySpans: Record<string, { min: number; max: number }> = {};
+      const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+      
+      selectedCourses.forEach(c => {
+        const allSchedules = [...(c.sectionSchedule?.classSchedules || []), ...(c.labSchedules || [])];
+        allSchedules.forEach((s: any) => {
+          if (!s.day || !s.startTime || !s.endTime) return;
+          const start = toMin(s.startTime);
+          const end = toMin(s.endTime);
+          if (!daySpans[s.day]) daySpans[s.day] = { min: start, max: end };
+          else {
+            daySpans[s.day].min = Math.min(daySpans[s.day].min, start);
+            daySpans[s.day].max = Math.max(daySpans[s.day].max, end);
+          }
+        });
+      });
+      const totalHours = parseFloat((Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min) / 60, 0)).toFixed(1));
 
       // 2. Send it to our new API
       const response = await fetch("/api/routine", {
@@ -290,7 +319,13 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           routineStr, 
-          routineName: `${semester || "My"} Routine` 
+          routineName: `${semester || "My"} Routine`,
+          semester: semester || "Unknown",
+          courseCount,
+          totalCredits,
+          totalDays,
+          totalHours,
+          hasClash: false // Defaulting to false, update if you track active clash state
         }),
       });
 

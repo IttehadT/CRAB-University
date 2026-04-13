@@ -86,7 +86,7 @@ export default function SavedRoutinesPage() {
   };
 
   const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    new Date(dateString).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
 
   const getCourseCount = (r: any) => {
     try { return r.courseCount || JSON.parse(atob(r.routineStr)).length; }
@@ -155,12 +155,26 @@ export default function SavedRoutinesPage() {
                         <Calendar className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-base text-foreground leading-tight truncate">
-                          {routine.routineName || `Routine #${routines.length - index}`}
-                        </h3>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-info-muted text-info mt-1 inline-block">
-                          {routine.semester || "Unknown"}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-bold text-base text-foreground leading-tight truncate">
+                            {routine.routineName || `Routine #${routines.length - index}`}
+                          </h3>
+                          <button
+                            onClick={() => { setRoutineToRename(routine); setNewRoutineName(routine.routineName); }}
+                            className="shrink-0 p-1 rounded text-muted-foreground hover:text-primary transition"
+                            title="Rename"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-info-muted text-info">
+                            {routine.semester || "Unknown"}
+                          </span>
+                          <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-warning-muted text-warning">
+                            {hours} hrs
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
@@ -219,13 +233,6 @@ export default function SavedRoutinesPage() {
                       title="Share"
                     >
                       <Share2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => { setRoutineToRename(routine); setNewRoutineName(routine.routineName); }}
-                      className="p-2.5 rounded-xl border border-border text-muted-foreground hover:text-primary hover:bg-primary-muted transition"
-                      title="Rename"
-                    >
-                      <Pencil className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setRoutineToDelete(routine.id)}
