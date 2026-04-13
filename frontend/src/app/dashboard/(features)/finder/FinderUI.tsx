@@ -70,8 +70,11 @@ const formatTime12h = (time24?: string | null) => {
 
 const formatExam = (schedule?: any) => {
   if (!schedule?.finalExamDate) return "N/A";
-  const dateObj = new Date(schedule.finalExamDate);
-  const dateStr = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const utc = new Date(schedule.finalExamDate);
+  const bd = new Date(utc.getTime() + 6 * 60 * 60 * 1000);
+  const dateStr = bd.toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric", timeZone: "UTC"
+  });
   const start = formatTime12h(schedule.finalExamStartTime);
   const end = formatTime12h(schedule.finalExamEndTime);
   if (start && end) return `${dateStr} ${start} – ${end}`;
@@ -383,15 +386,28 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   const rows: { courseCode: string; sectionName: string; type: string; date: string; time: string; rawDate: string; }[] = [];
   selectedCourses.forEach(c => {
     const s = c.sectionSchedule as any;
+    // Add this helper above examRows useMemo (or near formatTime12h)
+    const formatDateBD = (dateStr?: string | null) => {
+      if (!dateStr) return "";
+      // Parse as UTC, then shift to GMT+6 (+360 minutes)
+      const utc = new Date(dateStr);
+      const bd = new Date(utc.getTime() + 6 * 60 * 60 * 1000);
+      return bd.toLocaleDateString("en-US", {
+        weekday: "long", year: "numeric", month: "short", day: "numeric",
+        timeZone: "UTC", // read the already-shifted value as UTC so no double-shift
+      });
+    };
+
+    // Then in examRows:
     if (s?.midExamDate) rows.push({
       courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "MID",
-      date: new Date(s.midExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
+      date: formatDateBD(s.midExamDate),
       time: `${formatTime12h(s.midExamStartTime)} – ${formatTime12h(s.midExamEndTime)}`,
       rawDate: s.midExamDate,
     });
     if (s?.finalExamDate) rows.push({
       courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "FINAL",
-      date: new Date(s.finalExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
+      date: formatDateBD(s.finalExamDate),
       time: `${formatTime12h(s.finalExamStartTime)} – ${formatTime12h(s.finalExamEndTime)}`,
       rawDate: s.finalExamDate,
     });

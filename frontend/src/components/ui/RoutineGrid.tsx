@@ -70,29 +70,35 @@ export function RoutineGrid({ courses, showExams = true }: RoutineGridProps) {
   }, [courses]);
 
   const examRows = useMemo(() => {
-    const rows: { courseCode: string; sectionName: string; type: string; date: string; time: string; rawDate: string; }[] = [];
-    courses.forEach(c => {
-      const s = c.sectionSchedule as any;
-      if (s?.midExamDate) rows.push({
-        courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "MID",
-        date: new Date(s.midExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
-        time: `${formatTime12h(s.midExamStartTime)} – ${formatTime12h(s.midExamEndTime)}`,
-        rawDate: s.midExamDate,
-      });
-      if (s?.finalExamDate) rows.push({
-        courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "FINAL",
-        date: new Date(s.finalExamDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric" }),
-        time: `${formatTime12h(s.finalExamStartTime)} – ${formatTime12h(s.finalExamEndTime)}`,
-        rawDate: s.finalExamDate,
-      });
+  const rows: { courseCode: string; sectionName: string; type: string; date: string; time: string; rawDate: string; }[] = [];
+  courses.forEach(c => {
+    const s = c.sectionSchedule as any;
+    if (s?.midExamDate) rows.push({
+      courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "MID",
+      date: (() => {
+        const bd = new Date(new Date(s.midExamDate).getTime() + 6 * 60 * 60 * 1000);
+        return bd.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+      })(),
+      time: `${formatTime12h(s.midExamStartTime)} – ${formatTime12h(s.midExamEndTime)}`,
+      rawDate: s.midExamDate,
     });
-    rows.sort((a, b) => {
-      const da = new Date(a.rawDate).getTime();
-      const db = new Date(b.rawDate).getTime();
-      return da !== db ? da - db : a.time.localeCompare(b.time);
+    if (s?.finalExamDate) rows.push({
+      courseCode: c.courseCode || "", sectionName: c.sectionName || "", type: "FINAL",
+      date: (() => {
+        const bd = new Date(new Date(s.finalExamDate).getTime() + 6 * 60 * 60 * 1000);
+        return bd.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "short", day: "numeric", timeZone: "UTC" });
+      })(),
+      time: `${formatTime12h(s.finalExamStartTime)} – ${formatTime12h(s.finalExamEndTime)}`,
+      rawDate: s.finalExamDate,
     });
-    return rows;
-  }, [courses]);
+  });
+  rows.sort((a, b) => {
+    const da = new Date(a.rawDate).getTime();
+    const db = new Date(b.rawDate).getTime();
+    return da !== db ? da - db : a.time.localeCompare(b.time);
+  });
+  return rows;
+}, [courses]);
 
   if (courses.length === 0) return null;
 

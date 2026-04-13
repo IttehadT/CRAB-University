@@ -109,3 +109,11 @@ export async function renameUserRoutine(id: string, email: string, newName: stri
   const result = await updateSavedRoutineName(id, email, newName);
   if (!result.success) throw new Error(result.error);
 }
+
+import { setRoutineActiveStatus } from "./db/control"; // Adjust import path if needed
+
+export async function updateRoutineActiveStatus(id: string, email: string, isActive: boolean) {
+  const result = await setRoutineActiveStatus(id, email, isActive);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}

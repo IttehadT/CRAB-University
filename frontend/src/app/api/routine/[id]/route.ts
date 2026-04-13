@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { removeUserRoutine, fetchRoutineById, renameUserRoutine } from "@/lib/service";
+import { removeUserRoutine, fetchRoutineById, renameUserRoutine, updateRoutineActiveStatus } from "@/lib/service";
 
 /**
  * ── GET: PUBLIC ROUTINE DATA ───────────────────────────────────────────────
@@ -53,8 +53,9 @@ export async function DELETE(
 }
 
 /**
- * ── PATCH: RENAME ROUTINE ──────────────────────────────────────────────────
- * Updates the routine name. Requires strict Supabase authentication.
+ * ── PATCH: RENAME ROUTINE & SET DEFAULT ────────────────────────────────────
+ * Updates the routine name OR sets it as the active/default routine. 
+ * Requires strict Supabase authentication.
  */
 export async function PATCH(
   request: NextRequest,
@@ -72,20 +73,29 @@ export async function PATCH(
     const resolvedParams = await context.params;
     const id = resolvedParams.id;
     const body = await request.json();
-    const { routineName } = body;
+    const { routineName, isActive } = body;
 
-    // 3. Validate
-    if (!routineName || routineName.trim().length === 0 || routineName.length > 40) {
-      return NextResponse.json(
-        { error: "Routine name must be between 1 and 40 characters" },
-        { status: 400 }
-      );
+    // 3A. SCENARIO: Toggle Default Routine Status
+    if (isActive !== undefined) {
+      await updateRoutineActiveStatus(id, user.email, isActive);
+      return NextResponse.json({ success: true, isActive });
     }
 
-    // 4. Update Database
-    await renameUserRoutine(id, user.email, routineName.trim());
+    // 3B. SCENARIO: Rename Routine
+    if (routineName !== undefined) {
+      if (routineName.trim().length === 0 || routineName.length > 40) {
+        return NextResponse.json(
+          { error: "Routine name must be between 1 and 40 characters" },
+          { status: 400 }
+        );
+      }
+      await renameUserRoutine(id, user.email, routineName.trim());
+      return NextResponse.json({ success: true, routineName: routineName.trim() });
+    }
 
-    return NextResponse.json({ success: true, routineName: routineName.trim() });
+    // If neither was provided
+    return NextResponse.json({ error: "No valid update data provided" }, { status: 400 });
+
   } catch (error) {
     console.error("Error updating routine:", error);
     return NextResponse.json({ error: "Failed to update routine" }, { status: 500 });

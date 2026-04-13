@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Calendar, Pencil, Copy, Check, Eye, Share2, Trash2, AlertTriangle, Star } from "lucide-react";
+import { Calendar, Pencil, Copy, Check, Eye, Share2, Trash2, AlertTriangle, Star, CheckCircle } from "lucide-react";
 import { PopupModal } from "@/components/ui/PopupModal";
 import { Button } from "@/components/ui/button";
 
@@ -66,15 +66,35 @@ export default function SavedRoutinesPage() {
   };
 
   const toggleActive = async (routine: any) => {
-    const newVal = !routine.isActive;
+    // 1. Find the current state (checking both DB snake_case and React camelCase)
+    const isCurrentlyActive = routine.isActive === true || routine.is_active === 1;
+    const newVal = !isCurrentlyActive;
+
+    // 2. OPTIMISTIC UI: Instantly update the screen so it feels fast
+    setRoutines((prev) => 
+      prev.map((r) => {
+        if (r.id === routine.id) {
+          // Toggle the clicked one
+          return { ...r, isActive: newVal, is_active: newVal ? 1 : 0 };
+        } else if (newVal === true) {
+          // IF we just turned one ON, instantly turn all others OFF
+          return { ...r, isActive: false, is_active: 0 };
+        }
+        // If we are just turning one off, leave the others alone
+        return r;
+      })
+    );
+
+    // 3. Send the command to the database in the background
     try {
       await fetch(`/api/routine/${routine.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: newVal }),
       });
-      setRoutines((prev) => prev.map((r) => r.id === routine.id ? { ...r, isActive: newVal } : r));
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error("Failed to toggle default routine:", e); 
+    }
   };
 
   const handleCopyId = async (id: string) => {
@@ -85,16 +105,34 @@ export default function SavedRoutinesPage() {
     } catch (err) {}
   };
 
-const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleString("en-US", { 
-      timeZone: "Asia/Dhaka", // <-- Forces GMT+6 Bangladesh Time
+// We added ": string | Date" right here to make TypeScript happy!
+  const formatDate = (dateInput: string | Date) => {
+    if (!dateInput) return "Unknown date";
+    
+    // 1. Fix MySQL's raw string format
+    let safeStr = typeof dateInput === 'string' ? dateInput : String(dateInput);
+    
+    // Replace the space with a 'T' so JavaScript knows it's a strict time string
+    safeStr = safeStr.replace(' ', 'T');
+    
+    // Add 'Z' at the end to explicitly force JavaScript to read this as UTC (GMT 0)
+    if (!safeStr.endsWith('Z')) {
+      safeStr += 'Z';
+    }
+    
+    const date = new Date(safeStr);
+
+    // 2. Now that JS definitely knows it's UTC, we can safely tell it to output Dhaka time
+    return date.toLocaleString("en-US", {
+      timeZone: "Asia/Dhaka", // Automatically handles the +6 math beautifully
       month: "short", 
       day: "numeric", 
-      year: "numeric", 
+      year: "numeric",
       hour: "numeric", 
       minute: "2-digit", 
-      hour12: true 
+      hour12: true
     });
+  };
 
   const getCourseCount = (r: any) => {
     try { return r.courseCount || r.course_count || JSON.parse(atob(r.routineStr)).length; }
@@ -151,6 +189,7 @@ const formatDate = (dateString: string) =>
             
             const hours = getCampusHours(routine);
             const days = getUniqueDays(routine);
+            const isRoutineActive = routine.isActive == 1;
             
             const courseLabel = courseCount === 1 ? "1 course" : `${courseCount} courses`;
             const creditLabel = `${credits} credits`;
@@ -161,7 +200,7 @@ const formatDate = (dateString: string) =>
               <div key={routine.id} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden">
 
                 {/* Top color bar + clash badge */}
-                <div className={`h-1.5 w-full ${routine.isActive ? "bg-success" : "bg-primary/30"}`} />
+                <div className={`h-1.5 w-full ${isRoutineActive ? "bg-success" : "bg-primary/30"}`} />
 
                 <div className="p-5 flex flex-col flex-1">
 
@@ -195,17 +234,32 @@ const formatDate = (dateString: string) =>
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      {routine.hasClash && (
+                      {routine.hasClash ? (
                         <span className="flex items-center gap-1 bg-destructive-muted text-destructive px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
                           <AlertTriangle className="w-3 h-3" /> Clash
                         </span>
-                      )}
-                      <button
+                      ) : null}
+                      {/* <button
                         onClick={() => toggleActive(routine)}
                         title={routine.isActive ? "Active routine" : "Set as active"}
                         className={`p-1.5 rounded-lg transition-colors ${routine.isActive ? "text-success bg-success-muted" : "text-muted-foreground hover:text-success hover:bg-success-muted"}`}
                       >
                         <Star className="w-4 h-4" fill={routine.isActive ? "currentColor" : "none"} />
+                      </button> */}
+                      <button
+                        onClick={() => toggleActive(routine)}
+                        title={isRoutineActive ? "Default routine" : "Set default"}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          isRoutineActive 
+                            ? "text-success bg-success-muted" 
+                            : "text-muted-foreground hover:text-success hover:bg-success-muted"
+                        }`}
+                      >
+                        <CheckCircle 
+                          className="w-5 h-5" 
+                          fill={isRoutineActive ? "currentColor" : "none"} 
+                          stroke={isRoutineActive ? "white" : "currentColor"}
+                        />
                       </button>
                     </div>
                   </div>

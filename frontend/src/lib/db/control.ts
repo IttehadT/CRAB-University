@@ -183,7 +183,8 @@ export async function getSavedRoutinesByUser(email: string): Promise<DBResult<an
           SELECT 
             id, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt,
             semester, course_count AS courseCount, total_credits AS totalCredits, 
-            total_hours AS totalHours, has_clash AS hasClash
+            total_days AS totalDays, total_hours AS totalHours, has_clash AS hasClash,
+            is_active AS isActive
           FROM saved_routines 
           WHERE user_email = ? 
           ORDER BY created_at DESC
@@ -261,13 +262,40 @@ export async function getSavedRoutineById(id: string): Promise<DBResult<any>> {
           SELECT 
             id, user_email AS userEmail, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt,
             semester, course_count AS courseCount, total_credits AS totalCredits, 
-            total_hours AS totalHours, has_clash AS hasClash
+            total_days AS totalDays, total_hours AS totalHours, has_clash AS hasClash,
+            is_active AS isActive
           FROM saved_routines 
           WHERE id = ?
         `;
         const rows = await mysqlQuery<any>(sql, [id]);
-        // If the array has items, return the first one. Otherwise, return null.
         return rows.length > 0 ? rows[0] : null;
+      }
+    }
+  ]);
+}
+
+
+/**
+ * ── TOGGLE DEFAULT ROUTINE ────────────────────────────────────────────────
+ * If setting to true, it wipes all other defaults for this user first
+ * so they can only have ONE default routine at a time.
+ */
+export async function setRoutineActiveStatus(id: string, email: string, isActive: boolean): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        if (isActive) {
+          // 1. Turn off the tick for ALL of this user's routines
+          await mysqlQuery('UPDATE saved_routines SET is_active = 0 WHERE user_email = ?', [email]);
+          
+          // 2. Turn on the tick for ONLY the specific routine they clicked
+          await mysqlQuery('UPDATE saved_routines SET is_active = 1 WHERE id = ? AND user_email = ?', [id, email]);
+        } else {
+          // If they click a green tick to turn it off, just disable it
+          await mysqlQuery('UPDATE saved_routines SET is_active = 0 WHERE id = ? AND user_email = ?', [id, email]);
+        }
       }
     }
   ]);
