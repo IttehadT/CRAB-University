@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       courseCount,
       totalCredits,
       totalDays,
-      totalHours,
+      totalMinutes,
       hasClash = false 
     } = await request.json();
 
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     // 2. SAVE TO THE DATABASE (Don't forget this part!)
     await saveUserRoutine(
       id, user.email, routineName || "My Routine", routineStr,
-      semester, courseCount, totalCredits, totalDays, totalHours, hasClash
+      semester, courseCount, totalCredits, totalDays, totalMinutes, hasClash
     );
 
     return NextResponse.json({ success: true, id });

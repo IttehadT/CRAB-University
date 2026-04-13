@@ -146,16 +146,12 @@ export default function SavedRoutinesPage() {
   };
 
   const getCampusHours = (r: any): string => {
-    // Check for both camelCase and snake_case
-    const decimalHours = Number(r.totalHours ?? r.total_hours);
-    if (!decimalHours || decimalHours <= 0) return "0 hrs";
-
-    // Convert 26.20 hours into 26 hours and 12 minutes (0.2 * 60)
-    const hrs = Math.floor(decimalHours);
-    const mins = Math.round((decimalHours - hrs) * 60);
-
+    const totalMins = Number(r.totalMinutes ?? r.total_minutes);
+    if (!totalMins || totalMins <= 0) return "0 hrs";
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
     if (mins === 0) return `${hrs} hrs`;
-    return `${hrs}h ${mins}m`; 
+    return `${hrs}h ${mins}m`;
   };
 
   return (
@@ -194,13 +190,12 @@ export default function SavedRoutinesPage() {
             const courseLabel = courseCount === 1 ? "1 course" : `${courseCount} courses`;
             const creditLabel = `${credits} credits`;
             const dayLabel = days === 1 ? "1 day" : `${days} days`;
-            const hourLabel = hours; // getCampusHours already formats this perfectly now!
 
             return (
               <div key={routine.id} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden">
 
                 {/* Top color bar + clash badge */}
-                <div className={`h-1.5 w-full ${isRoutineActive ? "bg-success" : "bg-primary/30"}`} />
+                <div className={`h-1.5 w-full ${routine.hasClash == 1 ? "bg-destructive" : isRoutineActive ? "bg-success" : "bg-primary/30"}`} />
 
                 <div className="p-5 flex flex-col flex-1">
 
@@ -234,11 +229,11 @@ export default function SavedRoutinesPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
-                      {routine.hasClash ? (
+                      {/* {routine.hasClash == 1 ? (
                         <span className="flex items-center gap-1 bg-destructive-muted text-destructive px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider">
                           <AlertTriangle className="w-3 h-3" /> Clash
                         </span>
-                      ) : null}
+                      ) : null} */}
                       {/* <button
                         onClick={() => toggleActive(routine)}
                         title={routine.isActive ? "Active routine" : "Set as active"}
@@ -271,8 +266,6 @@ export default function SavedRoutinesPage() {
                     <span className="text-xs text-muted-foreground">{creditLabel}</span>
                     <span className="text-muted-foreground/30 text-xs">•</span>
                     <span className="text-xs text-muted-foreground">{dayLabel}</span>
-                    <span className="text-muted-foreground/30 text-xs">•</span>
-                    <span className="text-xs text-muted-foreground">{hourLabel}</span>
                   </div>
 
                   {/* ID row */}
@@ -315,9 +308,16 @@ export default function SavedRoutinesPage() {
                   </div>
 
                   {/* Date at bottom */}
-                  <p className="text-[11px] text-muted-foreground mt-3 pt-3 border-t border-border">
-                    Saved {formatDate(routine.createdAt)}
-                  </p>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
+                    <p className="text-[11px] text-muted-foreground">
+                      Saved {formatDate(routine.createdAt)}
+                    </p>
+                    {routine.hasClash == 1 && (
+                      <span className="flex items-center gap-1 bg-destructive-muted text-destructive px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                        <AlertTriangle className="w-3 h-3" /> Clash
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             );

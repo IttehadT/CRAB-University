@@ -314,7 +314,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
           }
         });
       });
-      const totalHours = parseFloat((Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min) / 60, 0)).toFixed(1));
+      const totalMinutes = Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min), 0);
 
       // 2. Send it to our new API
       const response = await fetch("/api/routine", {
@@ -327,7 +327,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
           courseCount,
           totalCredits,
           totalDays,
-          totalHours,
+          totalMinutes,
           hasClash: false // Defaulting to false, update if you track active clash state
         }),
       });

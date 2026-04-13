@@ -183,7 +183,7 @@ export async function getSavedRoutinesByUser(email: string): Promise<DBResult<an
           SELECT 
             id, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt,
             semester, course_count AS courseCount, total_credits AS totalCredits, 
-            total_days AS totalDays, total_hours AS totalHours, has_clash AS hasClash,
+            total_days AS totalDays, total_minutes AS totalMinutes, has_clash AS hasClash,
             is_active AS isActive
           FROM saved_routines 
           WHERE user_email = ? 
@@ -197,7 +197,7 @@ export async function getSavedRoutinesByUser(email: string): Promise<DBResult<an
 
 export async function createSavedRoutine(
   id: string, email: string, routineName: string, routineData: string,
-  semester: string, courseCount: number, totalCredits: number, totalDays: number, totalHours: number, hasClash: boolean
+  semester: string, courseCount: number, totalCredits: number, totalDays: number, totalMinutes: number, hasClash: boolean
 ): Promise<DBResult<void>> {
   return withFallback([
     {
@@ -207,10 +207,10 @@ export async function createSavedRoutine(
         // We added total_days to the column list, and an extra ? to the VALUES
         const sql = `
           INSERT INTO saved_routines 
-          (id, user_email, routine_name, routine_data, semester, course_count, total_credits, total_days, total_hours, has_clash) 
+          (id, user_email, routine_name, routine_data, semester, course_count, total_credits, total_days, total_minutes, has_clash)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        await mysqlQuery(sql, [id, email, routineName, routineData, semester, courseCount, totalCredits, totalDays, totalHours, hasClash]);
+        await mysqlQuery(sql, [id, email, routineName, routineData, semester, courseCount, totalCredits, totalDays, totalMinutes, hasClash]);
       }
     }
   ]);
@@ -262,7 +262,7 @@ export async function getSavedRoutineById(id: string): Promise<DBResult<any>> {
           SELECT 
             id, user_email AS userEmail, routine_name AS routineName, routine_data AS routineStr, created_at AS createdAt,
             semester, course_count AS courseCount, total_credits AS totalCredits, 
-            total_days AS totalDays, total_hours AS totalHours, has_clash AS hasClash,
+            total_days AS totalDays, total_minutes AS totalMinutes, has_clash AS hasClash,
             is_active AS isActive
           FROM saved_routines 
           WHERE id = ?

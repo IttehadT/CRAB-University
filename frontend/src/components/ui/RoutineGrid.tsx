@@ -43,19 +43,25 @@ export function RoutineGrid({ courses, showExams = true }: RoutineGridProps) {
     const cellCounts: number[][] = TIME_SLOTS.map(() => new Array(7).fill(0));
 
     courses.forEach(course => {
-      const addToGrid = (schedules: any[] | undefined | null, isLab: boolean) => {
+        const addToGrid = (schedules: any[] | undefined | null, isLab: boolean) => {
         (schedules || []).forEach(s => {
-          const dayIdx = getDayIndex(s.day);
-          if (dayIdx !== -1) {
+            const dayIdx = getDayIndex(s.day);
+            if (dayIdx !== -1) {
+            const schedStart = toMinutes(s.startTime);
+            const schedEnd = s.endTime ? toMinutes(s.endTime) : schedStart + (isLab ? 170 : 80);
             TIME_SLOTS.forEach((slot, slotIdx) => {
-              if (isInTimeSlot(s.startTime, slot.start, slot.end)) {
+                const slotStart = toMinutes(slot.start);
+                const slotEnd = toMinutes(slot.end);
+                // A slot is covered if the schedule overlaps it (not just starts in it)
+                const overlaps = schedStart <= slotEnd + 5 && schedEnd >= slotStart - 5;
+                if (overlaps) {
                 cellCounts[slotIdx][dayIdx]++;
                 grid[slotIdx][dayIdx].push({ course, isLab, isConflict: false });
-              }
+                }
             });
-          }
+            }
         });
-      };
+        };
       addToGrid(course.sectionSchedule?.classSchedules, false);
       addToGrid(course.labSchedules, true);
     });
@@ -166,7 +172,7 @@ export function RoutineGrid({ courses, showExams = true }: RoutineGridProps) {
         <div className="flex items-center gap-5 px-5 py-3 border-t border-border bg-muted/20">
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-blue-50 dark:bg-blue-900/30 border-l-2 border-blue-500" />Class</div>
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-purple-50 dark:bg-purple-900/30 border-l-2 border-purple-500" />Lab</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-red-50 dark:bg-red-900/30 border-l-2 border-red-500" />Conflict</div>
+          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-red-50 dark:bg-red-900/30 border-l-2 border-red-500" />Clash</div>
         </div>
       </div>
 
