@@ -85,27 +85,39 @@ export default function SavedRoutinesPage() {
     } catch (err) {}
   };
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit", hour12: true });
+const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleString("en-US", { 
+      timeZone: "Asia/Dhaka", // <-- Forces GMT+6 Bangladesh Time
+      month: "short", 
+      day: "numeric", 
+      year: "numeric", 
+      hour: "numeric", 
+      minute: "2-digit", 
+      hour12: true 
+    });
 
   const getCourseCount = (r: any) => {
-    try { return r.courseCount || JSON.parse(atob(r.routineStr)).length; }
+    try { return r.courseCount || r.course_count || JSON.parse(atob(r.routineStr)).length; }
     catch { return 0; }
   };
 
-  // Calculate campus hours: span from first class start to last class end per day, sum across days
-  const getCampusHours = (r: any): string => {
-    try {
-      if (r.totalHours && r.totalHours > 0) return r.totalHours.toFixed(1);
-      return "0.0";
-    } catch { return "0.0"; }
+  const getUniqueDays = (r: any): number => {
+    // Check for both camelCase and snake_case
+    const days = r.totalDays ?? r.total_days;
+    return days && days > 0 ? Number(days) : 0;
   };
 
-  const getUniqueDays = (r: any): number => {
-    try {
-      if (r.totalDays && r.totalDays > 0) return r.totalDays;
-      return 0;
-    } catch { return 0; }
+  const getCampusHours = (r: any): string => {
+    // Check for both camelCase and snake_case
+    const decimalHours = Number(r.totalHours ?? r.total_hours);
+    if (!decimalHours || decimalHours <= 0) return "0 hrs";
+
+    // Convert 26.20 hours into 26 hours and 12 minutes (0.2 * 60)
+    const hrs = Math.floor(decimalHours);
+    const mins = Math.round((decimalHours - hrs) * 60);
+
+    if (mins === 0) return `${hrs} hrs`;
+    return `${hrs}h ${mins}m`; 
   };
 
   return (
@@ -132,13 +144,18 @@ export default function SavedRoutinesPage() {
           {routines.map((routine, index) => {
             const courseCount = getCourseCount(routine);
             const isCopied = copiedId === routine.id;
-            const credits = parseFloat(routine.totalCredits || 0).toFixed(1);
+            
+            // Check for both camelCase and snake_case
+            const rawCredits = routine.totalCredits ?? routine.total_credits ?? 0;
+            const credits = parseFloat(rawCredits).toFixed(1);
+            
             const hours = getCampusHours(routine);
             const days = getUniqueDays(routine);
+            
             const courseLabel = courseCount === 1 ? "1 course" : `${courseCount} courses`;
             const creditLabel = `${credits} credits`;
             const dayLabel = days === 1 ? "1 day" : `${days} days`;
-            const hourLabel = `${hours} hrs`;
+            const hourLabel = hours; // getCampusHours already formats this perfectly now!
 
             return (
               <div key={routine.id} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden">
@@ -172,7 +189,7 @@ export default function SavedRoutinesPage() {
                             {routine.semester || "Unknown"}
                           </span>
                           <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-warning-muted text-warning">
-                            {hours} hrs
+                            {hours}
                           </span>
                         </div>
                       </div>

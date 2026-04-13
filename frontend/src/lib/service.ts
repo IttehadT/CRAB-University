@@ -69,15 +69,24 @@ export async function fetchUserRoutines(email: string) {
 
 // Add the new parameters to the signature
 export async function saveUserRoutine(
-  id: string, email: string, routineName: string, routineData: string,
-  semester: string, courseCount: number, totalCredits: number, totalHours: number, hasClash: boolean
+  id: string, 
+  email: string, 
+  routineName: string, 
+  routineStr: string,
+  semester: string, 
+  courseCount: number, 
+  totalCredits: number, 
+  totalDays: number, 
+  totalHours: number, 
+  hasClash: boolean
 ) {
-  // Pass them straight into the control layer
+  // Pass all 10 arguments down to the database controller
   const result = await createSavedRoutine(
-    id, email, routineName, routineData, 
-    semester, courseCount, totalCredits, totalHours, hasClash
+    id, email, routineName, routineStr, 
+    semester, courseCount, totalCredits, totalDays, totalHours, hasClash
   );
   if (!result.success) throw new Error(result.error);
+  return result.data;
 }
 
 export async function removeUserRoutine(id: string, email: string) {

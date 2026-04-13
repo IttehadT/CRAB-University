@@ -196,19 +196,20 @@ export async function getSavedRoutinesByUser(email: string): Promise<DBResult<an
 
 export async function createSavedRoutine(
   id: string, email: string, routineName: string, routineData: string,
-  semester: string, courseCount: number, totalCredits: number, totalHours: number, hasClash: boolean
+  semester: string, courseCount: number, totalCredits: number, totalDays: number, totalHours: number, hasClash: boolean
 ): Promise<DBResult<void>> {
   return withFallback([
     {
       name: 'mysql',
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
+        // We added total_days to the column list, and an extra ? to the VALUES
         const sql = `
           INSERT INTO saved_routines 
-          (id, user_email, routine_name, routine_data, semester, course_count, total_credits, total_hours, has_clash) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          (id, user_email, routine_name, routine_data, semester, course_count, total_credits, total_days, total_hours, has_clash) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
-        await mysqlQuery(sql, [id, email, routineName, routineData, semester, courseCount, totalCredits, totalHours, hasClash]);
+        await mysqlQuery(sql, [id, email, routineName, routineData, semester, courseCount, totalCredits, totalDays, totalHours, hasClash]);
       }
     }
   ]);
