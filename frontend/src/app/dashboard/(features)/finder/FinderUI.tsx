@@ -132,7 +132,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   // We no longer rely strictly on server props. We control the data client-side!
   const [courses, setCourses] = useState<Partial<CourseMold>[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [activeSemester, setActiveSemester] = useState(semester || "Spring 2026");
+  const [activeSemester, setActiveSemester] = useState(semester || "Summer 2026");
   
   const [isHydrating, setIsHydrating] = useState(false); 
   const searchParams = useSearchParams();
@@ -166,6 +166,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   useEffect(() => {
     const loadData = async () => {
       setIsLoadingData(true);
+      setCourses([]); // Instantly clear old data to force the Skeleton UI to show!
 
       // 1. Check local browser cache (Instant Load, Zero Freezing!)
       const cached = await getCachedData(activeSemester);
@@ -177,7 +178,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       // 2. Fetch fresh data securely via our upcoming API route
       try {
         // Fallback safety while we build Phase 2
-        if (!cached && initialCourses.length > 0 && activeSemester === (semester || "Spring 2026")) {
+        if (!cached && initialCourses.length > 0 && activeSemester === (semester || "Summer 2026")) {
           setCourses(initialCourses.map(normalizeCourse));
           setIsLoadingData(false);
         }
@@ -534,7 +535,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
 
   return (
     <div className="flex flex-col gap-4 pb-24 relative">
-      
+
       {/* ── 4. ADD THIS LOADING OVERLAY ── */}
       {isHydrating && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm rounded-xl">
@@ -547,83 +548,95 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       {/* TOP CONTROLS (B.O.R.A.C.L.E Style) */}
       <div className="flex flex-col sm:flex-row gap-2 relative z-30">
         
-        {/* Semester Dropdown */}
-        <select 
-          value={activeSemester} 
-          onChange={(e) => {
-            setActiveSemester(e.target.value);
-            setSelectedCourses([]); // Instantly clear grid to prevent routine crashing
-          }}
-          className="shrink-0 rounded-lg border border-border bg-primary/10 px-4 py-2.5 text-sm font-bold text-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm cursor-pointer"
-        >
-          <option value="Spring 2026">Spring 2026</option>
-          <option value="Fall 2025">Fall 2025</option>
-          <option value="Summer 2025">Summer 2025</option>
-          <option value="Spring 2025">Spring 2025</option>
-          <option value="Fall 2024">Fall 2024</option>
-        </select>
-
-        <div className="relative flex-1">
+        {/* Search Bar - Full width on mobile, flex-1 on desktop */}
+        <div className="relative flex-1 w-full">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
           <input 
             type="text" 
-            placeholder="Enter Course Code or Faculty Initial..." 
+            placeholder="Search Course or Faculty..." 
             value={searchTerm} 
             onChange={(e) => { setSearchTerm(e.target.value); setDisplayCount(50); }} 
-            className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
+            className="w-full rounded-lg border border-border bg-card py-2.5 pl-9 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm transition-colors"
           />
         </div>
-        <button onClick={() => setShowFilterModal(true)} className="px-5 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg flex items-center gap-2 font-medium text-sm transition-colors shadow-sm">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-          Filters
-        </button>
 
-        {activeFilterCount > 0 && (
-          <div className="relative" ref={filterDropdownRef}>
-            <button onClick={() => setFilterDropdownOpen(!filterDropdownOpen)} className="h-full px-4 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg flex items-center justify-center transition-colors shadow-sm">
-              <div className="relative flex items-center justify-center">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                <span className="absolute -top-2 -right-2 bg-card text-destructive text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold ring-2 ring-destructive">
-                  {activeFilterCount}
-                </span>
-              </div>
-            </button>
-            {filterDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 bg-card border border-border rounded-lg shadow-xl z-50">
-                <div className="p-3 border-b border-border flex justify-between items-center">
-                  <h3 className="font-semibold text-foreground text-sm">Active Filters</h3>
-                  <button onClick={() => { setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false }); setFilterDropdownOpen(false); }} className="text-xs text-destructive hover:underline">Clear All</button>
+        {/* Action Buttons Row - Side-by-side on mobile */}
+        <div className="flex gap-2 w-full sm:w-auto h-[42px]">
+          
+          {/* Semester Dropdown (Shadcn Outline Style) */}
+          <select 
+            value={activeSemester} 
+            onChange={(e) => {
+              setActiveSemester(e.target.value);
+              setSelectedCourses([]); // Instantly clear grid
+            }}
+            className="flex-1 sm:flex-none appearance-none rounded-lg border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm cursor-pointer transition-colors"
+            style={{ 
+              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='gray'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, 
+              backgroundRepeat: 'no-repeat', 
+              backgroundPosition: 'right 0.75rem center', 
+              backgroundSize: '1rem', 
+              paddingRight: '2.5rem' 
+            }}
+          >
+            <option value="Summer 2026">Summer 2026</option>
+            <option value="Spring 2026">Spring 2026</option>
+            <option value="Fall 2025">Fall 2025</option>
+            <option value="Summer 2025">Summer 2025</option>
+            <option value="Spring 2025">Spring 2025</option>
+            <option value="Fall 2024">Fall 2024</option>
+            <option value="Summer 2024">Summer 2024</option>
+          </select>
+
+          {/* Filters Button */}
+          <button onClick={() => setShowFilterModal(true)} className="flex-1 sm:flex-none px-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg flex items-center justify-center gap-2 font-medium text-sm transition-colors shadow-sm">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+            Filters
+          </button>
+
+          {/* Active Filter Badge */}
+          {activeFilterCount > 0 && (
+            <div className="relative h-full" ref={filterDropdownRef}>
+              <button onClick={() => setFilterDropdownOpen(!filterDropdownOpen)} className="h-full px-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg flex items-center justify-center transition-colors shadow-sm font-bold text-sm">
+                {activeFilterCount}
+              </button>
+              {filterDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-card border border-border rounded-lg shadow-xl z-50">
+                  <div className="p-3 border-b border-border flex justify-between items-center">
+                    <h3 className="font-semibold text-foreground text-sm">Active Filters</h3>
+                    <button onClick={() => { setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false }); setFilterDropdownOpen(false); }} className="text-xs text-destructive hover:underline">Clear All</button>
+                  </div>
+                  <div className="p-2 max-h-64 overflow-y-auto space-y-1">
+                    {filters.hideFilled && (
+                      <button onClick={() => setFilters(p => ({ ...p, hideFilled: false }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
+                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-primary" />Hide Filled</span>
+                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
+                      </button>
+                    )}
+                    {filters.onlySelected && (
+                      <button onClick={() => setFilters(p => ({ ...p, onlySelected: false }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
+                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-emerald-500" />Only Selected</span>
+                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
+                      </button>
+                    )}
+                    {filters.labFilter !== 'all' && (
+                      <button onClick={() => setFilters(p => ({ ...p, labFilter: 'all' }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
+                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-purple-500" />{filters.labFilter === 'with-lab' ? 'Has Lab' : 'No Lab'}</span>
+                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
+                      </button>
+                    )}
+                    {filters.avoidFaculties.map(f => (
+                      <button key={f} onClick={() => setFilters(p => ({ ...p, avoidFaculties: p.avoidFaculties.filter(x => x !== f) }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
+                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-destructive" />Avoid: {f}</span>
+                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="p-2 max-h-64 overflow-y-auto space-y-1">
-                  {filters.hideFilled && (
-                    <button onClick={() => setFilters(p => ({ ...p, hideFilled: false }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
-                      <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-primary" />Hide Filled</span>
-                      <span className="text-muted-foreground group-hover:text-destructive">✕</span>
-                    </button>
-                  )}
-                  {filters.onlySelected && (
-                    <button onClick={() => setFilters(p => ({ ...p, onlySelected: false }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
-                      <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-emerald-500" />Only Selected</span>
-                      <span className="text-muted-foreground group-hover:text-destructive">✕</span>
-                    </button>
-                  )}
-                  {filters.labFilter !== 'all' && (
-                    <button onClick={() => setFilters(p => ({ ...p, labFilter: 'all' }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
-                      <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-purple-500" />{filters.labFilter === 'with-lab' ? 'Has Lab' : 'No Lab'}</span>
-                      <span className="text-muted-foreground group-hover:text-destructive">✕</span>
-                    </button>
-                  )}
-                  {filters.avoidFaculties.map(f => (
-                    <button key={f} onClick={() => setFilters(p => ({ ...p, avoidFaculties: p.avoidFaculties.filter(x => x !== f) }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
-                      <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-destructive" />Avoid: {f}</span>
-                      <span className="text-muted-foreground group-hover:text-destructive">✕</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* SELECTED COURSES ACCORDION */}
@@ -656,12 +669,19 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
 
       {/* ── DESKTOP TABLE ─────────────────────────────────────────────────── */}
       {isLoadingData ? (
-        <div className="hidden md:block rounded-lg border border-border bg-card p-6 shadow-sm mt-2 z-10">
-          <div className="animate-pulse space-y-4">
-            <div className="h-10 bg-muted rounded w-full"></div>
-            <div className="h-10 bg-muted rounded w-full"></div>
-            <div className="h-10 bg-muted rounded w-full"></div>
-            <div className="h-10 bg-muted rounded w-full"></div>
+        <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden shadow-sm mt-2 z-10">
+          <div className="h-10 bg-muted/50 border-b border-border w-full animate-pulse"></div>
+          <div className="divide-y divide-border">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="flex items-center p-4 w-full gap-4 animate-pulse">
+                <div className="h-4 bg-muted rounded w-2/12"></div>
+                <div className="h-4 bg-muted rounded w-1/12"></div>
+                <div className="h-4 bg-muted rounded w-2/12"></div>
+                <div className="h-4 bg-muted rounded w-1/12"></div>
+                <div className="h-4 bg-muted rounded w-3/12"></div>
+                <div className="h-4 bg-muted rounded w-2/12"></div>
+              </div>
+            ))}
           </div>
         </div>
       ) : (
@@ -748,8 +768,19 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       {/* MOBILE CARDS */}
       {isLoadingData ? (
         <div className="flex md:hidden flex-col gap-3 mt-2">
-          <div className="h-32 bg-muted animate-pulse rounded-xl border border-border"></div>
-          <div className="h-32 bg-muted animate-pulse rounded-xl border border-border"></div>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm animate-pulse">
+              <div className="flex justify-between items-start">
+                <div className="space-y-2 w-2/3">
+                  <div className="h-5 bg-muted rounded w-3/4"></div>
+                  <div className="h-3 bg-muted rounded w-1/4"></div>
+                </div>
+                <div className="h-6 bg-muted rounded w-12"></div>
+              </div>
+              <div className="h-3 bg-muted rounded w-full mt-2"></div>
+              <div className="h-3 bg-muted rounded w-5/6"></div>
+            </div>
+          ))}
         </div>
       ) : (
       <div className="flex md:hidden flex-col gap-3 mt-2">

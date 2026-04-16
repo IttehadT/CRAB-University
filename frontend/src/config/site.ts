@@ -31,6 +31,7 @@ export type SidebarCategory = {
 // ─── CENTRAL CONFIGURATION ─────────────────────────
 
 export const siteConfig = {
+  currentSemester: "Summer 2026",
   name: "CRAB University",
   shortName: "CRABU",
   description: "The ultimate academic portal and toolkit for university students.",
