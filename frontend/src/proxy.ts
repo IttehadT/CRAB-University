@@ -2,7 +2,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { siteConfig } from '@/config/site' // Added for RBAC
+import { siteConfig } from '@/config/site' // Added for RBAC and Auth checks
 
 export async function proxy(request: NextRequest) {
   // 1. Create a response object that we can modify
@@ -42,16 +42,10 @@ export async function proxy(request: NextRequest) {
   // 3. Securely check if the user is logged in
   const { data: { user } } = await supabase.auth.getUser()
 
-  // 4. THE BOUNCER LOGIC
-  const isAccessingDashboard = request.nextUrl.pathname.startsWith('/dashboard')
-  const isAccessingLogin = request.nextUrl.pathname === '/login'
-
-  // KICK OUT: If trying to access dashboard without being logged in
-  if (!user && isAccessingDashboard) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
+  // 4. THE SMART BOUNCER LOGIC
+  const currentPath = request.nextUrl.pathname
+  const isAccessingDashboard = currentPath.startsWith('/dashboard')
+  const isAccessingLogin = currentPath === '/login'
 
   // LET IN: If already logged in, skip the login page and go straight to dashboard
   if (user && isAccessingLogin) {
@@ -60,20 +54,43 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // 5. ROLE-BASED ACCESS CONTROL (RBAC) - Added here safely
-  if (user) {
-    const currentPath = request.nextUrl.pathname;
-    const allFeatures = siteConfig.sidebarCategories.flatMap(cat => cat.items);
-    const requestedFeature = allFeatures.find(f => currentPath.startsWith(f.href));
+  // Check Dashboard Access dynamically based on siteConfig
+  if (isAccessingDashboard) {
+    // Flatten all features to search through them
+    const allFeatures = siteConfig.sidebarCategories.flatMap(cat => cat.items)
+    
+    // FIX: Sort features by length descending so deeper paths (/dashboard/finder) 
+    // are checked BEFORE shallow paths (/dashboard)
+    const sortedFeatures = [...allFeatures].sort((a, b) => b.href.length - a.href.length);
 
-    if (requestedFeature && requestedFeature.allowedRoles) {
-      const userRole = user.user_metadata?.role || 'student';
+    // Find if the current path matches a specific feature exactly, or is a sub-page of it
+    const requestedFeature = sortedFeatures.find(f => 
+      currentPath === f.href || currentPath.startsWith(`${f.href}/`)
+    )
+
+    // Default to strict: Dashboard root and unknown paths require login
+    let requiresAuth = true
+    if (requestedFeature) {
+      requiresAuth = requestedFeature.requiresAuth
+    }
+
+    // KICK OUT: If the route requires auth and there is no user logged in
+    if (requiresAuth && !user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('redirectedFrom', currentPath) // Helps UX so they return here after login
+      return NextResponse.redirect(url)
+    }
+
+    // 5. ROLE-BASED ACCESS CONTROL (RBAC)
+    if (user && requestedFeature && requestedFeature.allowedRoles) {
+      const userRole = user.user_metadata?.role || 'student'
       
-      // If the user's role isn't allowed, redirect them back to the main dashboard
+      // If the user's role isn't allowed, redirect them safely back to the main overview
       if (!requestedFeature.allowedRoles.includes(userRole)) {
-        const url = request.nextUrl.clone();
-        url.pathname = '/dashboard';
-        return NextResponse.redirect(url);
+        const url = request.nextUrl.clone()
+        url.pathname = '/dashboard'
+        return NextResponse.redirect(url)
       }
     }
   }
@@ -81,7 +98,7 @@ export async function proxy(request: NextRequest) {
   return supabaseResponse
 }
 
-// 5. Tell the bouncer which routes to monitor (Ignore static files and images)
+// 6. Tell the bouncer which routes to monitor (Ignore static files and images)
 export const config = {
   matcher: [
     /*

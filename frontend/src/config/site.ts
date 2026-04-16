@@ -77,7 +77,7 @@ export const siteConfig = {
         { id: "overview", label: "Overview", description: "Your central hub.", href: "/dashboard", icon: "🏠", placements: ["SIDEBAR"], requiresAuth: true },
         // ── ACTIVE FEATURES (Ordered for Carousel: Left, Middle, Right) ──
         { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true },
+        { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false },
         { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         // ── LOCKED FEATURES ──
         { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true },

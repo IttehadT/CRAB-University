@@ -19,7 +19,7 @@ export async function fetchCourseDataFromCDN<K extends keyof CourseMold>(
   if (!url) throw new Error("CONNECT_DATA_URL missing in .env.local");
 
   // Fetch the raw data with Next.js caching (5 minutes)
-  const response = await fetch(url, { next: { revalidate: 300 } });
+  const response = await fetch(url, { cache: "no-store" });
   if (!response.ok) throw new Error(`Tier 1 CDN is down: ${response.status}`);
 
   const rawData: CourseMold[] = await response.json();
