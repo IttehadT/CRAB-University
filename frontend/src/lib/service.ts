@@ -77,13 +77,13 @@ export async function saveUserRoutine(
   courseCount: number, 
   totalCredits: number, 
   totalDays: number, 
-  totalHours: number, 
+  totalMinutes: number, 
   hasClash: boolean
 ) {
   // Pass all 10 arguments down to the database controller
   const result = await createSavedRoutine(
     id, email, routineName, routineStr, 
-    semester, courseCount, totalCredits, totalDays, totalHours, hasClash
+    semester, courseCount, totalCredits, totalDays, totalMinutes, hasClash
   );
   if (!result.success) throw new Error(result.error);
   return result.data;

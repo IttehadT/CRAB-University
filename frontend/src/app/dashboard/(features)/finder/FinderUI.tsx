@@ -1,13 +1,51 @@
 "use client";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BEFORE USING: Ensure html-to-image is installed (npm install html-to-image)
+// THIS COMPONENT IS THE ENTIRE FINDER INTERFACE, INCLUDING THE CALENDAR (Routine) Rendering Engine
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { CourseMold } from "@/lib/db/mold";
 import { useSearchParams, useRouter } from "next/navigation"; 
 import { RoutineGrid } from "@/components/ui/RoutineGrid";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INDEXED-DB CACHE HELPER (Native, no npm packages required)
+// ─────────────────────────────────────────────────────────────────────────────
+const DB_NAME = "CRABU_Cache";
+const STORE_NAME = "course_catalogs";
+
+const getDB = (): Promise<IDBDatabase> => {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e: any) => e.target.result.createObjectStore(STORE_NAME);
+    req.onsuccess = (e: any) => resolve(e.target.result);
+    req.onerror = () => reject("IndexedDB Error");
+  });
+};
+
+const getCachedData = async (key: string): Promise<any> => {
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, "readonly");
+      const req = tx.objectStore(STORE_NAME).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  } catch { return null; }
+};
+
+const setCachedData = async (key: string, data: any) => {
+  try {
+    const db = await getDB();
+    return new Promise((resolve) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.objectStore(STORE_NAME).put(data, key);
+      tx.oncomplete = () => resolve(true);
+    });
+  } catch { return false; }
+};
 
 interface FinderUIProps {
   initialCourses: Partial<CourseMold>[];
@@ -91,7 +129,11 @@ const getDayIndex = (day: string) => DAYS.findIndex(d => d.toLowerCase().startsW
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function FinderUI({ initialCourses, studentName, semester }: FinderUIProps) {
-  const courses = useMemo(() => initialCourses.map(normalizeCourse), [initialCourses]);
+  // We no longer rely strictly on server props. We control the data client-side!
+  const [courses, setCourses] = useState<Partial<CourseMold>[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [activeSemester, setActiveSemester] = useState(semester || "Spring 2026");
+  
   const [isHydrating, setIsHydrating] = useState(false); 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -119,6 +161,52 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   
   const calendarRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+  // ── THE INSTANT LOAD CACHE ENGINE ────────────────────────────────────────
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoadingData(true);
+
+      // 1. Check local browser cache (Instant Load, Zero Freezing!)
+      const cached = await getCachedData(activeSemester);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        setCourses(cached.map(normalizeCourse));
+        setIsLoadingData(false); // UI instantly unfreezes
+      }
+
+      // 2. Fetch fresh data securely via our upcoming API route
+      try {
+        // Fallback safety while we build Phase 2
+        if (!cached && initialCourses.length > 0 && activeSemester === (semester || "Spring 2026")) {
+          setCourses(initialCourses.map(normalizeCourse));
+          setIsLoadingData(false);
+        }
+
+        // We will build this API route in the next step to safely hit Tier 1 or Tier 2
+        const res = await fetch(`/api/courses/catalog?semester=${encodeURIComponent(activeSemester)}`);
+        if (res.ok) {
+          const freshData = await res.json();
+          
+          // SMART NORMALIZER: Handles both CDN (Array) and Bucket (Object) formats flawlessly
+          const coursesArray = Array.isArray(freshData.data) 
+            ? freshData.data 
+            : freshData.data?.sections || [];
+
+          if (coursesArray.length > 0) {
+            setCourses(coursesArray.map(normalizeCourse));
+            await setCachedData(activeSemester, coursesArray); // Save to hard drive for next time
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch fresh catalog:", error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadData();
+  }, [activeSemester, initialCourses, semester]);
+
   // ── 3. ADD THE HYDRATION BRIDGE ───────────────────────────────────────────
   // If the user arrives with `?edit=ID`, intercept it and load the routine.
   useEffect(() => {
@@ -457,7 +545,24 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       )}
 
       {/* TOP CONTROLS (B.O.R.A.C.L.E Style) */}
-      <div className="flex gap-2 relative z-30">
+      <div className="flex flex-col sm:flex-row gap-2 relative z-30">
+        
+        {/* Semester Dropdown */}
+        <select 
+          value={activeSemester} 
+          onChange={(e) => {
+            setActiveSemester(e.target.value);
+            setSelectedCourses([]); // Instantly clear grid to prevent routine crashing
+          }}
+          className="shrink-0 rounded-lg border border-border bg-primary/10 px-4 py-2.5 text-sm font-bold text-primary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary shadow-sm cursor-pointer"
+        >
+          <option value="Spring 2026">Spring 2026</option>
+          <option value="Fall 2025">Fall 2025</option>
+          <option value="Summer 2025">Summer 2025</option>
+          <option value="Spring 2025">Spring 2025</option>
+          <option value="Fall 2024">Fall 2024</option>
+        </select>
+
         <div className="relative flex-1">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">🔍</span>
           <input 
@@ -550,6 +655,16 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       )}
 
       {/* ── DESKTOP TABLE ─────────────────────────────────────────────────── */}
+      {isLoadingData ? (
+        <div className="hidden md:block rounded-lg border border-border bg-card p-6 shadow-sm mt-2 z-10">
+          <div className="animate-pulse space-y-4">
+            <div className="h-10 bg-muted rounded w-full"></div>
+            <div className="h-10 bg-muted rounded w-full"></div>
+            <div className="h-10 bg-muted rounded w-full"></div>
+            <div className="h-10 bg-muted rounded w-full"></div>
+          </div>
+        </div>
+      ) : (
       <div className="hidden md:block rounded-lg border border-border bg-card overflow-hidden shadow-sm mt-2 z-10">
         <div className="overflow-x-auto px-2 py-2">
           <table className="w-full text-left text-sm">
@@ -628,8 +743,15 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
         </div>
         )}
       </div>
+      )}
 
       {/* MOBILE CARDS */}
+      {isLoadingData ? (
+        <div className="flex md:hidden flex-col gap-3 mt-2">
+          <div className="h-32 bg-muted animate-pulse rounded-xl border border-border"></div>
+          <div className="h-32 bg-muted animate-pulse rounded-xl border border-border"></div>
+        </div>
+      ) : (
       <div className="flex md:hidden flex-col gap-3 mt-2">
         {displayedCourses.map((course) => {
           const isSelected = selectedCourses.some((c) => c.sectionId === course.sectionId);
@@ -668,6 +790,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
           );
         })}
       </div>
+      )}
 
       {/* FILTER MODAL (B.O.R.A.C.L.E Perfect) */}
       {showFilterModal && (
