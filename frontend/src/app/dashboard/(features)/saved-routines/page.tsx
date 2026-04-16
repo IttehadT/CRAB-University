@@ -185,7 +185,9 @@ export default function SavedRoutinesPage() {
             
             const hours = getCampusHours(routine);
             const days = getUniqueDays(routine);
-            const isRoutineActive = routine.isActive == 1;
+            const isRoutineActive = routine.isActive == 1 || routine.is_active == 1;
+            // Rock-solid check for MySQL formats (1/0) or boolean (true/false)
+            const isClashing = routine.hasClash == 1 || routine.has_clash == 1 || routine.hasClash === true;
             
             const courseLabel = courseCount === 1 ? "1 course" : `${courseCount} courses`;
             const creditLabel = `${credits} credits`;
@@ -195,7 +197,7 @@ export default function SavedRoutinesPage() {
               <div key={routine.id} className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden">
 
                 {/* Top color bar + clash badge */}
-                <div className={`h-1.5 w-full ${routine.hasClash == 1 ? "bg-destructive" : isRoutineActive ? "bg-success" : "bg-primary/30"}`} />
+                <div className={`h-1.5 w-full ${isClashing ? "bg-destructive" : isRoutineActive ? "bg-success" : "bg-primary/30"}`} />
 
                 <div className="p-5 flex flex-col flex-1">
 
@@ -310,9 +312,9 @@ export default function SavedRoutinesPage() {
                   {/* Date at bottom */}
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
                     <p className="text-[11px] text-muted-foreground">
-                      Saved {formatDate(routine.createdAt)}
+                      Saved {formatDate(routine.createdAt || routine.created_at)}
                     </p>
-                    {routine.hasClash == 1 && (
+                    {isClashing && (
                       <span className="flex items-center gap-1 bg-destructive-muted text-destructive px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">
                         <AlertTriangle className="w-3 h-3" /> Clash
                       </span>

@@ -69,8 +69,8 @@ export default async function PublicRoutinePage({
                     <h1 className="text-2xl font-black text-foreground md:text-3xl">
                       {routine.routineName}
                     </h1>
-                    {/* Clash Warning Indicator */}
-                    {routine.hasClash && (
+                    {/* Clash Warning Indicator (Fixed the React Zero Bug) */}
+                    {(routine.hasClash == 1 || routine.has_clash == 1) && (
                       <span className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive-muted px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
                         <AlertTriangle className="h-3 w-3" /> Clash
                       </span>
