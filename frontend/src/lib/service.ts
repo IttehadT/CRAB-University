@@ -7,12 +7,20 @@
  * is allowed to see the data), and formats it for the frontend.
  */
 
-import { getCourseData, getUserById, getUserByEmail, upsertUser } from './db/control';
+import { 
+  getCourseData, 
+  getUserById, 
+  getUserByEmail, 
+  upsertUser,
+  getSavedRoutinesByUser, 
+  createSavedRoutine, 
+  deleteSavedRoutine,
+  getSavedRoutineById,
+  updateSavedRoutineName,
+  setRoutineActiveStatus
+} from './db/control';
 import { CourseMold, User } from './db/mold';
-import { getSavedRoutinesByUser, createSavedRoutine, deleteSavedRoutine } from './db/control';
-import { getSavedRoutineById } from './db/control'; 
-import { updateSavedRoutineName } from './db/control'; // <-- Add this to imports at the top
-
+import { siteConfig } from "@/config/site"; // <-- Added for Master Semester Switch
 
 // ============================================================
 // COURSE LOGIC
@@ -21,12 +29,15 @@ import { updateSavedRoutineName } from './db/control'; // <-- Add this to import
 /**
  * Fetches specific course columns. 
  * The UI simply asks for data, and this service returns it cleanly.
+ * Now Semester-Aware! Defaults to the master config if no semester is passed.
  */
 export async function fetchCourses<K extends keyof CourseMold>(
-  parameters: K[]
+  parameters: K[],
+  semester: string = siteConfig.currentSemester // <-- Phase 2: Added semester parameter
 ): Promise<{ source: string; data: Pick<CourseMold, K>[] }> {
   
-  const result = await getCourseData(parameters);
+  // Phase 2: Pass the semester down to the DB controller
+  const result = await getCourseData(parameters, semester);
   
   if (!result.success) {
     throw new Error(result.error);
@@ -109,8 +120,6 @@ export async function renameUserRoutine(id: string, email: string, newName: stri
   const result = await updateSavedRoutineName(id, email, newName);
   if (!result.success) throw new Error(result.error);
 }
-
-import { setRoutineActiveStatus } from "./db/control"; // Adjust import path if needed
 
 export async function updateRoutineActiveStatus(id: string, email: string, isActive: boolean) {
   const result = await setRoutineActiveStatus(id, email, isActive);

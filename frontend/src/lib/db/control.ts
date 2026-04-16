@@ -8,6 +8,7 @@
 import { mysqlQuery } from './mysql';
 import { fetchCourseDataFromCDN, fetchCourseDataFromBucket } from './json';
 import { CourseMold, User, DBResult } from './mold';
+import { siteConfig } from '@/config/site';
 
 // ============================================================
 // SECTION 1: DATABASE CONFIGURATION & ROUTING (Formerly db.config.ts)
@@ -51,19 +52,23 @@ async function withFallback<T>(
 
 // ── COURSES (Waterfall Strategy: CDN -> Bucket -> MySQL) ──
 export async function getCourseData<K extends keyof CourseMold>(
-  parameters: K[]
+  parameters: K[],
+  requestedSemester: string = siteConfig.currentSemester // Defaults to current if not provided
 ): Promise<DBResult<Pick<CourseMold, K>[]>> {
   
+  const isCurrentSemester = requestedSemester === siteConfig.currentSemester;
+
   return withFallback([
     {
       name: 'cdn',
-      condition: DB_CONFIG.useTier1_CDN,
+      // SMART ROUTING: Only use the CDN if they are asking for the current semester
+      condition: DB_CONFIG.useTier1_CDN && isCurrentSemester,
       fn: () => fetchCourseDataFromCDN(parameters),
     },
     {
       name: 'bucket',
       condition: DB_CONFIG.useTier2_SupabaseJSON,
-      fn: () => fetchCourseDataFromBucket(parameters),
+      fn: () => fetchCourseDataFromBucket(parameters, requestedSemester),
     },
     {
       name: 'mysql',

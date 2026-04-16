@@ -35,19 +35,27 @@ export async function fetchCourseDataFromCDN<K extends keyof CourseMold>(
 }
 
 // ============================================================
-// 2. TIER 2: FETCH FROM SUPABASE BUCKET
+// 2. TIER 2: FETCH FROM SUPABASE BUCKET (SEMESTER AWARE)
 // ============================================================
 export async function fetchCourseDataFromBucket<K extends keyof CourseMold>(
-  parameters: K[]
+  parameters: K[],
+  semester: string // Added semester parameter
 ): Promise<Pick<CourseMold, K>[]> {
-  const url = process.env.SUPABASE_FALLBACK_URL;
-  if (!url) throw new Error("SUPABASE_FALLBACK_URL missing in .env.local");
+  const baseUrl = process.env.SUPABASE_FALLBACK_URL;
+  if (!baseUrl) throw new Error("SUPABASE_FALLBACK_URL missing in .env.local");
+
+  // Convert "Fall 2025" to "fall2025.json"
+  const fileName = semester.toLowerCase().replace(/\s+/g, "") + ".json";
+  const url = `${baseUrl}/${fileName}`;
 
   // Fetch the raw backup data from the Supabase Bucket
   const response = await fetch(url, { next: { revalidate: 300 } });
   if (!response.ok) throw new Error(`Tier 2 Supabase Bucket is down: ${response.status}`);
 
-  const rawData: CourseMold[] = await response.json();
+  const data = await response.json();
+  
+  // SMART NORMALIZER: Safely extracts the array whether it's the CDN format or Bucket format
+  const rawData: CourseMold[] = Array.isArray(data) ? data : (data.sections || []);
 
   // Filter the array to ONLY include the requested infos
   return rawData.map((course) => {

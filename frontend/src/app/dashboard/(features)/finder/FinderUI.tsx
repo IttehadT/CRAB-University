@@ -698,7 +698,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 </th>
                 <th className="py-3 px-2 w-[150px]">Prereq</th>
                 <th className="py-3 px-2 text-center min-w-[190px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('capacity')}>
-                  <div className="flex items-center justify-center">Seat / Booked {renderSortIcon('capacity')}</div>
+                  <div className="flex items-center justify-center">Taken/Seat {renderSortIcon('capacity')}</div>
                 </th>
                 <th className="py-3 px-2 min-w-[160px]">Class Schedule</th>
                 <th className="py-3 px-2 min-w-[160px]">Lab Schedule</th>
@@ -707,14 +707,14 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {displayedCourses.map((course) => {
+              {displayedCourses.map((course, index) => {
                 const isSelected  = selectedCourses.some((c) => c.sectionId === course.sectionId);
                 const capacity    = course.capacity || 0;
                 const booked      = course.consumedSeat || 0;
                 const available   = capacity - booked;
 
                 return (
-                  <tr key={course.sectionId} className={`transition-colors hover:bg-muted/40 ${isSelected ? "bg-emerald-500/10 dark:bg-emerald-500/10" : ""}`}>
+                  <tr key={`${course.sectionId}-${index}`} className={`transition-colors hover:bg-muted/40 ${isSelected ? "bg-emerald-500/10 dark:bg-emerald-500/10" : ""}`}>
                     <td className="py-3 px-2 font-medium text-foreground align-middle leading-tight">
                         {course.courseCode} <span className="text-[11px] font-normal text-muted-foreground">[{course.sectionName}]</span>
                     </td>
@@ -722,7 +722,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                     <td className="py-3 px-2 text-muted-foreground text-[11px] max-w-[150px] whitespace-normal break-words align-middle">{course.prerequisiteCourses || "None"}</td>
                     <td className="py-3 px-2 text-center align-middle">
                         <div className="flex items-center justify-center gap-1">
-                            <span className="text-sm font-medium">{capacity} / {booked}</span>
+                            <span className="text-sm font-medium">{booked} / {capacity}</span>
                             <span className={`text-[11px] font-bold ${available > 0 ? "text-emerald-500" : available < 0 ? "text-red-500" : "text-foreground"}`}>
                             ({available > 0 ? `+${available}` : available})
                             </span>
@@ -784,19 +784,19 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
         </div>
       ) : (
       <div className="flex md:hidden flex-col gap-3 mt-2">
-        {displayedCourses.map((course) => {
+        {displayedCourses.map((course, index) => {
           const isSelected = selectedCourses.some((c) => c.sectionId === course.sectionId);
           const capacity = course.capacity || 0; const booked = course.consumedSeat || 0; const available = capacity - booked;
 
           return (
-            <div key={course.sectionId} className={`relative flex flex-col gap-2 rounded-xl border p-3.5 shadow-sm transition-all ${isSelected ? "border-emerald-500/50 bg-emerald-500/5" : "border-border bg-card"}`}>
+            <div key={`${course.sectionId}-${index}`} className={`relative flex flex-col gap-2 rounded-xl border p-3.5 shadow-sm transition-all ${isSelected ? "border-emerald-500/50 bg-emerald-500/5" : "border-border bg-card"}`}>
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-base font-bold text-foreground leading-tight">{course.courseCode} <span className="text-sm font-normal text-muted-foreground">[{course.sectionName}]</span></h3>
                   <p className="mt-0.5 text-xs text-primary font-semibold uppercase">{course.faculties || "TBA"}</p>
                 </div>
                 <div className={`flex flex-col items-center rounded-lg px-2 py-1 text-xs font-bold border ${available < 0 ? "border-destructive/30 bg-destructive/10 text-destructive" : available > 0 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-border bg-muted text-foreground"}`}>
-                  <span>{capacity}/{booked}</span>
+                  <span>{booked}/{capacity}</span>
                 </div>
               </div>
               <div className="flex flex-wrap gap-1.5 mt-1">
