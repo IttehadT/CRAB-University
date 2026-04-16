@@ -698,7 +698,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 </th>
                 <th className="py-3 px-2 w-[150px]">Prereq</th>
                 <th className="py-3 px-2 text-center min-w-[190px] cursor-pointer hover:bg-muted/80 transition" onClick={() => handleSort('capacity')}>
-                  <div className="flex items-center justify-center">Taken/Seat {renderSortIcon('capacity')}</div>
+                  <div className="flex items-center justify-center">Taken / Seat {renderSortIcon('capacity')}</div>
                 </th>
                 <th className="py-3 px-2 min-w-[160px]">Class Schedule</th>
                 <th className="py-3 px-2 min-w-[160px]">Lab Schedule</th>

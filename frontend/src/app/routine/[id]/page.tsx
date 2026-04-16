@@ -30,7 +30,7 @@ export default async function PublicRoutinePage({
     const sectionIds: number[] = JSON.parse(decodedStr);
 
     // ── 3. FETCH & FILTER MASTER COURSE CATALOG ──
-    // Fetch only the necessary fields to optimize load times
+    // Fetch only the necessary fields to optimize load times (Semester-Aware)
     const coursesRes = await fetchCourses([
       "sectionId",
       "courseCode",
@@ -39,7 +39,7 @@ export default async function PublicRoutinePage({
       "faculties",
       "sectionSchedule",
       "labSchedules",
-    ]);
+    ], routine.semester); // <-- We pass the saved semester here!
 
     // Map the decoded section IDs to the actual course data from the database
     const courses = coursesRes.data.filter((c: any) =>
@@ -84,7 +84,7 @@ export default async function PublicRoutinePage({
                     </span>
                     <span>•</span>
                     <span className="rounded-md bg-info-muted px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-info">
-                      {routine.semester || "Spring 2026"}
+                        {routine.semester || "Unknown Semester"}
                     </span>
                     <span>•</span>
                     <span>{courses.length} Courses</span>
@@ -99,7 +99,7 @@ export default async function PublicRoutinePage({
                 href="/dashboard/finder"
                 className="shrink-0 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-md transition hover:bg-primary/90"
               >
-                Build Your Own Routine
+                Build New Routine
               </Link>
             </div>
 

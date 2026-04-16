@@ -45,10 +45,10 @@ export default async function MyRoutinePage() {
     const decodedStr = Buffer.from(defaultRoutine.routineStr || defaultRoutine.routine_data, "base64").toString("utf-8");
     const sectionIds: number[] = JSON.parse(decodedStr);
 
-    // 4. Fetch the actual course schedules for the grid
+    // 4. Fetch the actual course schedules for the grid (Now Semester-Aware!)
     const coursesRes = await fetchCourses([
       "sectionId", "courseCode", "sectionName", "roomName", "faculties", "sectionSchedule", "labSchedules"
-    ]);
+    ], defaultRoutine.semester); // <-- We pass the saved semester here!
     const courses = coursesRes.data.filter((c: any) => sectionIds.includes(c.sectionId));
 
     // ── RENDER: DEFAULT ROUTINE GRID ──
