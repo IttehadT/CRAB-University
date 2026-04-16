@@ -41,6 +41,17 @@ export default function LoginPage() {
   const supabase = createClient();
   const router = useRouter();
 
+  // ─── ADD THIS NEW BLOCK ───
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("type") === "signup") {
+        setIsSignUp(true);
+      }
+    }
+  }, []);
+  // ──────────────────────────
+
   useEffect(() => {
     setWebviewDetected(isWebview());
   }, []);
@@ -67,8 +78,17 @@ export default function LoginPage() {
         } catch (e) {
           console.error("Failed to trigger sync", e);
         }
-        router.push("/dashboard");
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTo = urlParams.get("redirectedFrom") || "/dashboard";
+
+        // 1. Tell Next.js to throw away the cached "Locked" page
         router.refresh();
+        
+        // 2. Add a tiny 100ms delay to guarantee Supabase has finished saving your cookies, then push!
+        setTimeout(() => {
+          router.push(redirectTo);
+        }, 100);
       }
     });
     return () => {
@@ -96,16 +116,15 @@ export default function LoginPage() {
       }
 
       const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || email)}&background=2563eb&color=fff&size=128`;
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectTo = urlParams.get("redirectedFrom") || "/dashboard";
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            full_name: fullName,
-            avatar_url: defaultAvatar,
-          },
+          emailRedirectTo: `${window.location.origin}${redirectTo}`,
+          data: { full_name: fullName, avatar_url: defaultAvatar },
         },
       });
 
@@ -113,12 +132,9 @@ export default function LoginPage() {
         setMessage(error.message);
         setLoading(false);
       } else {
-        if (data.session) {
-          setMessage("Account created successfully! Redirecting...");
-          setIsRedirecting(true);
-          router.push("/dashboard");
-          router.refresh();
-        } else {
+        if (!data.session) {
+          // Only stop loading if they have to check their email. 
+          // If they are auto-logged in, the listener at the top will catch it and redirect!
           setMessage("Registration successful! Please check your email to verify your account.");
           setLoading(false);
           setIsSignUp(false);
@@ -134,13 +150,17 @@ export default function LoginPage() {
             : error.message
         );
         setLoading(false);
-      } else {
-        setMessage("Success! Redirecting...");
-        setIsRedirecting(true);
-        router.push("/dashboard");
-        router.refresh();
       }
+      // Notice we removed the success redirect here! 
+      // The onAuthStateChange listener will automatically detect the success and handle the cache-busting redirect.
     }
+  };
+
+  // Helper to get the full absolute URL for OAuth redirects
+  const getOAuthRedirectUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectTo = urlParams.get("redirectedFrom") || "/dashboard";
+    return `${window.location.origin}${redirectTo}`;
   };
 
   const handleGoogleLogin = async () => {
@@ -149,19 +169,12 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/dashboard`,
+        redirectTo: getOAuthRedirectUrl(),
         scopes: "openid email profile",
-        queryParams: {
-          access_type: "online",
-          prompt: "select_account",
-          fedcm_enabled: "false",
-        },
+        queryParams: { access_type: "online", prompt: "select_account", fedcm_enabled: "false" },
       },
     });
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-    }
+    if (error) { setMessage(error.message); setLoading(false); }
   };
 
   const handleMicrosoftLogin = async () => {
@@ -169,15 +182,9 @@ export default function LoginPage() {
     setMessage("Redirecting to Microsoft...");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "azure",
-      options: {
-        scopes: "email profile",
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
+      options: { scopes: "email profile", redirectTo: getOAuthRedirectUrl() },
     });
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-    }
+    if (error) { setMessage(error.message); setLoading(false); }
   };
 
   const handleGithubLogin = async () => {
@@ -185,12 +192,9 @@ export default function LoginPage() {
     setMessage("Redirecting to GitHub...");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "github",
-      options: { redirectTo: `${window.location.origin}/dashboard` },
+      options: { redirectTo: getOAuthRedirectUrl() },
     });
-    if (error) {
-      setMessage(error.message);
-      setLoading(false);
-    }
+    if (error) { setMessage(error.message); setLoading(false); }
   };
 
   if (isRedirecting) {

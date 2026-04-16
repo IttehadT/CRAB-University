@@ -74,12 +74,12 @@ export async function proxy(request: NextRequest) {
       requiresAuth = requestedFeature.requiresAuth
     }
 
-    // KICK OUT: If the route requires auth and there is no user logged in
+    // SOFT GATE: If the route requires auth and there is no user logged in
     if (requiresAuth && !user) {
       const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      url.searchParams.set('redirectedFrom', currentPath) // Helps UX so they return here after login
-      return NextResponse.redirect(url)
+      url.pathname = '/dashboard/locked' // Point to our new beautiful locked UI
+      url.searchParams.set('redirectedFrom', currentPath) 
+      return NextResponse.rewrite(url) // Using rewrite() keeps the layout and URL intact!
     }
 
     // 5. ROLE-BASED ACCESS CONTROL (RBAC)

@@ -29,10 +29,12 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const rawName = getUserDisplayName(user);
-        // FIX: Added check for user_metadata?.picture (For Google/Microsoft users)
         const rawAvatar = getUserAvatar(user, rawName);
         const rawRole = user.user_metadata?.role || "Student";
         setUserProfile({ name: rawName, avatar: rawAvatar, role: rawRole });
+      } else {
+        // Automatically default to Guest state if not logged in
+        setUserProfile({ name: "Guest View", avatar: "", role: "Student" });
       }
     };
     getUser();
@@ -184,7 +186,6 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
               <img 
                 src={userProfile.avatar} 
                 alt="Profile" 
-                // FIX: If the Google image link expires or breaks, silently hide it and show the CSS fallback
                 onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=2563eb&color=fff` }}
                 className="h-9 w-9 flex-shrink-0 rounded-full border border-border object-cover" 
               />
@@ -201,15 +202,28 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
               </div>
             )}
           </div>
-          <button 
-            onClick={handleSignOut} 
-            title={isCollapsed ? "Sign Out" : undefined}
-            className={`flex items-center justify-center rounded-md border border-border bg-card py-2 text-sm font-medium text-red-600 transition hover:bg-red-500/10 ${isCollapsed ? 'px-0' : 'px-4'}`}
-          >
-            {isCollapsed ? (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-            ) : "Sign Out"}
-          </button>
+          
+          {userProfile.name === "Guest View" ? (
+            <Link 
+              href="/login" 
+              title={isCollapsed ? "Sign In" : undefined}
+              className={`flex items-center justify-center rounded-md border border-border bg-primary/10 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground ${isCollapsed ? 'px-0' : 'px-4'}`}
+            >
+              {isCollapsed ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
+              ) : "Sign In"}
+            </Link>
+          ) : (
+            <button 
+              onClick={handleSignOut} 
+              title={isCollapsed ? "Sign Out" : undefined}
+              className={`flex items-center justify-center rounded-md border border-border bg-card py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 ${isCollapsed ? 'px-0' : 'px-4'}`}
+            >
+              {isCollapsed ? (
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
+              ) : "Sign Out"}
+            </button>
+          )}
         </div>
       </aside>
     </>
