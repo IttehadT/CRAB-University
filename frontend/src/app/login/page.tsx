@@ -159,8 +159,12 @@ export default function LoginPage() {
   // Helper to get the full absolute URL for OAuth redirects
   const getOAuthRedirectUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const redirectTo = urlParams.get("redirectedFrom") || "/dashboard";
-    return `${window.location.origin}${redirectTo}`;
+    const finalDestination = urlParams.get("redirectedFrom") || "/dashboard/finder";
+    
+    // Send them right back to the login page! 
+    // The onAuthStateChange listener will instantly catch them, run the sync API, 
+    // and then forward them to the final destination.
+    return `${window.location.origin}/login?redirectedFrom=${encodeURIComponent(finalDestination)}`;
   };
 
   const handleGoogleLogin = async () => {
