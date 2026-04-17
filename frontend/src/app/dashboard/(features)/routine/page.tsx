@@ -18,7 +18,7 @@ export default async function MyRoutinePage() {
     
     // 2. Find the ONE routine marked as active/default
     // Checking both camelCase and snake_case for maximum safety
-    const defaultRoutine = routines.find((r: any) => r.isActive == 1);
+    const defaultRoutine = routines.find((r: any) => r.isActive == 1 || r.is_active == 1);
 
     // ── EMPTY STATE: No Default Routine Set ──
     if (!defaultRoutine) {
@@ -45,54 +45,96 @@ export default async function MyRoutinePage() {
     const decodedStr = Buffer.from(defaultRoutine.routineStr || defaultRoutine.routine_data, "base64").toString("utf-8");
     const sectionIds: number[] = JSON.parse(decodedStr);
 
-    // 4. Fetch the actual course schedules for the grid (Now Semester-Aware!)
+    // 4. Fetch the actual course schedules for the grid (Semester-Aware)
     const coursesRes = await fetchCourses([
       "sectionId", "courseCode", "sectionName", "roomName", "faculties", "sectionSchedule", "labSchedules"
-    ], defaultRoutine.semester); // <-- We pass the saved semester here!
+    ], defaultRoutine.semester); 
+    
     const courses = coursesRes.data.filter((c: any) => sectionIds.includes(c.sectionId));
+
+    // ── STATS CALCULATION (Bulletproof Fallbacks) ──
+    const totalMinutes = defaultRoutine.totalMinutes ?? defaultRoutine.total_minutes ?? 0;
+    const hrs = Math.floor(totalMinutes / 60);
+    const mins = totalMinutes % 60;
+    const timeString = mins === 0 ? `${hrs} hrs` : `${hrs}h ${mins}m`;
+    
+    const isClashing = defaultRoutine.hasClash == 1 || defaultRoutine.has_clash == 1 || defaultRoutine.hasClash === true;
+    const credits = Number(defaultRoutine.totalCredits || defaultRoutine.total_credits || 0);
+    const courseLabel = courses.length === 1 ? "Course" : "Courses";
 
     // ── RENDER: DEFAULT ROUTINE GRID ──
     return (
-      <main className="min-h-screen space-y-6 bg-background p-4 text-foreground md:p-8">
+      // max-w-[100vw] prevents the page layout from horizontally breaking on mobile
+      <main className="min-h-screen space-y-6 bg-background p-4 text-foreground md:p-8 max-w-[100vw] overflow-x-hidden">
         
-        {/* Header Banner */}
-        {/* Header — matches Saved Routines page style */}
+        {/* Header Title */}
         <div className="mb-2">
-        <h1 className="text-3xl font-bold text-primary tracking-tight">
+          <h1 className="text-3xl font-bold text-primary tracking-tight">
             {user.user_metadata?.full_name?.split(" ")[0]}'s Routine
-        </h1>
-        <p className="text-muted-foreground mt-1">Your default schedule for this semester.</p>
+          </h1>
+          <p className="text-muted-foreground mt-1">Your default schedule for this semester.</p>
         </div>
 
         {/* Routine Banner Card */}
-        <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm md:flex-row md:items-center">
-        <div className="flex items-center gap-4">
-            <div className="shrink-0 rounded-xl bg-primary-muted p-3 text-primary">
-            <Calendar className="h-6 w-6" />
+        <div className="flex flex-col items-start justify-between gap-5 rounded-2xl border border-border bg-card p-6 shadow-sm lg:flex-row lg:items-center">
+          
+          <div className="flex items-start sm:items-center gap-4 flex-col sm:flex-row w-full">
+            <div className="shrink-0 rounded-xl bg-primary-muted p-3 text-primary hidden sm:block">
+              <Calendar className="h-6 w-6" />
             </div>
-            <div>
-            <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold md:text-2xl">{defaultRoutine.routineName || defaultRoutine.routine_name}</h2>
-                <span className="flex items-center gap-1 rounded-full bg-success-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
-                <CheckCircle className="h-3 w-3" /> Default
+            
+            <div className="w-full">
+              {/* Title & Top Tags */}
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-bold md:text-2xl mr-1">{defaultRoutine.routineName || defaultRoutine.routine_name}</h2>
+                
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary border border-primary/20">
+                  {defaultRoutine.semester}
                 </span>
+
+                {isClashing && (
+                  <span className="flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                    <AlertTriangle className="h-3 w-3" /> Clash
+                  </span>
+                )}
+
+                <span className="flex items-center gap-1 rounded-full bg-success-muted px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-success ml-auto sm:ml-0">
+                  <CheckCircle className="h-3 w-3" /> Default
+                </span>
+              </div>
+              
+              {/* Bottom Stats Row */}
+              <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm font-medium text-muted-foreground">
+                <span>{courses.length} {courseLabel}</span>
+                <span className="opacity-40 text-xs">•</span>
+                <span>{credits} Credits</span>
+                
+                {/* Capsules for Days and Time */}
+                <span className="ml-1 rounded-md bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground border border-border">
+                  {defaultRoutine.totalDays || defaultRoutine.total_days || 0} Days
+                </span>
+                <span className="rounded-md bg-primary-purple/10 px-2 py-0.5 text-xs font-bold text-primary-purple border border-primary-purple/20">
+                  {timeString}
+                </span>
+              </div>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-                {defaultRoutine.semester} • {courses.length} Courses • {defaultRoutine.totalCredits || defaultRoutine.total_credits} Credits
-            </p>
-            </div>
-        </div>
-        
-        <Link 
+          </div>
+          
+          {/* Action Button - Vivid Blue & Full Width on Mobile */}
+          <Link 
             href="/dashboard/saved-routines" 
-            className="shrink-0 rounded-xl border border-border bg-muted px-5 py-2.5 text-sm font-bold text-foreground transition hover:bg-border"
-        >
+            className="shrink-0 w-full lg:w-auto text-center rounded-xl bg-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-md transition hover:bg-primary/90"
+          >
             Manage Routines
-        </Link>
+          </Link>
         </div>
 
-        {/* The beautiful calendar grid! */}
-        <RoutineGrid courses={courses} showExams={true} />
+        {/* The beautiful calendar grid - WRAPPED FOR FLAWLESS MOBILE SCROLLING */}
+        <div className="w-full overflow-x-auto scrollbar-hide pb-4">
+          <div className="min-w-[900px]">
+            <RoutineGrid courses={courses} showExams={true} />
+          </div>
+        </div>
 
       </main>
     );

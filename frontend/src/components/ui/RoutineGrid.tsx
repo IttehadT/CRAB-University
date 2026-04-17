@@ -112,49 +112,52 @@ export function RoutineGrid({ courses, showExams = true }: RoutineGridProps) {
     <div className="flex flex-col gap-4">
 
       {/* Weekly Grid */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden min-w-[900px] shadow-sm">
+      <div className="bg-card rounded-xl border border-border overflow-hidden min-w-[550px] md:min-w-[900px] shadow-sm">
         <table className="w-full text-[12px] border-collapse">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="w-[130px] px-4 py-3.5 text-left font-semibold text-muted-foreground border-r border-border text-[11px] uppercase tracking-wider">TIME / DAY</th>
+              <th className="w-[75px] md:w-[130px] px-2 md:px-4 py-2 md:py-3.5 text-left font-semibold text-muted-foreground border-r border-border text-[9px] md:text-[11px] uppercase tracking-wider">TIME / DAY</th>
               {DAYS.map((day) => (
-                <th key={day} className="px-3 py-3.5 text-center font-semibold text-muted-foreground border-r border-border last:border-r-0 text-[11px] uppercase tracking-wider">{day}</th>
+                <th key={day} className="px-1 md:px-3 py-2 md:py-3.5 text-center font-semibold text-muted-foreground border-r border-border last:border-r-0 text-[9px] md:text-[11px] uppercase tracking-wider">
+                  <span className="md:hidden">{day.substring(0, 3)}</span>
+                  <span className="hidden md:inline">{day}</span>
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {TIME_SLOTS.map((slot, slotIdx) => (
               <tr key={slot.label} className="border-b border-border last:border-b-0">
-                <td className="px-4 py-3 align-top border-r border-border text-muted-foreground font-medium bg-muted/20 text-[11px] leading-snug whitespace-nowrap">
+                <td className="px-2 md:px-4 py-2 md:py-3 align-top border-r border-border text-muted-foreground font-medium bg-muted/20 text-[8px] md:text-[11px] leading-snug whitespace-nowrap">
                   {slot.label.split("–").map((t, i) => <div key={i}>{t}</div>)}
                 </td>
                 {DAYS.map((_, dayIdx) => {
                   const entries = calendarGrid[slotIdx][dayIdx];
                   return (
-                    <td key={dayIdx} className="p-1.5 align-top border-r border-border last:border-r-0 min-w-[120px]">
+                    <td key={dayIdx} className="p-0.5 md:p-1.5 align-top border-r border-border last:border-r-0 min-w-[75px] md:min-w-[120px]">
                       {entries.length === 0
-                        ? <div className="min-h-[80px]" />
+                        ? <div className="min-h-[50px] md:min-h-[80px]" />
                         : (
-                          <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-col gap-1 md:gap-1.5">
                             {entries.map((item, i) => (
-                              <div key={i} className={`relative rounded-r-lg rounded-l-[3px] p-2.5 min-h-[80px] flex flex-col justify-center
+                              <div key={i} className={`relative rounded-r-lg rounded-l-[3px] p-1.5 md:p-2.5 min-h-[50px] md:min-h-[80px] flex flex-col justify-center
                                 ${item.isConflict
-                                  ? 'bg-red-50 dark:bg-red-900/30 border-l-4 border-red-500 text-red-900 dark:text-red-100'
+                                  ? 'bg-red-50 dark:bg-red-900/30 border-l-4 md:border-l-4 border-l-2 border-red-500 text-red-900 dark:text-red-100'
                                   : item.isLab
-                                    ? 'bg-purple-50 dark:bg-purple-900/30 border-l-4 border-purple-500 text-purple-900 dark:text-purple-100'
-                                    : 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100'
+                                    ? 'bg-purple-50 dark:bg-purple-900/30 border-l-4 md:border-l-4 border-l-2 border-purple-500 text-purple-900 dark:text-purple-100'
+                                    : 'bg-blue-50 dark:bg-blue-900/30 border-l-4 md:border-l-4 border-l-2 border-blue-500 text-blue-900 dark:text-blue-100'
                                 }`}>
-                                <div className="font-bold text-[12px] tracking-tight leading-tight flex items-center gap-1.5 pr-4">
-                                  {item.course.courseCode}
-                                  <span className="text-[10px] font-black px-1.5 py-0.5 rounded-sm bg-black/10 dark:bg-white/20">{item.course.sectionName}</span>
-                                  {item.isLab && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200">LAB</span>}
+                                <div className="font-bold text-[9px] md:text-[12px] tracking-tight leading-tight flex flex-wrap items-center gap-0.5 md:gap-1.5 pr-1 md:pr-4">
+                                  <span>{item.course.courseCode}</span>
+                                  <span className="text-[7px] md:text-[10px] font-black px-1 md:px-1.5 py-0.5 rounded-sm bg-black/10 dark:bg-white/20">{item.course.sectionName}</span>
+                                  {item.isLab && <span className="text-[6px] md:text-[9px] font-bold px-1 py-0.5 rounded bg-purple-200 dark:bg-purple-800 text-purple-800 dark:text-purple-200">LAB</span>}
                                 </div>
-                                <div className="text-[11px] mt-1.5 flex items-start gap-1 opacity-80 font-medium">
-                                  <svg className="w-3 h-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                                <div className="text-[7px] md:text-[11px] mt-0.5 md:mt-1.5 flex items-start gap-1 opacity-80 font-medium truncate">
+                                  <svg className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 mt-0.5 hidden md:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                                   {item.course.roomName || "TBA"}
                                 </div>
-                                <div className="text-[11px] mt-0.5 flex items-center gap-1 opacity-70 font-medium">
-                                  <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                <div className="text-[7px] md:text-[11px] mt-0.5 flex items-center gap-1 opacity-70 font-medium truncate">
+                                  <svg className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 hidden md:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                                   {item.course.faculties || "TBA"}
                                 </div>
                               </div>
@@ -169,10 +172,12 @@ export function RoutineGrid({ courses, showExams = true }: RoutineGridProps) {
             ))}
           </tbody>
         </table>
-        <div className="flex items-center gap-5 px-5 py-3 border-t border-border bg-muted/20">
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-blue-50 dark:bg-blue-900/30 border-l-2 border-blue-500" />Class</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-purple-50 dark:bg-purple-900/30 border-l-2 border-purple-500" />Lab</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-3 w-3 rounded-sm bg-red-50 dark:bg-red-900/30 border-l-2 border-red-500" />Clash</div>
+        
+        {/* Legend */}
+        <div className="flex flex-wrap items-center gap-3 md:gap-5 px-3 md:px-5 py-2 md:py-3 border-t border-border bg-muted/20">
+          <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm bg-blue-50 dark:bg-blue-900/30 border-l-2 border-blue-500" />Class</div>
+          <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm bg-purple-50 dark:bg-purple-900/30 border-l-2 border-purple-500" />Lab</div>
+          <div className="flex items-center gap-1.5 text-[9px] md:text-[11px] text-muted-foreground font-medium uppercase tracking-wider"><div className="h-2.5 w-2.5 md:h-3 md:w-3 rounded-sm bg-red-50 dark:bg-red-900/30 border-l-2 border-red-500" />Clash</div>
         </div>
       </div>
 
