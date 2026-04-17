@@ -396,9 +396,11 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       
       // Keep track of every time slot to see if they overlap
       const dailySchedules: Record<string, { start: number; end: number }[]> = {};
+      const examSchedules: Record<string, { start: number; end: number }[]> = {}; // NEW: Track exams by exact date!
       let calculatedHasClash = false;
 
       selectedCourses.forEach(c => {
+        // --- 1. CHECK CLASS & LAB OVERLAPS ---
         const allSchedules = [...(c.sectionSchedule?.classSchedules || []), ...(c.labSchedules || [])];
         allSchedules.forEach((s: any) => {
           if (!s.day || !s.startTime || !s.endTime) return;
@@ -415,10 +417,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
           // Calculate actual overlap for the Clash Badge!
           if (!dailySchedules[s.day]) dailySchedules[s.day] = [];
           
-          // Check if this new class overlaps with any existing class on this day
           dailySchedules[s.day].forEach(existingSlot => {
-            // If the start time is BEFORE the existing end time, AND the end time is AFTER the existing start time...
-            // Note: We subtract 5 minutes from the start time to account for the transit time you built into your grid!
             if (start - 5 < existingSlot.end && end > existingSlot.start) {
               calculatedHasClash = true;
             }
@@ -426,9 +425,36 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
           
           dailySchedules[s.day].push({ start, end });
         });
+
+        // --- 2. CHECK EXAM OVERLAPS ---
+        const s = c.sectionSchedule as any;
+        if (s) {
+          const checkExam = (dateStr: string, startTime: string, endTime: string) => {
+            if (!dateStr || !startTime || !endTime) return;
+            
+            // Extract just the YYYY-MM-DD part so we only compare exams on the exact same day
+            const dateKey = dateStr.split("T")[0]; 
+            const start = toMin(startTime);
+            const end = toMin(endTime);
+
+            if (!examSchedules[dateKey]) examSchedules[dateKey] = [];
+
+            examSchedules[dateKey].forEach(existingSlot => {
+              // If exams overlap on the same exact day, trigger the clash!
+              if (start < existingSlot.end && end > existingSlot.start) {
+                calculatedHasClash = true;
+              }
+            });
+            
+            examSchedules[dateKey].push({ start, end });
+          };
+
+          checkExam(s.midExamDate, s.midExamStartTime, s.midExamEndTime);
+          checkExam(s.finalExamDate, s.finalExamStartTime, s.finalExamEndTime);
+        }
       });
       const totalMinutes = Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min), 0);
-
+      
       // 2. Send it to our new API
       const response = await fetch("/api/routine", {
         method: "POST",
