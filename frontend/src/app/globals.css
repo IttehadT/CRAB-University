@@ -43,10 +43,11 @@
   /* ── 5. BRAND TERTIARY (Professional Green) ── 
    * Affects: Success states, active routine toggles, and positive feedback highlights.
    */
-  --primary-green: #059669; 
+  /* ── BRAND TERTIARY (Professional Green) ── */
+  --primary-green: #047857; /* Darkened for better text readability */
   --primary-green-foreground: #ffffff;
-  --primary-green-muted: #ecfdf5; /* Soft green for badges/light backgrounds */
-  
+  --primary-green-muted: #ecfdf5;
+    
   /* ── 6. THE 5 SEMANTIC COLORS (Professional & Muted) ── 
    * Affects: System alerts, status badges, destructive actions (delete), and warnings.
    */
