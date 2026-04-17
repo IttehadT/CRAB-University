@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { fetchUserRoutines, saveUserRoutine, fetchCourses } from "@/lib/service";
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
@@ -47,28 +48,46 @@ export async function POST(request: Request) {
     // 1. CREATE THE ID
     const id = crypto.randomUUID();
 
-    // ── NEW: PERMANENT PERSONALIZED AUTO-NAMING ──
+    // // ── NEW: Name + routine #1 ──
+    // let finalName = routineName?.trim();
+    
+    // if (!finalName) {
+    //   // 1. Count existing routines
+    //   const existingRoutines = await fetchUserRoutines(user.email);
+    //   const count = existingRoutines ? existingRoutines.length : 0;
+      
+    //   // 2. Grab the user's first name from their Supabase session
+    //   let firstName = "My";
+    //   if (user?.user_metadata?.full_name) {
+    //     // Split "ITTEHAD AHMED TAUSIF" into "ITTEHAD"
+    //     const rawFirst = user.user_metadata.full_name.split(" ")[0];
+    //     // Format it nicely: "Ittehad"
+    //     firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase();
+    //   }
+
+    //   // 3. Combine them! e.g., "Ittehad's Routine #1"
+    //   finalName = `${firstName}'s Routine #${count + 1}`;
+    // }
+
+    // // 2. SAVE TO THE DATABASE WITH THE REAL NAME
+    // await saveUserRoutine(
+    //   id, user.email, finalName, routineStr,
+    //   semester, courseCount, totalCredits, totalDays, totalMinutes, hasClash
+    // );
+
+    // ── NEW: without name just routine#1 ──
     let finalName = routineName?.trim();
     
     if (!finalName) {
       // 1. Count existing routines
       const existingRoutines = await fetchUserRoutines(user.email);
       const count = existingRoutines ? existingRoutines.length : 0;
-      
-      // 2. Grab the user's first name from their Supabase session
-      let firstName = "My";
-      if (user?.user_metadata?.full_name) {
-        // Split "ITTEHAD AHMED TAUSIF" into "ITTEHAD"
-        const rawFirst = user.user_metadata.full_name.split(" ")[0];
-        // Format it nicely: "Ittehad"
-        firstName = rawFirst.charAt(0).toUpperCase() + rawFirst.slice(1).toLowerCase();
-      }
 
-      // 3. Combine them! e.g., "Ittehad's Routine #1"
-      finalName = `${firstName}'s Routine #${count + 1}`;
+      // 2. Format it: "Routine #1"
+      finalName = `Routine #${count + 1}`;
     }
 
-    // 2. SAVE TO THE DATABASE WITH THE REAL NAME
+    // 2. SAVE TO THE DATABASE (This is what was missing!)
     await saveUserRoutine(
       id, user.email, finalName, routineStr,
       semester, courseCount, totalCredits, totalDays, totalMinutes, hasClash

@@ -203,7 +203,7 @@ export function RoutineGrid({ courses, showExams = true }: RoutineGridProps) {
                           {isClash && <span className="ml-2 text-[10px] font-bold text-red-500 bg-red-100 dark:bg-red-900/40 px-1.5 py-0.5 rounded-full">⚠ CLASH</span>}
                         </td>
                         <td className="px-4 py-2.5 border-r border-border">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${row.type === "MID" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300" : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"}`}>{row.type}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border uppercase tracking-wider ${row.type === "MID" ? "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:text-blue-400" : "bg-purple-500/10 text-purple-600 border-purple-500/20 dark:text-purple-400"}`}>{row.type}</span>
                         </td>
                         <td className="px-4 py-2.5 text-muted-foreground border-r border-border">{row.date}</td>
                         <td className="px-4 py-2.5 text-muted-foreground">{row.time}</td>

@@ -330,7 +330,69 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
     return filteredCourses.slice(start, start + displayCount);
   }, [filteredCourses, displayCount, page]);
   useEffect(() => { setPage(1); }, [searchTerm, filters, sortConfig]);
-  const totalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0);
+  const totalCredits = Number(selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0));
+  
+  // ── THE SHARED MATH ENGINE ──
+  // Both the Preview UI and the Save Button pull from this single source!
+  // ── THE SHARED MATH ENGINE ──
+  // Both the Preview UI and the Save Button pull from this single source!
+  const liveStats = useMemo(() => {
+    const daySet = new Set<string>();
+    const daySpans: Record<string, { min: number; max: number }> = {};
+    const dailySchedules: Record<string, { start: number; end: number }[]> = {};
+    const examSchedules: Record<string, { start: number; end: number }[]> = {};
+    let clash = false;
+
+    selectedCourses.forEach(c => {
+      // 1. Class & Lab Overlaps
+      const allSchedules = [...(c.sectionSchedule?.classSchedules || []), ...(c.labSchedules || [])];
+      allSchedules.forEach((s: any) => {
+        if (!s.day || !s.startTime || !s.endTime) return;
+        daySet.add(s.day);
+        
+        // FIXED: Changed toMin to toMinutes
+        const start = toMinutes(s.startTime); 
+        const end = toMinutes(s.endTime);
+        
+        if (!daySpans[s.day]) daySpans[s.day] = { min: start, max: end };
+        else { daySpans[s.day].min = Math.min(daySpans[s.day].min, start); daySpans[s.day].max = Math.max(daySpans[s.day].max, end); }
+
+        if (!dailySchedules[s.day]) dailySchedules[s.day] = [];
+        dailySchedules[s.day].forEach(ext => { if (start - 5 < ext.end && end > ext.start) clash = true; });
+        dailySchedules[s.day].push({ start, end });
+      });
+
+      // 2. Exam Overlaps
+      const sx = c.sectionSchedule as any;
+      if (sx) {
+        const checkExam = (dStr: string, sTime: string, eTime: string) => {
+          if (!dStr || !sTime || !eTime) return;
+          const dKey = dStr.split("T")[0]; 
+          
+          // FIXED: Changed toMin to toMinutes
+          const st = toMinutes(sTime); 
+          const et = toMinutes(eTime);
+          
+          if (!examSchedules[dKey]) examSchedules[dKey] = [];
+          examSchedules[dKey].forEach(ext => { if (st < ext.end && et > ext.start) clash = true; });
+          examSchedules[dKey].push({ start: st, end: et });
+        };
+        checkExam(sx.midExamDate, sx.midExamStartTime, sx.midExamEndTime);
+        checkExam(sx.finalExamDate, sx.finalExamStartTime, sx.finalExamEndTime);
+      }
+    });
+
+    const totalMinutes = Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min), 0);
+    const hrs = Math.floor(totalMinutes / 60); const mins = totalMinutes % 60;
+    
+    return { 
+      totalDays: daySet.size, 
+      totalMinutes,
+      timeStr: mins === 0 ? `${hrs} hrs` : `${hrs}h ${mins}m`, 
+      hasClash: clash 
+    };
+  }, [selectedCourses]);
+
   const activeFilterCount = (filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0);
 
   // Handlers
@@ -356,16 +418,30 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       const { toPng } = await import("html-to-image");
       const isDark = document.documentElement.classList.contains("dark");
       const bg = isDark ? "#0f172a" : "#ffffff";
-      const dataUrl = await toPng(calendarRef.current, {
-        quality: 0.95,
+      
+      // Grab the EXACT mathematical dimensions of the fully expanded table
+      const node = calendarRef.current;
+      const width = node.scrollWidth;
+      const height = node.scrollHeight;
+
+      const dataUrl = await toPng(node, {
+        quality: 1.0, // Bumped to max quality!
         pixelRatio: 3,
         backgroundColor: bg,
+        width: width,   // Forces the library to capture the full width
+        height: height, // Forces the library to capture the hidden scrolled height!
+        style: {
+          margin: "0",
+        }
       });
+      
       const link = document.createElement("a");
       link.download = `CRABU_Routine_${new Date().toISOString().split("T")[0]}.png`;
       link.href = dataUrl;
       link.click();
-    } catch { alert("Failed to export PNG."); }
+    } catch { 
+      alert("Failed to export PNG."); 
+    }
   };
 
   const handleSaveRoutine = async () => {
@@ -376,103 +452,30 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
 
     setIsSaving(true);
     try {
-      // 1. Extract just the Section IDs and Base64 encode them
       const sectionIds = selectedCourses.map(course => course.sectionId).sort();
       const routineStr = btoa(JSON.stringify(sectionIds));
 
-      // ── NEW CALCULATIONS FOR STATS ──
-      const courseCount = selectedCourses.length;
-      const totalCredits = selectedCourses.reduce((sum, c) => sum + (c.courseCredit || 0), 0);
-      
-      const daySet = new Set<string>();
-      selectedCourses.forEach(c => {
-        c.sectionSchedule?.classSchedules?.forEach((s: any) => { if (s.day) daySet.add(s.day); });
-        (c.labSchedules || []).forEach((s: any) => { if (s.day) daySet.add(s.day); });
-      });
-      const totalDays = daySet.size;
+      // We pull the math directly from our shared liveStats!
+      const { totalDays, totalMinutes, hasClash } = liveStats;
 
-      const daySpans: Record<string, { min: number; max: number }> = {};
-      const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
-      
-      // Keep track of every time slot to see if they overlap
-      const dailySchedules: Record<string, { start: number; end: number }[]> = {};
-      const examSchedules: Record<string, { start: number; end: number }[]> = {}; // NEW: Track exams by exact date!
-      let calculatedHasClash = false;
-
-      selectedCourses.forEach(c => {
-        // --- 1. CHECK CLASS & LAB OVERLAPS ---
-        const allSchedules = [...(c.sectionSchedule?.classSchedules || []), ...(c.labSchedules || [])];
-        allSchedules.forEach((s: any) => {
-          if (!s.day || !s.startTime || !s.endTime) return;
-          const start = toMin(s.startTime);
-          const end = toMin(s.endTime);
-          
-          // Calculate max span for the minutes counter
-          if (!daySpans[s.day]) daySpans[s.day] = { min: start, max: end };
-          else {
-            daySpans[s.day].min = Math.min(daySpans[s.day].min, start);
-            daySpans[s.day].max = Math.max(daySpans[s.day].max, end);
-          }
-
-          // Calculate actual overlap for the Clash Badge!
-          if (!dailySchedules[s.day]) dailySchedules[s.day] = [];
-          
-          dailySchedules[s.day].forEach(existingSlot => {
-            if (start - 5 < existingSlot.end && end > existingSlot.start) {
-              calculatedHasClash = true;
-            }
-          });
-          
-          dailySchedules[s.day].push({ start, end });
-        });
-
-        // --- 2. CHECK EXAM OVERLAPS ---
-        const s = c.sectionSchedule as any;
-        if (s) {
-          const checkExam = (dateStr: string, startTime: string, endTime: string) => {
-            if (!dateStr || !startTime || !endTime) return;
-            
-            // Extract just the YYYY-MM-DD part so we only compare exams on the exact same day
-            const dateKey = dateStr.split("T")[0]; 
-            const start = toMin(startTime);
-            const end = toMin(endTime);
-
-            if (!examSchedules[dateKey]) examSchedules[dateKey] = [];
-
-            examSchedules[dateKey].forEach(existingSlot => {
-              // If exams overlap on the same exact day, trigger the clash!
-              if (start < existingSlot.end && end > existingSlot.start) {
-                calculatedHasClash = true;
-              }
-            });
-            
-            examSchedules[dateKey].push({ start, end });
-          };
-
-          checkExam(s.midExamDate, s.midExamStartTime, s.midExamEndTime);
-          checkExam(s.finalExamDate, s.finalExamStartTime, s.finalExamEndTime);
-        }
-      });
-      const totalMinutes = Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min), 0);
-      
-      // 2. Send it to our new API
       const response = await fetch("/api/routine", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           routineStr, 
-          routineName: "", // Send an empty string so the Saved page auto-numbers it!
-          semester: activeSemester, // FIX: Use the live dropdown state!
-          courseCount,
+          routineName: "", 
+          semester: activeSemester, 
+          courseCount: selectedCourses.length,
           totalCredits,
           totalDays,
           totalMinutes,
-          hasClash: calculatedHasClash 
+          hasClash
         }),
       });
 
       if (response.ok) {
         setIsModalOpen(false);
+        // A hard redirect guarantees the browser clears its cache and loads the fresh database data
         window.location.href = "/dashboard/saved-routines";
       } else if (response.status === 401) {
         window.location.href = "/login";
@@ -986,30 +989,20 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
         <div className="relative flex h-[95vh] w-full max-w-[1400px] flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
 
           {/* Modal Header */}
+          {/* 1. Sleek Action Bar (No Duplicate Info!) */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border bg-muted/40 px-5 py-4 shrink-0 gap-4">
             <div>
-              <h2 className="text-xl font-bold text-foreground">My Routine</h2>
-              <div className="flex items-center gap-3 mt-1 flex-wrap">
-                {studentName && <span className="text-xs font-medium text-muted-foreground">👤 {studentName}</span>}
-                {activeSemester && <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{activeSemester}</span>}
-                <span className={`text-xs font-bold ${totalCredits > 18 ? "text-red-500" : "text-emerald-500"}`}>{totalCredits} / 25 Credits</span>
-              </div>
+              <h2 className="text-xl font-black text-foreground">Routine Preview</h2>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setShowExamTable(p => !p)}
-                className={`flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition shadow-sm border ${showExamTable ? "bg-amber-500 text-white border-amber-500" : "bg-muted text-foreground border-border hover:border-amber-500 hover:text-amber-500"}`}
-              >
+              <button onClick={() => setShowExamTable(p => !p)} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition shadow-sm bg-card border border-border text-foreground hover:bg-muted">
                 📋 {showExamTable ? "Hide Exams" : "Show Exams"}
               </button>
-              <button 
-                  onClick={handleSaveRoutine} 
-                  disabled={isSaving}
-                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-sm disabled:opacity-50"
-                >
-                  💾 {isSaving ? "Saving..." : "Save Routine"}
+              {/* Fallback to standard Tailwind purple to guarantee color render */}
+              <button onClick={handleSaveRoutine} disabled={isSaving} className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-700 transition shadow-sm disabled:opacity-50">
+                💾 {isSaving ? "Saving..." : "Save Routine"}
               </button>
-              <button onClick={handleDownloadPNG} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition shadow-sm">
+              <button onClick={handleDownloadPNG} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 transition shadow-sm">
                 ⬇ Save as PNG
               </button>
               <button onClick={() => setIsModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted bg-background ml-auto sm:ml-2">
@@ -1018,30 +1011,41 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
             </div>
           </div>
 
-          {/* Calendar Body */}
-          <div className="flex-1 overflow-auto p-4">
-            {selectedCourses.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-muted-foreground text-sm">
-                No courses selected. Close this and click + on any course.
-              </div>
-            ) : (
-              <div ref={calendarRef} className="flex flex-col gap-4">
+          {/* 2. Scrollable Calendar Body (Fixes Issue 3!) */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/10">
+            <div ref={calendarRef} className="mx-auto flex w-full max-w-max flex-col gap-4 p-5 md:p-8 bg-background rounded-2xl shadow-sm border border-border">
 
-                {/* Header info for PNG export */}
-                <div className="flex items-center justify-between px-1">
-                  <div>
-                    <p className="text-base font-bold text-foreground">{studentName ? `${studentName}'s Routine` : "My Routine"}</p>
-                    {activeSemester && <p className="text-xs text-muted-foreground">{activeSemester}</p>}
+              {/* The Single Source of Truth for Info (Captured perfectly in PNG!) */}
+              <div className="flex items-center justify-between px-1 pb-2">
+                <div>
+                  <div className="flex items-center gap-3">
+                    <p className="text-2xl font-black text-foreground tracking-tight">{studentName ? `${studentName}'s Routine` : "My Routine"}</p>
+                    {activeSemester && <span className="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20 uppercase tracking-wider">{activeSemester}</span>}
+                    {liveStats.hasClash && <span className="text-[11px] font-black text-destructive bg-destructive/10 border border-destructive/30 px-2 py-1 rounded-md uppercase tracking-wider">⚠ Clash</span>}
                   </div>
-                  <p className="text-xs text-muted-foreground font-medium">{totalCredits} Credits · {selectedCourses.length} Courses</p>
                 </div>
-
-                {/* Weekly Grid */}
-                {/* Exam Table */}
-                <RoutineGrid courses={selectedCourses} showExams={showExamTable} />
-
+                <div className="text-right">
+                  <p className="text-sm text-foreground font-bold">{selectedCourses.length} Courses • {totalCredits} Credits</p>
+                  <p className="text-xs font-bold mt-2 flex items-center justify-end gap-2">
+                    <span className="bg-muted px-2 py-1 rounded-md text-muted-foreground border border-border">{liveStats.totalDays} Days</span>
+                    <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-2 py-1 rounded-md">{liveStats.timeStr}</span>
+                  </p>
+                </div>
               </div>
-            )}
+
+              <RoutineGrid courses={selectedCourses} showExams={showExamTable} />
+
+              {/* Professional CRABU Watermark (Will appear on screen and in PNG) */}
+              <div className="mt-2 pt-4 border-t border-border flex items-center justify-between opacity-80">
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Academic Schedule
+                </p>
+                <p className="text-[10px] font-bold text-muted-foreground tracking-wide flex items-center gap-1.5">
+                  GENERATED BY <span className="text-primary">CRAB University</span> • www.crabu.app
+                </p>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>

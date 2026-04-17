@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { fetchCourses, fetchRoutineById } from "@/lib/service";
+import { fetchCourses, fetchRoutineById, findUserByEmail } from "@/lib/service";
 import { RoutineGrid } from "@/components/ui/RoutineGrid";
 import { AlertTriangle, Calendar, User } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -20,12 +20,18 @@ export default async function PublicRoutinePage({
 
   try {
     // ── 1. FETCH ROUTINE DATA ──
-    // Retrieve the saved routine from the database using the unique ID
     const routine = await fetchRoutineById(id);
     if (!routine) throw new Error("Routine not found");
 
-    // ADD THIS LINE:
-    console.log("DATABASE ROUTINE OBJECT:", routine);
+    // ── NEW: FETCH OWNER NAME & FORMAT TIME ──
+    const owner = await findUserByEmail(routine.userEmail);
+    const ownerName = owner?.full_name || "A Student";
+    
+    const hrs = Math.floor((routine.totalMinutes || 0) / 60);
+    const mins = (routine.totalMinutes || 0) % 60;
+    const timeString = mins === 0 ? `${hrs} hrs` : `${hrs}h ${mins}m`;
+    // Rock-solid check for MySQL formats (1/0), strings ("1"/"0"), or boolean (true/false)
+    const isClashing = routine.hasClash == 1 || routine.has_clash == 1 || routine.hasClash === true || routine.has_clash === true;
 
     // ── 2. DECODE COURSE IDS ──
     // The routine string is stored as a Base64 encoded JSON array of section IDs
@@ -49,8 +55,6 @@ export default async function PublicRoutinePage({
       sectionIds.includes(c.sectionId)
     );
 
-    // Rock-solid check for MySQL formats (1/0), strings ("1"/"0"), or boolean (true/false)
-    const isClashing = routine.hasClash == 1 || routine.has_clash == 1 || routine.hasClash === true || routine.has_clash === true;
 
     // ── 4. RENDER: SUCCESS STATE ──
     return (
@@ -71,31 +75,37 @@ export default async function PublicRoutinePage({
 
                 {/* Routine Details */}
                 <div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <h1 className="text-2xl font-black text-foreground md:text-3xl">
-                      {routine.routineName || "Shared Routine"}
+                      {routine.routineName || "My Routine"}
                     </h1>
+                    
+                    {/* NEW: Semester Tag Moved Here */}
+                    <span className="rounded-full bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary border border-primary/20">
+                      {routine.semester || "Unknown"}
+                    </span>
+
                     {/* Clash Warning Indicator */}
                     {isClashing && (
-                      <span className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive-muted px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
+                      <span className="flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-destructive">
                         <AlertTriangle className="h-3 w-3" /> Clash
                       </span>
                     )}
                   </div>
 
                   {/* Meta Information Tags */}
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-sm font-medium text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <User className="h-4 w-4" /> Shared via CRABU
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <span className="flex items-center gap-1.5 text-foreground font-semibold">
+                      <User className="h-4 w-4" /> {ownerName}
                     </span>
-                    <span>•</span>
-                    <span className="rounded-md bg-info-muted px-2 py-0.5 text-xs font-bold uppercase tracking-wider text-info">
-                        {routine.semester || "Unknown Semester"}
-                    </span>
-                    <span>•</span>
+                    <span className="opacity-40">•</span>
                     <span>{courses.length} Courses</span>
-                    <span>•</span>
-                    <span>{routine.totalCredits || 0} Credits</span>
+                    <span className="opacity-40">•</span>
+                    <span>{Number(routine.totalCredits || 0)} Credits</span>
+                    <span className="opacity-40">•</span>
+                    <span>{routine.totalDays || 0} Days</span>
+                    <span className="opacity-40">•</span>
+                    <span>{timeString}</span>
                   </div>
                 </div>
               </div>

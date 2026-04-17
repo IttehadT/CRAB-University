@@ -23,7 +23,8 @@ export default function SavedRoutinesPage() {
 
   const fetchRoutines = async () => {
     try {
-      const res = await fetch("/api/routine");
+      // Added "no-store" so the browser is forced to ask the database for the newest routines
+      const res = await fetch("/api/routine", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (data.success) setRoutines(data.routines);

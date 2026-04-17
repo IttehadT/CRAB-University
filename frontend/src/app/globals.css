@@ -8,7 +8,9 @@
  */
 
 :root {
-  /* ── 1. SURFACE & BACKGROUND COLORS (Apple Light Theme) ── */
+  /* ── 1. SURFACE & BACKGROUND COLORS (Apple Light Theme) ── 
+   * Affects: The main page background, floating cards, dropdown menus, and modals.
+   */
   --background: #fbfbfd; /* Apple's signature soft off-white */
   --foreground: #1d1d1f; /* Apple's soft black for text (easier on eyes than #000) */
   --card: #ffffff; /* Pure white for elevated cards */
@@ -16,18 +18,38 @@
   --popover: #ffffff; /* Fixes transparent modals/tooltips */
   --popover-foreground: #1d1d1f;
   
-  /* ── 2. UI ELEMENTS & BORDERS ── */
+  /* ── 2. UI ELEMENTS & BORDERS ── 
+   * Affects: Divider lines, input outlines, empty table cells, and subtle hover states.
+   */
   --border: #d2d2d7; /* Apple's exact light border color */
   --input: #d2d2d7; /* For form inputs */
   --muted: #f5f5f7; /* Apple's secondary background for subtle areas */
   --muted-foreground: #86868b; /* Apple's secondary text color */
   
-  /* ── 3. BRAND PRIMARY (Apple System Blue) ── */
+  /* ── 3. BRAND PRIMARY (Apple System Blue) ── 
+   * Affects: Primary CTA buttons, active links, checkboxes, focus rings, and main highlights.
+   */
   --primary: #0071e3; 
   --primary-foreground: #ffffff;
-  --primary-muted: #e8f0fe; /* 10% opacity equivalent for soft backgrounds */
+  --primary-muted: #e8f0fe; /* 10% opacity equivalent for soft backgrounds/hovers */
+
+  /* ── 4. BRAND SECONDARY (Professional Purple) ── 
+   * Affects: Final exam capsules, "Save Routine" button, and secondary call-outs.
+   */
+  --primary-purple: #7c3aed; 
+  --primary-purple-foreground: #ffffff;
+  --primary-purple-muted: #f5f3ff; /* Soft purple for badges/light backgrounds */
+
+  /* ── 5. BRAND TERTIARY (Professional Green) ── 
+   * Affects: Success states, active routine toggles, and positive feedback highlights.
+   */
+  --primary-green: #059669; 
+  --primary-green-foreground: #ffffff;
+  --primary-green-muted: #ecfdf5; /* Soft green for badges/light backgrounds */
   
-  /* ── 4. THE 5 SEMANTIC COLORS (Professional & Muted) ── */
+  /* ── 6. THE 5 SEMANTIC COLORS (Professional & Muted) ── 
+   * Affects: System alerts, status badges, destructive actions (delete), and warnings.
+   */
   
   /* Accent: Used for hover states and neutral highlights */
   --accent: #f5f5f7; 
@@ -41,7 +63,7 @@
   --warning: #ff9500;
   --warning-muted: #fff5e5; /* Soft amber for alerts */
 
-  /* Destructive: Apple System Red */
+  /* Destructive: Apple System Red (Clashes, Delete Buttons) */
   --destructive: #ff3b30;
   --destructive-muted: #ffeceb; /* Soft red for delete buttons/errors */
 
@@ -49,34 +71,43 @@
   --info: #32ade6;
   --info-muted: #ebf7fd; /* Soft cyan for informational highlights */
 
-  /* ── 5. FOCUS RINGS & RADIUS ── */
+  /* ── 7. FOCUS RINGS & RADIUS ── */
   --ring: #0071e3; /* Blue glow when clicking inputs */
   --radius: 0.75rem; /* Slightly rounder, modern Apple feel (12px) */
 }
 
 .dark {
   /* ── 1. SURFACE & BACKGROUND COLORS (Apple Dark Theme) ── */
-  --background: #000000; /* True black for OLED screens */
+  --background: #0f172a; /* FIXED: Deep slate-blue instead of pure OLED black */
   --foreground: #f5f5f7; /* Soft white text */
-  --card: #1c1c1e; /* Apple's elevated dark gray for cards */
+  --card: #1e293b; /* Elevated dark slate-blue for cards */
   --card-foreground: #f5f5f7;
-  --popover: #1c1c1e; /* Fixes transparent modals/tooltips */
+  --popover: #1e293b; /* Fixes transparent modals/tooltips */
   --popover-foreground: #f5f5f7;
   
   /* ── 2. UI ELEMENTS & BORDERS ── */
-  --border: #38383a; /* Apple's dark border color */
-  --input: #38383a;
-  --muted: #2c2c2e; /* Deeper gray for secondary backgrounds */
-  --muted-foreground: #86868b; /* Dimmed text */
+  --border: #334155; /* Dark slate border color */
+  --input: #334155;
+  --muted: #1e293b; /* Deeper gray for secondary backgrounds */
+  --muted-foreground: #94a3b8; /* Dimmed text */
   
   /* ── 3. BRAND PRIMARY (Apple Dark System Blue) ── */
-  --primary: #2997ff; /* Brighter blue to pop against black */
+  --primary: #2997ff; /* Brighter blue to pop against dark background */
   --primary-foreground: #ffffff;
-  --primary-muted: #003366; /* Deep blue for soft backgrounds */
+  --primary-muted: #172554; /* Deep blue for soft backgrounds */
+
+  /* ── 4. BRAND SECONDARY (Professional Purple) ── */
+  --primary-purple: #8b5cf6; 
+  --primary-purple-foreground: #ffffff;
+  --primary-purple-muted: #2e1065; /* Deep muted purple for dark backgrounds */
+
+  /* ── 5. BRAND TERTIARY (Professional Green) ── */
+  --primary-green: #10b981; 
+  --primary-green-foreground: #ffffff;
+  --primary-green-muted: #022c22; /* Deep muted green for dark backgrounds */
   
-  /* ── 4. THE 5 SEMANTIC COLORS (Dark Mode Variants) ── */
-  
-  --accent: #2c2c2e; 
+  /* ── 6. THE 5 SEMANTIC COLORS (Dark Mode Variants) ── */
+  --accent: #1e293b; 
   --accent-foreground: #f5f5f7;
 
   /* Success: Dark Apple System Green */
@@ -95,12 +126,12 @@
   --info: #64d2ff;
   --info-muted: #00384d; /* Deep muted cyan */
 
-  /* ── 5. FOCUS RINGS ── */
+  /* ── 7. FOCUS RINGS ── */
   --ring: #2997ff;
 }
 
 /* * ─── TAILWIND V4 THEME MAPPING ─────────────────────────────────────────────
- * This wires up our variables so we can type `bg-success`, `text-info`, etc.
+ * This wires up our variables so we can type `bg-primary-purple`, `text-info`, etc.
  */
 @theme inline {
   --color-background: var(--background);
@@ -119,6 +150,14 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-muted: var(--primary-muted);
+
+  --color-primary-purple: var(--primary-purple);
+  --color-primary-purple-foreground: var(--primary-purple-foreground);
+  --color-primary-purple-muted: var(--primary-purple-muted);
+
+  --color-primary-green: var(--primary-green);
+  --color-primary-green-foreground: var(--primary-green-foreground);
+  --color-primary-green-muted: var(--primary-green-muted);
   
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
