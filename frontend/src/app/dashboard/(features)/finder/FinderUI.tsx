@@ -129,14 +129,18 @@ const getDayIndex = (day: string) => DAYS.findIndex(d => d.toLowerCase().startsW
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function FinderUI({ initialCourses, studentName, semester }: FinderUIProps) {
+  // Move these hooks to the top so we can use them for initial state!
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   // We no longer rely strictly on server props. We control the data client-side!
   const [courses, setCourses] = useState<Partial<CourseMold>[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [activeSemester, setActiveSemester] = useState(semester || "Summer 2026");
   
-  const [isHydrating, setIsHydrating] = useState(false); 
-  const searchParams = useSearchParams();
-  const router = useRouter();
+  // FIX: Check the URL first. If editing, start on the saved routine's semester!
+  const [activeSemester, setActiveSemester] = useState(searchParams.get("sem") || semester || "Summer 2026");
+  
+  const [isHydrating, setIsHydrating] = useState(false);
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
@@ -390,17 +394,37 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       const daySpans: Record<string, { min: number; max: number }> = {};
       const toMin = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
       
+      // Keep track of every time slot to see if they overlap
+      const dailySchedules: Record<string, { start: number; end: number }[]> = {};
+      let calculatedHasClash = false;
+
       selectedCourses.forEach(c => {
         const allSchedules = [...(c.sectionSchedule?.classSchedules || []), ...(c.labSchedules || [])];
         allSchedules.forEach((s: any) => {
           if (!s.day || !s.startTime || !s.endTime) return;
           const start = toMin(s.startTime);
           const end = toMin(s.endTime);
+          
+          // Calculate max span for the minutes counter
           if (!daySpans[s.day]) daySpans[s.day] = { min: start, max: end };
           else {
             daySpans[s.day].min = Math.min(daySpans[s.day].min, start);
             daySpans[s.day].max = Math.max(daySpans[s.day].max, end);
           }
+
+          // Calculate actual overlap for the Clash Badge!
+          if (!dailySchedules[s.day]) dailySchedules[s.day] = [];
+          
+          // Check if this new class overlaps with any existing class on this day
+          dailySchedules[s.day].forEach(existingSlot => {
+            // If the start time is BEFORE the existing end time, AND the end time is AFTER the existing start time...
+            // Note: We subtract 5 minutes from the start time to account for the transit time you built into your grid!
+            if (start - 5 < existingSlot.end && end > existingSlot.start) {
+              calculatedHasClash = true;
+            }
+          });
+          
+          dailySchedules[s.day].push({ start, end });
         });
       });
       const totalMinutes = Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min), 0);
@@ -411,13 +435,13 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           routineStr, 
-          routineName: `${semester || "My"} Routine`,
-          semester: semester || "Unknown",
+          routineName: "", // Send an empty string so the Saved page auto-numbers it!
+          semester: activeSemester, // FIX: Use the live dropdown state!
           courseCount,
           totalCredits,
           totalDays,
           totalMinutes,
-          hasClash: false // Defaulting to false, update if you track active clash state
+          hasClash: calculatedHasClash 
         }),
       });
 
@@ -941,7 +965,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
               <h2 className="text-xl font-bold text-foreground">My Routine</h2>
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {studentName && <span className="text-xs font-medium text-muted-foreground">👤 {studentName}</span>}
-                {semester && <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{semester}</span>}
+                {activeSemester && <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{activeSemester}</span>}
                 <span className={`text-xs font-bold ${totalCredits > 18 ? "text-red-500" : "text-emerald-500"}`}>{totalCredits} / 25 Credits</span>
               </div>
             </div>
@@ -981,7 +1005,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 <div className="flex items-center justify-between px-1">
                   <div>
                     <p className="text-base font-bold text-foreground">{studentName ? `${studentName}'s Routine` : "My Routine"}</p>
-                    {semester && <p className="text-xs text-muted-foreground">{semester}</p>}
+                    {activeSemester && <p className="text-xs text-muted-foreground">{activeSemester}</p>}
                   </div>
                   <p className="text-xs text-muted-foreground font-medium">{totalCredits} Credits · {selectedCourses.length} Courses</p>
                 </div>

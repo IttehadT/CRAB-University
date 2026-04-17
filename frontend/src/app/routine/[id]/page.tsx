@@ -24,6 +24,9 @@ export default async function PublicRoutinePage({
     const routine = await fetchRoutineById(id);
     if (!routine) throw new Error("Routine not found");
 
+    // ADD THIS LINE:
+    console.log("DATABASE ROUTINE OBJECT:", routine);
+
     // ── 2. DECODE COURSE IDS ──
     // The routine string is stored as a Base64 encoded JSON array of section IDs
     const decodedStr = Buffer.from(routine.routineStr, "base64").toString("utf-8");
@@ -46,6 +49,9 @@ export default async function PublicRoutinePage({
       sectionIds.includes(c.sectionId)
     );
 
+    // Rock-solid check for MySQL formats (1/0), strings ("1"/"0"), or boolean (true/false)
+    const isClashing = routine.hasClash == 1 || routine.has_clash == 1 || routine.hasClash === true || routine.has_clash === true;
+
     // ── 4. RENDER: SUCCESS STATE ──
     return (
       <div className="flex min-h-screen flex-col bg-background">
@@ -67,10 +73,10 @@ export default async function PublicRoutinePage({
                 <div>
                   <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-black text-foreground md:text-3xl">
-                      {routine.routineName}
+                      {routine.routineName || "Shared Routine"}
                     </h1>
-                    {/* Clash Warning Indicator (Fixed the React Zero Bug) */}
-                    {(routine.hasClash == 1 || routine.has_clash == 1) && (
+                    {/* Clash Warning Indicator */}
+                    {isClashing && (
                       <span className="flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive-muted px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive">
                         <AlertTriangle className="h-3 w-3" /> Clash
                       </span>

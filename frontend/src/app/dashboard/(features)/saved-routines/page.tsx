@@ -210,7 +210,7 @@ export default function SavedRoutinesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
                           <h3 className="font-bold text-base text-foreground leading-tight truncate">
-                            {routine.routineName || `Routine #${routines.length - index}`}
+                            {routine.routineName}
                           </h3>
                           <button
                             onClick={() => { setRoutineToRename(routine); setNewRoutineName(routine.routineName); }}
@@ -291,7 +291,7 @@ export default function SavedRoutinesPage() {
                       <Link href={`/routine/${routine.id}`}><Eye className="w-4 h-4" /> View</Link>
                     </Button>
                     <Button asChild variant="outline" className="flex-1 rounded-xl font-bold gap-1.5 text-sm">
-                      <Link href={`/dashboard/finder?edit=${routine.id}`}><Pencil className="w-4 h-4" /> Edit</Link>
+                      <Link href={`/dashboard/finder?edit=${routine.id}&sem=${encodeURIComponent(routine.semester || "")}`}><Pencil className="w-4 h-4" /> Edit</Link>
                     </Button>
                     <button
                       onClick={() => setRoutineToShare(routine.id)}
