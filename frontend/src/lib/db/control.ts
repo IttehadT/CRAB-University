@@ -305,3 +305,30 @@ export async function setRoutineActiveStatus(id: string, email: string, isActive
     }
   ]);
 }
+
+
+export async function getAllUsers(): Promise<DBResult<User[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        // Fetch all users, sorted by whoever logged in most recently
+        const rows = await mysqlQuery<User>('SELECT * FROM users ORDER BY last_sign_in_at DESC');
+        return rows;
+      }
+    }
+  ]);
+}
+
+export async function deleteUserFromDb(id: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        await mysqlQuery('DELETE FROM users WHERE id = ?', [id]);
+      }
+    }
+  ]);
+}

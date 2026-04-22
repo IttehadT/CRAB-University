@@ -76,13 +76,14 @@ export default function LoginPage() {
         try {
           await fetch("/api/auth/sync-user", { method: "POST" });
         } catch (e) {
-          console.error("Failed to trigger sync", e);
-        }
-        
-        const urlParams = new URLSearchParams(window.location.search);
-        const redirectTo = urlParams.get("redirectedFrom") || "/dashboard";
+          console.error("Failed to trigger sync", e);
+        }
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        // Check 'next' first, fallback to 'redirectedFrom' for legacy links, default to dashboard
+        const redirectTo = urlParams.get("next") || urlParams.get("redirectedFrom") || "/dashboard";
 
-        // 1. Tell Next.js to throw away the cached "Locked" page
+        // 1. Tell Next.js to throw away the cached "Locked" page
         router.refresh();
         
         // 2. Add a tiny 100ms delay to guarantee Supabase has finished saving your cookies, then push!
@@ -116,10 +117,10 @@ export default function LoginPage() {
       }
 
       const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || email)}&background=2563eb&color=fff&size=128`;
-      const urlParams = new URLSearchParams(window.location.search);
-      const redirectTo = urlParams.get("redirectedFrom") || "/dashboard";
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectTo = urlParams.get("next") || urlParams.get("redirectedFrom") || "/dashboard";
 
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -157,15 +158,14 @@ export default function LoginPage() {
   };
 
   // Helper to get the full absolute URL for OAuth redirects
-  const getOAuthRedirectUrl = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const finalDestination = urlParams.get("redirectedFrom") || "/dashboard/finder";
-    
-    // Send them right back to the login page! 
-    // The onAuthStateChange listener will instantly catch them, run the sync API, 
-    // and then forward them to the final destination.
-    return `${window.location.origin}/login?redirectedFrom=${encodeURIComponent(finalDestination)}`;
-  };
+  const getOAuthRedirectUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const finalDestination = urlParams.get("next") || urlParams.get("redirectedFrom") || "/dashboard";
+    
+    // Send them right back to the login page WITH the ?next parameter attached!
+    // The onAuthStateChange listener will catch this and push them to finalDestination.
+    return `${window.location.origin}/login?next=${encodeURIComponent(finalDestination)}`;
+  };
 
   const handleGoogleLogin = async () => {
     setLoading(true);

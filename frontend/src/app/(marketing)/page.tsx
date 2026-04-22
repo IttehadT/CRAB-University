@@ -5,13 +5,37 @@ import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 
 export default function Home() {
-  // Grabs exactly the top 3 active features for the Hero
-  const heroFeatures = siteConfig.sidebarCategories
+  // 1. Grab all HERO features and sort them by your new `sortOrder` property
+  // Items without a sortOrder get pushed to the back (99).
+  const sortedHeroFeatures = siteConfig.sidebarCategories
     .flatMap(category => category.items)
-    .filter(feature => !feature.isDisabled)
-    .slice(0, 3);
+    .filter(feature => feature.placements.includes("HERO"))
+    .sort((a, b) => (a.sortOrder || 99) - (b.sortOrder || 99));
+
+  // 2. The Dynamic Auto-Balancer Algorithm
+  // This takes your sorted list (1, 2, 3, 4, 5...) and magically weaves it into the 3D circle:
+  // Math Expects: [Center, ImmRight, FarRight, FarLeft, ImmLeft]
+  // Result: [1st, 2nd, 4th, 5th, 3rd]
+  const heroFeatures = new Array(sortedHeroFeatures.length);
+  if (sortedHeroFeatures.length > 0) {
+    heroFeatures[0] = sortedHeroFeatures[0]; // Highest priority goes dead Center
+    
+    let rightIndex = 1;
+    let leftIndex = sortedHeroFeatures.length - 1;
+
+    // Loop through remaining items: Odds go right, Evens go left!
+    for (let i = 1; i < sortedHeroFeatures.length; i++) {
+      if (i % 2 === 1) {
+        heroFeatures[rightIndex++] = sortedHeroFeatures[i]; // 2nd, 4th, 6th priority -> Right Side
+      } else {
+        heroFeatures[leftIndex--] = sortedHeroFeatures[i]; // 3rd, 5th, 7th priority -> Left Side
+      }
+    }
+  }
 
   // Grabs ALL slider features, ignoring the isDisabled flag so they all show up
+
+  // Grab all slider features
   const sliderFeatures = siteConfig.sidebarCategories
     .flatMap(category => category.items)
     .filter(feature => feature.placements.includes("SLIDER"));
@@ -31,12 +55,13 @@ export default function Home() {
         : (prev - 1 + heroFeatures.length) % heroFeatures.length;
       return next;
     });
-    setTimeout(() => setIsAnimatingHero(false), 500);
+    // Increased from 500ms to 800ms to match the new CSS transition duration
+    setTimeout(() => setIsAnimatingHero(false), 800); 
   }, [isAnimatingHero, heroFeatures.length]);
 
-  // Auto-advance every 3s
+  // Auto-advance every 4.5s (gives users more time to read before it moves) speed
   useEffect(() => {
-    heroAutoPlayRef.current = setInterval(() => advanceHero("right"), 3000);
+    heroAutoPlayRef.current = setInterval(() => advanceHero("right"), 4500);
     return () => { if (heroAutoPlayRef.current) clearInterval(heroAutoPlayRef.current); };
   }, [advanceHero]);
   
@@ -165,7 +190,13 @@ export default function Home() {
             const absOffset = Math.abs(offset);
             const isActive = offset === 0;
 
-            const translateX = offset * (mounted && isMobile ? 55 : 240);
+            // THE FIX: Dampen the distance for the outer cards so they pull closer to the center
+            let distanceMultiplier = absOffset;
+            if (absOffset === 2) distanceMultiplier = 1.8; // Pulls the outer boundary cards inward
+            if (absOffset > 2) distanceMultiplier = 1.8;   // Tightens up any extra cards hidden in the back
+
+            // Use Math.sign to keep the negative/positive direction correct
+            const translateX = Math.sign(offset) * distanceMultiplier * (mounted && isMobile ? 55 : 240);
             const rotateY = offset * (mounted && isMobile ? -20 : -30);
             const scale = isActive ? 1 : Math.max(0.68, 1 - absOffset * 0.13);
             const opacity = absOffset > 2 ? 0 : Math.max(0.35, 1 - absOffset * 0.3);
@@ -186,7 +217,8 @@ export default function Home() {
                   transform: `translateX(calc(-50% + ${translateX}px)) rotateY(${rotateY}deg) scale(${scale})`,
                   transformOrigin: "center center",
                   transformStyle: "preserve-3d",
-                  transition: "all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+                  // Slowed down to 0.8s with a beautiful, smooth "ease-out" curve
+                  transition: "all 0.8s cubic-bezier(0.25, 1, 0.5, 1)",
                   zIndex,
                   opacity,
                   filter: blur,
@@ -225,14 +257,21 @@ export default function Home() {
                         {feature.badges?.includes("BETA") && <span className="rounded-md bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-amber-600 dark:text-amber-400">BETA</span>}
                         {feature.badges?.includes("NEW") && <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-600 dark:text-emerald-400">NEW</span>}
                         {feature.badges?.includes("AI") && <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-purple-600 dark:text-purple-400">AI</span>}
+                        {feature.isDisabled && <span className="rounded-md bg-slate-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-slate-600 dark:text-slate-400">COMING SOON</span>}
                       </div>
-                      <Link
-                        href={feature.href}
-                        className="mt-5 flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/30"
-                      >
-                        Open
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="h-3 w-3"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
-                      </Link>
+                      {feature.isDisabled ? (
+                        <div className="mt-5 flex items-center gap-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 px-5 py-2 text-xs font-bold text-slate-400 cursor-not-allowed">
+                          Locked 🔒
+                        </div>
+                      ) : (
+                        <Link
+                          href={feature.href}
+                          className="mt-5 flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/30"
+                        >
+                          Open
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="h-3 w-3"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+                        </Link>
+                      )}
                     </>
                   )}
                 </div>
@@ -296,9 +335,14 @@ export default function Home() {
           <div ref={sliderRef} className="flex gap-5 overflow-x-auto pb-10 pt-6 px-4 -mx-4 snap-x scrollbar-hide max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden scroll-smooth">
             {sliderFeatures.map((feature, index) => (
               <Link
-                href={feature.href}
+                href={feature.isDisabled ? "#" : feature.href}
+                onClick={(e) => feature.isDisabled && e.preventDefault()}
                 key={index}
-                className="group relative min-w-[270px] snap-center overflow-hidden rounded-2xl border border-border bg-card p-7 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10 md:min-w-[300px]"
+                className={`group relative min-w-[270px] snap-center overflow-hidden rounded-2xl border bg-card p-7 transition-all duration-300 md:min-w-[300px] ${
+                  feature.isDisabled 
+                    ? "border-border opacity-60 cursor-not-allowed grayscale-[0.5]" 
+                    : "border-border shadow-sm hover:-translate-y-2 hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/10"
+                }`}
               >
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="relative z-10">

@@ -75,12 +75,12 @@ export async function proxy(request: NextRequest) {
     }
 
     // SOFT GATE: If the route requires auth and there is no user logged in
-    if (requiresAuth && !user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/dashboard/locked' // Point to our new beautiful locked UI
-      url.searchParams.set('redirectedFrom', currentPath) 
-      return NextResponse.rewrite(url) // Using rewrite() keeps the layout and URL intact!
-    }
+    if (requiresAuth && !user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login' 
+      url.searchParams.set('next', currentPath) // Set the pipeline parameter
+      return NextResponse.redirect(url) // Force redirect so the URL pipeline begins
+    }
 
     // 5. ROLE-BASED ACCESS CONTROL (RBAC)
     if (user && requestedFeature && requestedFeature.allowedRoles) {

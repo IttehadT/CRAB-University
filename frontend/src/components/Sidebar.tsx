@@ -141,15 +141,18 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                 <div className={`flex flex-col gap-1 overflow-hidden transition-all duration-300 ease-in-out ${isCategoryOpen ? 'mt-1 max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
                   {category.items.map((link) => {
                     const isActive = pathname === link.href;
+                    const isGuest = userProfile.name === "Guest View";
+                    const needsAuthLock = link.requiresAuth && isGuest && !link.isDisabled;
+                    
                     const isAiStyling = link.badges?.includes("AI") ? "bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300" : "border border-transparent";
-                    const disabledStyling = link.isDisabled ? "opacity-50 pointer-events-none grayscale cursor-not-allowed" : "hover:bg-muted";
+                    const disabledStyling = link.isDisabled ? "opacity-50 grayscale cursor-not-allowed" : "hover:bg-muted";
                     const activeStyling = isActive && !link.badges?.includes("AI") ? "bg-primary/10 text-primary font-bold" : "text-card-foreground";
 
                     return (
                       <Link
                         key={link.href}
-                        // Replace href with "#" if disabled so keyboard users can't navigate to it
-                        href={link.isDisabled ? "#" : link.href}
+                        // If it's locked behind auth, send them through the ?next pipeline!
+                        href={link.isDisabled ? "#" : needsAuthLock ? `/login?next=${link.href}` : link.href}
                         onClick={(e) => { 
                           if (link.isDisabled) {
                             e.preventDefault();
@@ -168,7 +171,7 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                           {link.badges?.includes("AI") && <span className="text-xs">✨</span>}
                           {link.badges?.includes("BETA") && !link.isDisabled && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">BETA</span>}
                           {link.badges?.includes("NEW") && !link.isDisabled && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-blue-700 dark:bg-blue-900/50 dark:text-blue-400">NEW</span>}
-                          {link.isDisabled && <span className="text-xs opacity-50">🔒</span>}
+                          {(link.isDisabled || needsAuthLock) && <span className="text-xs opacity-50">🔒</span>}
                         </div>
                       </Link>
                     );

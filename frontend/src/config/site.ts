@@ -17,6 +17,7 @@ export type FeatureItem = {
   badges?: FeatureBadge[];
   placements: FeaturePlacement[];
   isDisabled?: boolean; 
+  sortOrder?: number; // Added: Controls visual priority (1 = Highest/Center, 2 = Right, 3 = Left...)
   
   // Security & Auth
   requiresAuth: boolean;
@@ -76,17 +77,17 @@ export const siteConfig = {
       items: [
         { id: "overview", label: "Overview", description: "Your central hub.", href: "/dashboard", icon: "🏠", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         // ── ACTIVE FEATURES (Ordered for Carousel: Left, Middle, Right) ──
-        { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false },
-        { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+        { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 1 },
+        { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 2 },
+        { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 3 },
         // ── LOCKED FEATURES ──
-        { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true },
+        { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: true },
       ]
     },
     {
       title: "Academic Tools",
       items: [
-        { id: "base-converter", label: "Base Converter", description: "Convert binary, hex, and more.", href: "/dashboard/converter", icon: "🔢", badges: ["NEW"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: false },
+        { id: "base-converter", label: "Base Converter", description: "Convert binary, hex, and more.", href: "/dashboard/converter", icon: "🔢", badges: ["NEW"], isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
         { id: "signal-grapher", label: "Signal Grapher", description: "Plot complex signals.", href: "/dashboard/signals", icon: "📈", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
         { id: "web-ide", label: "Web IDE", description: "Code directly in your browser.", href: "/dashboard/ide", icon: "💻", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "circuit-sim", label: "Circuit Simulator", description: "Build and test digital logic.", href: "/dashboard/circuits", icon: "🔌", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
@@ -95,10 +96,10 @@ export const siteConfig = {
     {
       title: "Campus Life",
       items: [
-        { id: "friend-matcher", label: "Friend Matcher", description: "Find students with similar interests.", href: "/dashboard/friend-matcher", icon: "🤝", badges: ["BETA"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true },
+        { id: "friend-matcher", label: "Friend Matcher", description: "Find students with similar interests.", href: "/dashboard/friend-matcher", icon: "🤝", badges: ["BETA"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 4 },
         { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", badges: ["NEW"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
         { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "bus-schedule", label: "Bus Schedule", description: "Live campus transport timings.", href: "/dashboard/bus", icon: "🚌", isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: false },
+        { id: "bus-schedule", label: "Bus Schedule", description: "Live campus transport timings.", href: "/dashboard/bus", icon: "🚌", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
         { id: "faculty-reviews", label: "Faculty Reviews", description: "Read and write professor ratings.", href: "/dashboard/reviews", icon: "⭐", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
       ]
     },
@@ -113,7 +114,7 @@ export const siteConfig = {
     {
       title: "AI & Lounge",
       items: [
-        { id: "ai-mentor", label: "AI Peer Mentor", description: "Your 24/7 academic assistant.", href: "/dashboard/mentor", icon: "🤖", badges: ["AI"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true },
+        { id: "ai-mentor", label: "AI Peer Mentor", description: "Your 24/7 academic assistant.", href: "/dashboard/mentor", icon: "🤖", badges: ["AI"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 5 },
         { id: "gaming-lounge", label: "Gaming Lounge", description: "Relax with browser games.", href: "/dashboard/games", icon: "🎮", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
       ]
     },
@@ -122,6 +123,21 @@ export const siteConfig = {
       items: [
         { id: "report-bug", label: "Report a Bug", description: "Help us improve CRABU.", href: "/dashboard/bug", icon: "🐛", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "dev-profile", label: "Developer Profile", description: "About the creator.", href: "/dashboard/developer", icon: "👨‍💻", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+      ]
+    },
+    {
+      title: "Administration",
+      items: [
+        { 
+          id: "admin-hub", 
+          label: "Admin Hub", 
+          description: "Manage users, sync DB, and resolve tickets.", 
+          href: "/dashboard/admin", 
+          icon: "🛡️", 
+          placements: ["SIDEBAR"], 
+          requiresAuth: true, 
+          allowedRoles: ["admin"] // STRICT RBAC: Only admins will even see this link
+        },
       ]
     }
   ] as SidebarCategory[],

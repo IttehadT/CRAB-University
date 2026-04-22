@@ -17,7 +17,9 @@ import {
   deleteSavedRoutine,
   getSavedRoutineById,
   updateSavedRoutineName,
-  setRoutineActiveStatus
+  setRoutineActiveStatus,
+  getAllUsers,
+  deleteUserFromDb
 } from './db/control';
 import { CourseMold, User } from './db/mold';
 import { siteConfig } from "@/config/site"; // <-- Added for Master Semester Switch
@@ -125,4 +127,15 @@ export async function updateRoutineActiveStatus(id: string, email: string, isAct
   const result = await setRoutineActiveStatus(id, email, isActive);
   if (!result.success) throw new Error(result.error);
   return result.data;
+}
+
+export async function fetchAllUsers(): Promise<User[]> {
+  const result = await getAllUsers();
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+export async function removeUser(id: string): Promise<void> {
+  const result = await deleteUserFromDb(id);
+  if (!result.success) throw new Error(result.error);
 }
