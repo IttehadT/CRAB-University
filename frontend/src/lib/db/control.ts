@@ -332,3 +332,76 @@ export async function deleteUserFromDb(id: string): Promise<DBResult<void>> {
     }
   ]);
 }
+
+
+export async function getAllCourseSwaps(): Promise<DBResult<any[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        return await mysqlQuery<any>('SELECT * FROM course_swaps ORDER BY created_at DESC');
+      }
+    }
+  ]);
+}
+
+
+// ============================================================
+// ── FYAT ROUTINE MAPPER ──
+// ============================================================
+
+export async function getFyatGroupsByEmail(email: string): Promise<DBResult<any[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        return await mysqlQuery<any>('SELECT * FROM fyat_groups WHERE mentor_email = ? ORDER BY created_at DESC', [email]);
+      }
+    }
+  ]);
+}
+
+export async function getFyatGroupDetails(groupId: string): Promise<DBResult<{ group: any, responses: any[] }>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const groupRows = await mysqlQuery<any>('SELECT * FROM fyat_groups WHERE id = ?', [groupId]);
+        if (groupRows.length === 0) throw new Error("Group not found");
+        
+        const responseRows = await mysqlQuery<any>('SELECT * FROM fyat_responses WHERE group_id = ? ORDER BY created_at DESC', [groupId]);
+        
+        return { group: groupRows[0], responses: responseRows };
+      }
+    }
+  ]);
+}
+
+export async function createFyatGroup(id: string, email: string, groupName: string, courses: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `INSERT INTO fyat_groups (id, mentor_email, group_name, mentor_courses) VALUES (?, ?, ?, ?)`;
+        await mysqlQuery(sql, [id, email, groupName, courses]);
+      }
+    }
+  ]);
+}
+
+export async function createFyatResponse(id: string, groupId: string, studentName: string, studentId: string, courses: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `INSERT INTO fyat_responses (id, group_id, student_name, student_id, courses) VALUES (?, ?, ?, ?, ?)`;
+        await mysqlQuery(sql, [id, groupId, studentName, studentId, courses]);
+      }
+    }
+  ]);
+}

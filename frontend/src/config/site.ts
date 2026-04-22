@@ -80,6 +80,8 @@ export const siteConfig = {
         { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 1 },
         { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 2 },
         { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 3 },
+        { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+        { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", badges: ["NEW"], placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },        
         // ── LOCKED FEATURES ──
         { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: true },
       ]
@@ -97,8 +99,6 @@ export const siteConfig = {
       title: "Campus Life",
       items: [
         { id: "friend-matcher", label: "Friend Matcher", description: "Find students with similar interests.", href: "/dashboard/friend-matcher", icon: "🤝", badges: ["BETA"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 4 },
-        { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", badges: ["NEW"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
-        { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "bus-schedule", label: "Bus Schedule", description: "Live campus transport timings.", href: "/dashboard/bus", icon: "🚌", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
         { id: "faculty-reviews", label: "Faculty Reviews", description: "Read and write professor ratings.", href: "/dashboard/reviews", icon: "⭐", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
       ]

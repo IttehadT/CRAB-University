@@ -19,7 +19,10 @@ import {
   updateSavedRoutineName,
   setRoutineActiveStatus,
   getAllUsers,
-  deleteUserFromDb
+  deleteUserFromDb,
+  getAllCourseSwaps,
+  createFyatGroup,
+  createFyatResponse
 } from './db/control';
 import { CourseMold, User } from './db/mold';
 import { siteConfig } from "@/config/site"; // <-- Added for Master Semester Switch
@@ -137,5 +140,35 @@ export async function fetchAllUsers(): Promise<User[]> {
 
 export async function removeUser(id: string): Promise<void> {
   const result = await deleteUserFromDb(id);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function fetchAllCourseSwaps() {
+  const result = await getAllCourseSwaps();
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+import { getFyatGroupsByEmail, getFyatGroupDetails } from './db/control'; // add to top imports
+
+export async function fetchFyatGroups(email: string) {
+  const result = await getFyatGroupsByEmail(email);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+export async function fetchFyatGroupDetails(groupId: string) {
+  const result = await getFyatGroupDetails(groupId);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+export async function addFyatGroup(id: string, email: string, groupName: string, courses: string) {
+  const result = await createFyatGroup(id, email, groupName, courses);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function addFyatResponse(id: string, groupId: string, studentName: string, studentId: string, courses: string) {
+  const result = await createFyatResponse(id, groupId, studentName, studentId, courses);
   if (!result.success) throw new Error(result.error);
 }
