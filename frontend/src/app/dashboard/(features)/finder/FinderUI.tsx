@@ -7,7 +7,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { CourseMold } from "@/lib/db/mold";
 import { useSearchParams, useRouter } from "next/navigation"; 
-import { RoutineGrid } from "@/components/ui/RoutineGrid";
+import { RoutineViewer } from "@/components/ui/RoutineViewer";
+import { useRoutineMath, checkCourseClash } from "@/hooks/useRoutineMath";
+import { useToast } from "@/components/ui/Toast";
+import { exportRoutineToPNG } from "@/lib/exportRoutine";
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // INDEXED-DB CACHE HELPER (Native, no npm packages required)
@@ -80,7 +84,14 @@ const normalizeCourse = (raw: any): Partial<CourseMold> => {
       };
     } catch {}
   }
-const labSchedules = raw.labSchedules ?? raw.lab_schedule ?? null;
+  
+  // Safely extract lab schedules (checking CDN name, old DB name, and new DB name)
+  let rawLabSchedules = raw.labSchedules ?? raw.lab_schedule ?? raw.schedule_details ?? null;
+  let parsedLabSchedules = null;
+  try {
+    parsedLabSchedules = typeof rawLabSchedules === "string" ? JSON.parse(rawLabSchedules) : rawLabSchedules;
+  } catch {}
+
   return {
     ...raw,
     sectionId: raw.sectionId || raw.id,
@@ -92,8 +103,12 @@ const labSchedules = raw.labSchedules ?? raw.lab_schedule ?? null;
     faculties: raw.faculties,
     capacity: raw.capacity,
     roomName: raw.roomName || raw.room_name || raw.roomNumber || null,
+    
+    // 🔥 EXPLICITLY GRAB THE LAB ROOM (CDN JSON -> raw.labRoomName | MySQL -> raw.lab_room_name)
+    labRoomName: raw.labRoomName || raw.lab_room_name || null, 
+    
     sectionSchedule,
-    labSchedules,
+    labSchedules: parsedLabSchedules,
   };
 };
 
@@ -106,17 +121,22 @@ const formatTime12h = (time24?: string | null) => {
   return `${h}:${minutes} ${ampm}`;
 };
 
-const formatExam = (schedule?: any) => {
-  if (!schedule?.finalExamDate) return "N/A";
-  const utc = new Date(schedule.finalExamDate);
+const formatExamDate = (dateStr: string | null, start: string | null, end: string | null) => {
+  if (!dateStr) return null;
+  const utc = new Date(dateStr);
   const bd = new Date(utc.getTime() + 6 * 60 * 60 * 1000);
-  const dateStr = bd.toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric", timeZone: "UTC"
-  });
-  const start = formatTime12h(schedule.finalExamStartTime);
-  const end = formatTime12h(schedule.finalExamEndTime);
-  if (start && end) return `${dateStr} ${start} – ${end}`;
-  return dateStr;
+  const d = bd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  const s = formatTime12h(start);
+  const e = formatTime12h(end);
+  return s && e ? `${d} ${s}–${e}` : d;
+};
+
+const formatExam = (schedule?: any): { mid: string | null; final: string | null } | "N/A" => {
+  if (!schedule) return "N/A";
+  const mid = formatExamDate(schedule.midExamDate, schedule.midExamStartTime, schedule.midExamEndTime);
+  const final = formatExamDate(schedule.finalExamDate, schedule.finalExamStartTime, schedule.finalExamEndTime);
+  if (!mid && !final) return "N/A";
+  return { mid, final };
 };
 
 const toMinutes = (t: string) => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
@@ -165,6 +185,8 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   
   const calendarRef = useRef<HTMLDivElement>(null);
   const filterDropdownRef = useRef<HTMLDivElement>(null);
+
+  const { showToast, ToastComponent } = useToast();
 
   // ── THE INSTANT LOAD CACHE ENGINE ────────────────────────────────────────
   useEffect(() => {
@@ -336,62 +358,10 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   // Both the Preview UI and the Save Button pull from this single source!
   // ── THE SHARED MATH ENGINE ──
   // Both the Preview UI and the Save Button pull from this single source!
-  const liveStats = useMemo(() => {
-    const daySet = new Set<string>();
-    const daySpans: Record<string, { min: number; max: number }> = {};
-    const dailySchedules: Record<string, { start: number; end: number }[]> = {};
-    const examSchedules: Record<string, { start: number; end: number }[]> = {};
-    let clash = false;
 
-    selectedCourses.forEach(c => {
-      // 1. Class & Lab Overlaps
-      const allSchedules = [...(c.sectionSchedule?.classSchedules || []), ...(c.labSchedules || [])];
-      allSchedules.forEach((s: any) => {
-        if (!s.day || !s.startTime || !s.endTime) return;
-        daySet.add(s.day);
-        
-        // FIXED: Changed toMin to toMinutes
-        const start = toMinutes(s.startTime); 
-        const end = toMinutes(s.endTime);
-        
-        if (!daySpans[s.day]) daySpans[s.day] = { min: start, max: end };
-        else { daySpans[s.day].min = Math.min(daySpans[s.day].min, start); daySpans[s.day].max = Math.max(daySpans[s.day].max, end); }
 
-        if (!dailySchedules[s.day]) dailySchedules[s.day] = [];
-        dailySchedules[s.day].forEach(ext => { if (start - 5 < ext.end && end > ext.start) clash = true; });
-        dailySchedules[s.day].push({ start, end });
-      });
-
-      // 2. Exam Overlaps
-      const sx = c.sectionSchedule as any;
-      if (sx) {
-        const checkExam = (dStr: string, sTime: string, eTime: string) => {
-          if (!dStr || !sTime || !eTime) return;
-          const dKey = dStr.split("T")[0]; 
-          
-          // FIXED: Changed toMin to toMinutes
-          const st = toMinutes(sTime); 
-          const et = toMinutes(eTime);
-          
-          if (!examSchedules[dKey]) examSchedules[dKey] = [];
-          examSchedules[dKey].forEach(ext => { if (st < ext.end && et > ext.start) clash = true; });
-          examSchedules[dKey].push({ start: st, end: et });
-        };
-        checkExam(sx.midExamDate, sx.midExamStartTime, sx.midExamEndTime);
-        checkExam(sx.finalExamDate, sx.finalExamStartTime, sx.finalExamEndTime);
-      }
-    });
-
-    const totalMinutes = Object.values(daySpans).reduce((sum, d) => sum + (d.max - d.min), 0);
-    const hrs = Math.floor(totalMinutes / 60); const mins = totalMinutes % 60;
-    
-    return { 
-      totalDays: daySet.size, 
-      totalMinutes,
-      timeStr: mins === 0 ? `${hrs} hrs` : `${hrs}h ${mins}m`, 
-      hasClash: clash 
-    };
-  }, [selectedCourses]);
+  // We use our shared engine to instantly get the stats for the Save Routine button!
+  const { stats: liveStats } = useRoutineMath(selectedCourses);
 
   const activeFilterCount = (filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0);
 
@@ -408,39 +378,35 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   const toggleCourse = (course: Partial<CourseMold>) => {
     setSelectedCourses(prev => {
       const exists = prev.some(c => c.sectionId === course.sectionId);
-      return exists ? prev.filter(c => c.sectionId !== course.sectionId) : [...prev, course];
+      if (exists) return prev.filter(c => c.sectionId !== course.sectionId);
+      const sameCourseDifferentSection = prev.some(c => c.courseCode === course.courseCode && c.sectionId !== course.sectionId);
+      if (sameCourseDifferentSection) {
+        showToast(`${course.courseCode} is already added. `, "error");
+        return prev;
+      }
+      return [...prev, course];
     });
   };
 
+  // Add this state near your other UI toggles
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Replace your old handleDownloadPNG with this:
   const handleDownloadPNG = async () => {
     if (!calendarRef.current) return;
+    
+    setIsExporting(true);
     try {
-      const { toPng } = await import("html-to-image");
-      const isDark = document.documentElement.classList.contains("dark");
-      const bg = isDark ? "#0f172a" : "#ffffff";
-      
-      // Grab the EXACT mathematical dimensions of the fully expanded table
-      const node = calendarRef.current;
-      const width = node.scrollWidth;
-      const height = node.scrollHeight;
-
-      const dataUrl = await toPng(node, {
-        quality: 1.0, // Bumped to max quality!
-        pixelRatio: 3,
-        backgroundColor: bg,
-        width: width,   // Forces the library to capture the full width
-        height: height, // Forces the library to capture the hidden scrolled height!
-        style: {
-          margin: "0",
-        }
+      await exportRoutineToPNG({
+        routineRef: calendarRef,
+        filename: `CRABU_Routine_${studentName?.replace(/\s+/g, '_') || "Mine"}`,
+        // The utility automatically forces a 1200px desktop width!
       });
-      
-      const link = document.createElement("a");
-      link.download = `CRABU_Routine_${new Date().toISOString().split("T")[0]}.png`;
-      link.href = dataUrl;
-      link.click();
-    } catch { 
-      alert("Failed to export PNG."); 
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Failed to export PNG. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -783,7 +749,19 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                     </td>
                     <td className="py-3 px-2 align-middle">{renderScheduleCell(course.sectionSchedule?.classSchedules)}</td>
                     <td className="py-3 px-2 align-middle">{renderScheduleCell(course.labSchedules)}</td>
-                    <td className="py-3 px-2 text-[11px] text-muted-foreground whitespace-nowrap align-middle">{formatExam(course.sectionSchedule)}</td>
+                    <td className="py-3 px-2 text-[11px] text-muted-foreground align-middle">
+                      {(() => {
+                        const exam = formatExam(course.sectionSchedule);
+                        if (!exam || exam === "N/A") return <span>N/A</span>;
+                        if (typeof exam === "string") return <span>{exam}</span>;
+                        return (
+                          <div className="flex flex-col gap-0.5">
+                            {exam.mid && <div><span className="font-bold text-foreground">Mid</span> {exam.mid}</div>}
+                            {exam.final && <div><span className="font-bold text-foreground">Final</span> {exam.final}</div>}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="py-3 px-2 text-center align-middle">
                       <button onClick={() => toggleCourse(course)} className={`flex h-7 w-7 items-center justify-center rounded-lg border transition mx-auto ${isSelected ? "border-destructive bg-destructive text-destructive-foreground hover:opacity-80" : "border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/10"}`}>
                         {isSelected ? "✕" : "+"}
@@ -820,60 +798,97 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
 
       {/* MOBILE CARDS */}
       {isLoadingData ? (
-        <div className="flex md:hidden flex-col gap-3 mt-2">
+        <div className="flex md:hidden flex-col gap-4 mt-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm animate-pulse">
+            <div key={i} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm animate-pulse">
               <div className="flex justify-between items-start">
-                <div className="space-y-2 w-2/3">
-                  <div className="h-5 bg-muted rounded w-3/4"></div>
-                  <div className="h-3 bg-muted rounded w-1/4"></div>
+                <div className="space-y-2 w-1/2">
+                  <div className="h-5 bg-muted rounded w-full"></div>
+                  <div className="h-3 bg-muted rounded w-1/2"></div>
                 </div>
-                <div className="h-6 bg-muted rounded w-12"></div>
+                <div className="h-6 bg-muted rounded-full w-12"></div>
               </div>
-              <div className="h-3 bg-muted rounded w-full mt-2"></div>
-              <div className="h-3 bg-muted rounded w-5/6"></div>
+              <div className="h-4 bg-muted rounded-full w-2/3 mt-2"></div>
+              <div className="h-8 bg-muted rounded-md w-full mt-2"></div>
             </div>
           ))}
         </div>
       ) : (
-      <div className="flex md:hidden flex-col gap-3 mt-2">
-        {displayedCourses.map((course, index) => {
-          const isSelected = selectedCourses.some((c) => c.sectionId === course.sectionId);
-          const capacity = course.capacity || 0; const booked = course.consumedSeat || 0; const available = capacity - booked;
+        <div className="flex md:hidden flex-col gap-4 mt-4">
+          {displayedCourses.map((course, index) => {
+            const isSelected = selectedCourses.some((c) => c.sectionId === course.sectionId);
+            
+            // 🔥 CLASH DETECTION LOGIC
+            const causesClash = !isSelected && selectedCourses.length > 0 && checkCourseClash(course, selectedCourses);
+            
+            const capacity = course.capacity || 0;
+            const booked = course.consumedSeat || 0;
 
-          return (
-            <div key={`${course.sectionId}-${index}`} className={`relative flex flex-col gap-2 rounded-xl border p-3.5 shadow-sm transition-all ${isSelected ? "border-emerald-500/50 bg-emerald-500/5" : "border-border bg-card"}`}>
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-foreground leading-tight">{course.courseCode} <span className="text-sm font-normal text-muted-foreground">[{course.sectionName}]</span></h3>
-                  <p className="mt-0.5 text-xs text-primary font-semibold uppercase">{course.faculties || "TBA"}</p>
+            return (
+              <div 
+                key={`${course.sectionId}-${index}`} 
+                className={`relative flex flex-col rounded-2xl border bg-card p-4 shadow-sm transition-all overflow-hidden
+                  ${isSelected ? "border-primary bg-primary/5" : "border-border"} 
+                  ${causesClash && !isSelected ? "border-red-400 bg-red-50/30" : ""}
+                `}
+              >
+                {/* Top Row: Course, Section, Capacity */}
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <div className="flex items-baseline gap-1.5">
+                      <h3 className="text-xl font-bold text-foreground leading-none">{course.courseCode}</h3>
+                      <span className="text-sm font-medium text-muted-foreground">[{course.sectionName}]</span>
+                    </div>
+                    <p className="mt-1 text-sm font-bold text-primary uppercase">{course.faculties || "TBA"}</p>
+                  </div>
+                  <div className="flex items-center justify-center rounded-full px-2.5 py-1 text-xs font-bold border border-border bg-muted/20 text-foreground shrink-0">
+                    {booked}/{capacity}
+                  </div>
                 </div>
-                <div className={`flex flex-col items-center rounded-lg px-2 py-1 text-xs font-bold border ${available < 0 ? "border-destructive/30 bg-destructive/10 text-destructive" : available > 0 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-border bg-muted text-foreground"}`}>
-                  <span>{booked}/{capacity}</span>
+
+                {/* Middle Row: Blue Time Pills */}
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {(course.sectionSchedule?.classSchedules || []).map((s:any, i:number) => (
+                    <span key={i} className="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-900/40 px-3 py-1 text-[11px] font-bold text-blue-600 dark:text-blue-400 tracking-wide">
+                      {s.day?.substring(0, 3).toUpperCase()} {formatTime12h(s.startTime)}–{formatTime12h(s.endTime)}
+                    </span>
+                  ))}
+                  {(course.labSchedules || []).map((s:any, i:number) => (
+                    <span key={i} className="inline-flex items-center rounded-full bg-purple-100 dark:bg-purple-900/40 px-3 py-1 text-[11px] font-bold text-purple-600 dark:text-purple-400 tracking-wide">
+                      {s.day?.substring(0, 3).toUpperCase()} {formatTime12h(s.startTime)}–{formatTime12h(s.endTime)} (LAB)
+                    </span>
+                  ))}
+                </div>
+
+                {/* Bottom Row: Exam & Action Button */}
+                <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
+                  <span className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+                    📅 {(() => {
+                      const exam = formatExam(course.sectionSchedule);
+                      if (exam === "N/A") return "N/A";
+                      return `${exam.mid ? "Mid: " + exam.mid : ""} ${exam.final ? "| Final: " + exam.final : ""}`.trim();
+                    })()}
+                  </span>
+                  
+                  {/* Action Button (With glowing red clash effect) */}
+                  <button 
+                    onClick={() => toggleCourse(course)} 
+                    title={causesClash ? "Warning: This course overlaps with your routine" : ""}
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-lg transition-all 
+                      ${isSelected 
+                        ? "border-destructive bg-destructive text-white shadow-md" 
+                        : causesClash
+                          ? "border-red-500 text-red-500 hover:bg-red-500 hover:text-white shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                          : "border-border text-foreground hover:border-primary hover:text-primary bg-background shadow-sm"
+                      }`}
+                  >
+                    {isSelected ? "−" : "+"}
+                  </button>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1.5 mt-1">
-                {(course.sectionSchedule?.classSchedules || []).map((s:any, i:number) => (
-                  <span key={i} className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-primary/10 text-primary">
-                    {s.day?.substring(0, 3)} {formatTime12h(s.startTime)}–{formatTime12h(s.endTime)}
-                  </span>
-                ))}
-                {(course.labSchedules || []).map((s:any, i:number) => (
-                  <span key={i} className="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                    {s.day?.substring(0, 3)} {formatTime12h(s.startTime)}–{formatTime12h(s.endTime)} <span className="ml-1 bg-purple-500/20 px-1 rounded">LAB</span>
-                  </span>
-                ))}
-              </div>
-              <div className="flex items-center justify-between border-t border-border pt-3 mt-2">
-                <span className="text-xs text-muted-foreground truncate flex items-center gap-1.5">📅 {formatExam(course.sectionSchedule)}</span>
-                <button onClick={() => toggleCourse(course)} className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-sm transition ${isSelected ? "border-destructive bg-destructive text-destructive-foreground shadow-md" : "border-border text-foreground bg-muted/50"}`}>
-                  {isSelected ? "✕" : "+"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
       )}
 
       {/* FILTER MODAL (B.O.R.A.C.L.E Perfect) */}
@@ -971,11 +986,14 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       )}
 
       {/* FLOATING VIEW ROUTINE BUTTON */}
-      <button onClick={() => setIsModalOpen(true)} className="fixed bottom-6 right-6 flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-xl shadow-primary/30 transition hover:-translate-y-0.5 z-40">
-        <span className="relative">
+      <button 
+        onClick={() => setIsModalOpen(true)} 
+        className="fixed bottom-6 right-6 md:right-8 flex items-center gap-2 rounded-full bg-[#0070F3] px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-500/30 transition-transform hover:-translate-y-0.5 z-40"
+      >
+        <span className="relative flex items-center justify-center">
           📅
           {selectedCourses.length > 0 && (
-            <span className="absolute -top-2 -right-3 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground font-bold border-2 border-primary">
+            <span className="absolute -top-2 -right-3 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-[#0070F3] font-black shadow-sm">
               {selectedCourses.length}
             </span>
           )}
@@ -988,68 +1006,71 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90 backdrop-blur-md p-2 md:p-6">
         <div className="relative flex h-[95vh] w-full max-w-[1400px] flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
 
-          {/* Modal Header */}
-          {/* 1. Sleek Action Bar (No Duplicate Info!) */}
+          {/* Modal Header & Clean Icon Actions */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border bg-muted/40 px-5 py-4 shrink-0 gap-4">
             <div>
-              <h2 className="text-xl font-black text-foreground">Routine Preview</h2>
+              <h2 className="text-xl font-bold text-foreground">Routine Preview</h2>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <button onClick={() => setShowExamTable(p => !p)} className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold transition shadow-sm bg-card border border-border text-foreground hover:bg-muted">
-                📋 {showExamTable ? "Hide Exams" : "Show Exams"}
+            <div className="flex items-center gap-2">
+              
+              {/* Hide/Show Exams Button */}
+              <button onClick={() => setShowExamTable(p => !p)} className="flex h-10 w-10 sm:w-36 shrink-0 items-center justify-center gap-2 rounded-lg bg-card border border-border text-foreground hover:bg-muted transition shadow-sm">
+                {showExamTable ? (
+                  <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>
+                ) : (
+                  <svg className="w-4 h-4 text-muted-foreground shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.543 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                )}
+                <span className="hidden sm:inline-block text-xs font-bold truncate">{showExamTable ? "Hide Exams" : "Show Exams"}</span>
               </button>
-              {/* Fallback to standard Tailwind purple to guarantee color render */}
-              <button onClick={handleSaveRoutine} disabled={isSaving} className="flex items-center gap-1.5 rounded-lg bg-purple-600 px-4 py-2 text-xs font-bold text-white hover:bg-purple-700 transition shadow-sm disabled:opacity-50">
-                💾 {isSaving ? "Saving..." : "Save Routine"}
+              
+              {/* Save Routine Button (Purple Floppy) */}
+              <button onClick={handleSaveRoutine} disabled={isSaving} className="flex h-10 w-10 sm:w-36 shrink-0 items-center justify-center gap-2 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition shadow-sm disabled:opacity-50">
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 21v-8H7v8M7 3v5h8V3" />
+                </svg>
+                <span className="hidden sm:inline-block text-xs font-bold truncate">{isSaving ? "Saving..." : "Save Routine"}</span>
               </button>
-              <button onClick={handleDownloadPNG} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground hover:opacity-90 transition shadow-sm">
-                ⬇ Save as PNG
+              
+              {/* Save PNG Button (Blue Download) */}
+              <button onClick={handleDownloadPNG} disabled={isExporting} className="flex h-10 w-10 sm:w-36 shrink-0 items-center justify-center gap-2 rounded-lg bg-[#0070F3] text-white hover:bg-[#0070F3]/90 transition shadow-sm disabled:opacity-50">
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 11v6m0 0l-3-3m3 3l3-3" />
+                </svg>
+                <span className="hidden sm:inline-block text-xs font-bold truncate">{isExporting ? "Exporting..." : "Save PNG"}</span>
               </button>
-              <button onClick={() => setIsModalOpen(false)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-border text-muted-foreground hover:bg-muted bg-background ml-auto sm:ml-2">
-                ✕
+              
+              {/* Forceful Red Close Button */}
+              <button onClick={() => setIsModalOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-500 bg-red-50 text-red-600 hover:bg-red-500 hover:text-white dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white transition shadow-sm shrink-0">
+                <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
+            </div>
+          </div>
+
+          {/* Scrollable Calendar Body */}
+          <div className="flex-1 overflow-y-auto p-3 md:p-6 bg-muted/10">
+            <div className="mx-auto flex w-full flex-col bg-transparent">
+              
+              {/* The Viewer now inherently contains the Header Banner and the ref! */}
+              <RoutineViewer 
+                courses={selectedCourses} 
+                showExams={showExamTable} 
+                title={studentName ? `${studentName}'s Routine` : "My Routine"}
+                semester={activeSemester}
+                forwardedRef={calendarRef} 
+                onRemoveCourse={(courseId) => {
+                  setSelectedCourses(prev => prev.filter(c => c.sectionId !== courseId));
+                }}
+              />
+
             </div>
           </div>
 
-          {/* 2. Scrollable Calendar Body (Fixes Issue 3!) */}
-          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/10">
-            <div ref={calendarRef} className="mx-auto flex w-full max-w-max flex-col gap-4 p-5 md:p-8 bg-background rounded-2xl shadow-sm border border-border">
-
-              {/* The Single Source of Truth for Info (Captured perfectly in PNG!) */}
-              <div className="flex items-center justify-between px-1 pb-2">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-2xl font-black text-foreground tracking-tight">{studentName ? `${studentName}'s Routine` : "My Routine"}</p>
-                    {activeSemester && <span className="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20 uppercase tracking-wider">{activeSemester}</span>}
-                    {liveStats.hasClash && <span className="text-[11px] font-black text-destructive bg-destructive/10 border border-destructive/30 px-2 py-1 rounded-md uppercase tracking-wider">⚠ Clash</span>}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-foreground font-bold">{selectedCourses.length} Courses • {totalCredits} Credits</p>
-                  <p className="text-xs font-bold mt-2 flex items-center justify-end gap-2">
-                    <span className="bg-muted px-2 py-1 rounded-md text-muted-foreground border border-border">{liveStats.totalDays} Days</span>
-                    <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-2 py-1 rounded-md">{liveStats.timeStr}</span>
-                  </p>
-                </div>
-              </div>
-
-              <RoutineGrid courses={selectedCourses} showExams={showExamTable} />
-
-              {/* Professional CRABU Watermark (Will appear on screen and in PNG) */}
-              <div className="mt-2 pt-4 border-t border-border flex items-center justify-between opacity-80">
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Academic Schedule
-                </p>
-                <p className="text-[10px] font-bold text-muted-foreground tracking-wide flex items-center gap-1.5">
-                  GENERATED BY <span className="text-primary">CRAB University</span> • www.crabu.app
-                </p>
-              </div>
-
-            </div>
-          </div>
         </div>
       </div>
-    )}
+      )}
+      {ToastComponent}
     </div>
   );
 }

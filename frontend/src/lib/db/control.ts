@@ -77,6 +77,7 @@ export async function getCourseData<K extends keyof CourseMold>(
         // The Master JOIN Query (Moved from mysqlDb.ts)
         // The Master JOIN Query (Updated to include schedules & exams)
         // The Master JOIN Query (Perfectly aliased to match the JSON CDN)
+        // The Master JOIN Query (Perfectly mapped to the actual schema)
         const sql = `
           SELECT 
             s.id AS sectionId, 
@@ -89,12 +90,13 @@ export async function getCourseData<K extends keyof CourseMold>(
             s.semester_id AS semesterSessionId,
             f.initials AS faculties, 
             s.room_name AS roomName, 
+            l.room_name AS labRoomName,       /* Pulled from the labs table */
             c.course_type AS courseType,
             c.academic_degree AS academicDegree, 
             c.course_name AS courseName,
             c.prerequisite_courses AS prerequisiteCourses,
             s.class_schedule AS sectionSchedule,
-            s.lab_schedule AS labSchedules,
+            l.schedule_details AS labSchedules, /* Pulled from the labs table */
             s.final_exam_date AS finalExamDate, 
             s.final_exam_start_time AS finalExamStartTime, 
             s.final_exam_end_time AS finalExamEndTime,
@@ -105,6 +107,7 @@ export async function getCourseData<K extends keyof CourseMold>(
           JOIN courses c ON s.course_id = c.id
           LEFT JOIN faculties f ON s.faculty_id = f.id
           LEFT JOIN seat_status ss ON s.id = ss.section_id
+          LEFT JOIN labs l ON s.id = l.parent_section_id
         `;
         
         const rows = await mysqlQuery<any>(sql);

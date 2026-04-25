@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { fetchCourses, fetchUserRoutines } from "@/lib/service";
-import { RoutineGrid } from "@/components/ui/RoutineGrid";
+import { RoutineViewer } from "@/components/ui/RoutineViewer"; // 🔥 Updated Import
 import { AlertTriangle, Calendar, CheckCircle } from "lucide-react";
 
 export default async function MyRoutinePage() {
@@ -47,8 +47,15 @@ export default async function MyRoutinePage() {
 
     // 4. Fetch the actual course schedules for the grid (Semester-Aware)
     const coursesRes = await fetchCourses([
-      "sectionId", "courseCode", "sectionName", "roomName", "faculties", "sectionSchedule", "labSchedules"
-    ], defaultRoutine.semester); 
+      "sectionId", 
+      "courseCode", 
+      "sectionName", 
+      "roomName", 
+      "labRoomName", // 🔥 ADD THIS LINE!
+      "faculties", 
+      "sectionSchedule", 
+      "labSchedules"
+    ], defaultRoutine.semester);
     
     const courses = coursesRes.data.filter((c: any) => sectionIds.includes(c.sectionId));
 
@@ -129,11 +136,9 @@ export default async function MyRoutinePage() {
           </Link>
         </div>
 
-        {/* The beautiful calendar grid - WRAPPED FOR FLAWLESS MOBILE SCROLLING */}
-        <div className="w-full overflow-x-auto scrollbar-hide pb-4">
-          <div className="min-w-[900px]">
-            <RoutineGrid courses={courses} showExams={true} />
-          </div>
+        {/* 🔥 The unified calendar viewer - No wrapper needed! */}
+        <div className="w-full pb-4">
+          <RoutineViewer courses={courses} showExams={true} />
         </div>
 
       </main>

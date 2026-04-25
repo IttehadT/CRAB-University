@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       "consumedSeat",
       "faculties",
       "roomName",
+      "labRoomName", // 🔥 ADD THIS LINE
       "prerequisiteCourses",
       "sectionSchedule", 
       "labSchedules",  

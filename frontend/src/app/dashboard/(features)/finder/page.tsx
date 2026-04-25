@@ -72,7 +72,7 @@ export default async function FinderPage() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           {/* Automatically says "Summer 2026 data is now live!" */}
-          <span><strong>{siteConfig.currentSemester}</strong> data is now live!</span>
+          <span><strong>{siteConfig.currentSemester}</strong> schedule is now live!</span>
         </div>
       </div>
 
