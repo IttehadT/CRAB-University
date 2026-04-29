@@ -161,10 +161,11 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   const [activeSemester, setActiveSemester] = useState(searchParams.get("sem") || semester || "Summer 2026");
   
   const [isHydrating, setIsHydrating] = useState(false);
+  
 
   // State
   const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({ hideFilled: false, avoidFaculties: [] as string[], labFilter: 'all', onlySelected: false });
+  const [filters, setFilters] = useState({ hideFilled: false, avoidFaculties: [] as string[], avoidDays: [] as string[], labFilter: 'all', onlySelected: false });
   const [sortConfig, setSortConfig] = useState({ key: 'courseCode' as string | null, direction: 'asc' });
   const [selectedCourses, setSelectedCourses] = useState<Partial<CourseMold>[]>([]);
   const [displayCount, setDisplayCount] = useState(25);
@@ -310,6 +311,25 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
     if (filters.avoidFaculties.length > 0) {
       filtered = filtered.filter(c => !filters.avoidFaculties.some(f => c.faculties?.toUpperCase().includes(f)));
     }
+    // 🔥 NEW: AVOID DAY LOGIC
+    if (filters.avoidDays.length > 0) {
+      filtered = filtered.filter(c => {
+        let hasConflict = false;
+        // 1. Check Theory Classes
+        if (c.sectionSchedule?.classSchedules) {
+          hasConflict = c.sectionSchedule.classSchedules.some((s: any) => 
+            filters.avoidDays.some(avoidDay => s.day && avoidDay.toUpperCase().startsWith(s.day.toUpperCase().substring(0, 3)))
+          );
+        }
+        // 2. Check Labs
+        if (!hasConflict && c.labSchedules) {
+          hasConflict = c.labSchedules.some((s: any) => 
+            filters.avoidDays.some(avoidDay => s.day && avoidDay.toUpperCase().startsWith(s.day.toUpperCase().substring(0, 3)))
+          );
+        }
+        return !hasConflict; // Only keep courses that have NO conflict
+      });
+    }
     if (filters.labFilter === 'with-lab') filtered = filtered.filter(c => c.labSchedules && c.labSchedules.length > 0);
     if (filters.labFilter === 'without-lab') filtered = filtered.filter(c => !c.labSchedules || c.labSchedules.length === 0);
     if (filters.onlySelected) filtered = filtered.filter(c => selectedCourses.some(sc => sc.sectionId === c.sectionId));
@@ -363,7 +383,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
   // We use our shared engine to instantly get the stats for the Save Routine button!
   const { stats: liveStats } = useRoutineMath(selectedCourses);
 
-  const activeFilterCount = (filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0);
+  const activeFilterCount = (filters.hideFilled ? 1 : 0) + filters.avoidFaculties.length + filters.avoidDays.length + (filters.labFilter !== 'all' ? 1 : 0) + (filters.onlySelected ? 1 : 0);
 
   // Handlers
   const handleSort = (key: string) => {
@@ -623,9 +643,25 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 <div className="absolute right-0 mt-2 w-72 bg-card border border-border rounded-lg shadow-xl z-50">
                   <div className="p-3 border-b border-border flex justify-between items-center">
                     <h3 className="font-semibold text-foreground text-sm">Active Filters</h3>
-                    <button onClick={() => { setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false }); setFilterDropdownOpen(false); }} className="text-xs text-destructive hover:underline">Clear All</button>
+                    {/* 🔥 Updated Clear All State */}
+                    <button onClick={() => { setFilters({ hideFilled: false, avoidFaculties: [], avoidDays: [], labFilter: 'all', onlySelected: false }); setFilterDropdownOpen(false); }} className="text-xs text-destructive hover:underline">Clear All</button>
                   </div>
-                  <div className="p-2 max-h-64 overflow-y-auto space-y-1">
+                  <div className="p-2 max-h-64 overflow-y-auto flex-col gap-1">
+                    {/* ... (Keep hideFilled, onlySelected, labFilter here) ... */}
+
+                    {filters.avoidFaculties.map(f => (
+                      <button key={f} onClick={() => setFilters(p => ({ ...p, avoidFaculties: p.avoidFaculties.filter(x => x !== f) }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
+                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-destructive" />Avoid: {f}</span>
+                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
+                      </button>
+                    ))}
+                    {/* 🔥 NEW: Active Avoid Days Dropdown Items */}
+                    {filters.avoidDays.map(d => (
+                      <button key={d} onClick={() => setFilters(p => ({ ...p, avoidDays: p.avoidDays.filter(x => x !== d) }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
+                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-orange-500" />Avoid: {d}</span>
+                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
+                      </button>
+                    ))}
                     {filters.hideFilled && (
                       <button onClick={() => setFilters(p => ({ ...p, hideFilled: false }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
                         <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-primary" />Hide Filled</span>
@@ -644,12 +680,6 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                         <span className="text-muted-foreground group-hover:text-destructive">✕</span>
                       </button>
                     )}
-                    {filters.avoidFaculties.map(f => (
-                      <button key={f} onClick={() => setFilters(p => ({ ...p, avoidFaculties: p.avoidFaculties.filter(x => x !== f) }))} className="w-full flex justify-between items-center px-3 py-2 hover:bg-muted rounded text-sm group">
-                        <span className="flex items-center gap-2 text-foreground"><div className="w-2 h-2 rounded-full bg-destructive" />Avoid: {f}</span>
-                        <span className="text-muted-foreground group-hover:text-destructive">✕</span>
-                      </button>
-                    ))}
                   </div>
                 </div>
               )}
@@ -958,25 +988,55 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 {filters.avoidFaculties.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {filters.avoidFaculties.map(f => (
-                      <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20">
-                        {f} <button onClick={() => setFilters(p => ({ ...p, avoidFaculties: p.avoidFaculties.filter(x => x !== f) }))} className="hover:text-destructive/70 transition">✕</button>
+                      <span key={f} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[hsl(var(--filter-faculty)_/_10%)] text-[hsl(var(--filter-faculty))] text-xs font-medium border border-[hsl(var(--filter-faculty)_/_20%)]">
+                        {f} <button onClick={() => setFilters(p => ({ ...p, avoidFaculties: p.avoidFaculties.filter(x => x !== f) }))} className="hover:opacity-70 transition">✕</button>
                       </span>
                     ))}
                   </div>
                 )}
               </div>
 
+              {/* Avoid Days UI */}
+              <div className="space-y-3 pt-4 border-t border-border">
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Avoid Day</label>
+                <div className="flex items-center justify-between gap-1">
+                  {[
+                    { label: 'S', value: 'Sunday' }, { label: 'M', value: 'Monday' }, { label: 'T', value: 'Tuesday' }, 
+                    { label: 'W', value: 'Wednesday' }, { label: 'T', value: 'Thursday' }, { label: 'F', value: 'Friday' }, { label: 'S', value: 'Saturday' }
+                  ].map((day, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setFilters(p => ({
+                          ...p,
+                          avoidDays: p.avoidDays.includes(day.value)
+                            ? p.avoidDays.filter(d => d !== day.value)
+                            : [...p.avoidDays, day.value]
+                        }));
+                      }}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${
+                        filters.avoidDays.includes(day.value)
+                          ? 'bg-[hsl(var(--filter-day))] text-white border-[hsl(var(--filter-day))] shadow-sm shadow-[hsl(var(--filter-day))]/20'
+                          : 'bg-card text-muted-foreground hover:bg-muted hover:text-foreground border-border/60'
+                      }`}
+                    >
+                      {day.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Checkboxes */}
               <div className="space-y-3 pt-2 border-t border-border">
                 <label className="flex items-center gap-3 cursor-pointer p-3 bg-muted/30 hover:bg-muted/50 rounded-lg border border-border transition-colors">
-                  <input type="checkbox" checked={filters.onlySelected} onChange={e => setFilters(p => ({ ...p, onlySelected: e.target.checked }))} className="w-5 h-5 rounded border-border accent-emerald-500 bg-background" />
+                  <input type="checkbox" checked={filters.onlySelected} onChange={e => setFilters(p => ({ ...p, onlySelected: e.target.checked }))} className="w-5 h-5 rounded border-border accent-[hsl(var(--filter-selected))] bg-background cursor-pointer" />
                   <div>
                     <span className="block font-medium text-foreground">Only Show Selected</span>
                     <span className="text-[11px] text-muted-foreground">Filter list to display only your routine</span>
                   </div>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer p-3 bg-muted/30 hover:bg-muted/50 rounded-lg border border-border transition-colors">
-                  <input type="checkbox" checked={filters.hideFilled} onChange={e => setFilters(p => ({ ...p, hideFilled: e.target.checked }))} className="w-5 h-5 rounded border-border accent-primary bg-background" />
+                  <input type="checkbox" checked={filters.hideFilled} onChange={e => setFilters(p => ({ ...p, hideFilled: e.target.checked }))} className="w-5 h-5 rounded border-border accent-[hsl(var(--filter-filled))] bg-background cursor-pointer" />
                   <div>
                     <span className="block font-medium text-foreground">Hide Filled Sections</span>
                     <span className="text-[11px] text-muted-foreground">Remove sections with no available seats</span>
@@ -989,16 +1049,22 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Lab Requirement</label>
                 <div className="flex p-1 bg-muted rounded-lg border border-border">
                   <button onClick={() => setFilters(p => ({ ...p, labFilter: 'all' }))} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${filters.labFilter === 'all' ? 'bg-card text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'}`}>All Courses</button>
-                  <button onClick={() => setFilters(p => ({ ...p, labFilter: 'with-lab' }))} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${filters.labFilter === 'with-lab' ? 'bg-card text-purple-500 shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'}`}>With Labs</button>
-                  <button onClick={() => setFilters(p => ({ ...p, labFilter: 'without-lab' }))} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${filters.labFilter === 'without-lab' ? 'bg-card text-primary shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'}`}>Without Labs</button>
+                  <button onClick={() => setFilters(p => ({ ...p, labFilter: 'with-lab' }))} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${filters.labFilter === 'with-lab' ? 'bg-card text-[hsl(var(--filter-lab))] shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'}`}>With Labs</button>
+                  <button onClick={() => setFilters(p => ({ ...p, labFilter: 'without-lab' }))} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${filters.labFilter === 'without-lab' ? 'bg-card text-[hsl(var(--filter-filled))] shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:text-foreground'}`}>Without Labs</button>
                 </div>
               </div>
 
             </div>
 
             <div className="flex gap-3 p-4 border-t border-border bg-muted/30">
-              <button onClick={() => { setFilters({ hideFilled: false, avoidFaculties: [], labFilter: 'all', onlySelected: false }); setShowFilterModal(false); }} className="flex-1 py-2.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-medium rounded-lg text-sm transition">Reset</button>
-              <button onClick={() => setShowFilterModal(false)} className="flex-1 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-lg text-sm transition shadow-sm">Apply Filters</button>
+              {/* White/Neutral Reset Button */}
+              <button onClick={() => { setFilters({ hideFilled: false, avoidFaculties: [], avoidDays: [], labFilter: 'all', onlySelected: false }); setShowFilterModal(false); }} className="flex-1 py-2.5 bg-background border border-border text-foreground hover:bg-muted font-bold rounded-lg text-sm transition shadow-sm">
+                Reset
+              </button>
+              {/* Primary Apply Button */}
+              <button onClick={() => setShowFilterModal(false)} className="flex-1 py-2.5 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-lg text-sm transition shadow-sm">
+                Apply Filters
+              </button>
             </div>
           </div>
         </div>

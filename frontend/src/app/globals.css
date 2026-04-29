@@ -75,6 +75,13 @@
   /* ── 7. FOCUS RINGS & RADIUS ── */
   --ring: #0071e3; /* Blue glow when clicking inputs */
   --radius: 0.75rem; /* Slightly rounder, modern Apple feel (12px) */
+
+  /* this colros are for finderui filter blocks */
+  --filter-filled: 217 91% 60%;   /* Blue */
+  --filter-selected: 142 71% 45%; /* Emerald Green */
+  --filter-lab: 270 70% 60%;      /* Purple */
+  --filter-faculty: 0 84% 60%;    /* Red */
+  --filter-day: 24 95% 53%;       /* Orange */
 }
 
 .dark {
@@ -129,6 +136,13 @@
 
   /* ── 7. FOCUS RINGS ── */
   --ring: #2997ff;
+
+  /* this colros are for finderui filter blocks */
+  --filter-filled: 217 91% 60%;
+  --filter-selected: 142 71% 45%;
+  --filter-lab: 270 60% 65%;
+  --filter-faculty: 0 84% 60%;
+  --filter-day: 24 95% 53%;
 }
 
 /* * ─── TAILWIND V4 THEME MAPPING ─────────────────────────────────────────────
