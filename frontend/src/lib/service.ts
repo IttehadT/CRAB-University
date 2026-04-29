@@ -22,10 +22,18 @@ import {
   deleteUserFromDb,
   getAllCourseSwaps,
   createFyatGroup,
-  createFyatResponse
+  createFyatResponse,
+  createCourseSwap,
+  createSwapRequest,
+  getSwapRequestsForUser,
+  updateSwapRequestStatus,
+  deleteSwapRequest,
+  setCourseSwapDone,
+  markNotificationsAsRead
 } from './db/control';
 import { CourseMold, User } from './db/mold';
 import { siteConfig } from "@/config/site"; // <-- Added for Master Semester Switch
+import { getFyatGroupsByEmail, getFyatGroupDetails } from './db/control'; // add to top imports
 
 // ============================================================
 // COURSE LOGIC
@@ -149,7 +157,7 @@ export async function fetchAllCourseSwaps() {
   return result.data;
 }
 
-import { getFyatGroupsByEmail, getFyatGroupDetails } from './db/control'; // add to top imports
+
 
 export async function fetchFyatGroups(email: string) {
   const result = await getFyatGroupsByEmail(email);
@@ -170,5 +178,45 @@ export async function addFyatGroup(id: string, email: string, groupName: string,
 
 export async function addFyatResponse(id: string, groupId: string, studentName: string, studentId: string, courses: string) {
   const result = await createFyatResponse(id, groupId, studentName, studentId, courses);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function addCourseSwap(
+  id: string, userEmail: string, studentName: string, courseCode: string,
+  haveSection: string, haveFaculty: string, haveTime: string,
+  wantSection: string, wantFaculty: string, wantTime: string, notes: string
+) {
+  const result = await createCourseSwap(id, userEmail, studentName, courseCode, haveSection, haveFaculty, haveTime, wantSection, wantFaculty, wantTime, notes);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function addSwapRequest(id: string, swapId: string, senderEmail: string, receiverEmail: string) {
+  const result = await createSwapRequest(id, swapId, senderEmail, receiverEmail);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function fetchUserSwapRequests(email: string) {
+  const result = await getSwapRequestsForUser(email);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+export async function changeSwapRequestStatus(requestId: string, status: 'ACCEPTED' | 'REJECTED') {
+  const result = await updateSwapRequestStatus(requestId, status);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function removeSwapRequest(requestId: string) {
+  const result = await deleteSwapRequest(requestId);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function markSwapAsDone(swapId: string, userEmail: string) {
+  const result = await setCourseSwapDone(swapId, userEmail);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function readAllSwapNotifications(email: string) {
+  const result = await markNotificationsAsRead(email);
   if (!result.success) throw new Error(result.error);
 }

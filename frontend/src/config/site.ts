@@ -80,7 +80,7 @@ export const siteConfig = {
         { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 1 },
         { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 2 },
         { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 3 },
-        { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+        { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", isDisabled: true, badges: ["NEW"], placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },        
         // ── LOCKED FEATURES ──
         { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: true },

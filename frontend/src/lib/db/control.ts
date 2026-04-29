@@ -408,3 +408,117 @@ export async function createFyatResponse(id: string, groupId: string, studentNam
     }
   ]);
 }
+
+
+// Course Swap Actions
+
+// ── NEW: COURSE SWAP MUTATIONS ──
+
+export async function createCourseSwap(
+  id: string, userEmail: string, studentName: string, courseCode: string,
+  haveSection: string, haveFaculty: string, haveTime: string,
+  wantSection: string, wantFaculty: string, wantTime: string, notes: string
+): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `
+          INSERT INTO course_swaps 
+          (id, user_email, student_name, course_code, have_section, have_faculty, have_time, want_section, want_faculty, want_time, notes, status)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'AVAILABLE')
+        `;
+        await mysqlQuery(sql, [id, userEmail, studentName, courseCode, haveSection, haveFaculty, haveTime, wantSection, wantFaculty, wantTime, notes]);
+      }
+    }
+  ]);
+}
+
+// ── NEW: BORACLE HANDSHAKE SYSTEM ──
+
+export async function createSwapRequest(id: string, swapId: string, senderEmail: string, receiverEmail: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `INSERT INTO swap_requests (id, swap_id, sender_email, receiver_email) VALUES (?, ?, ?, ?)`;
+        await mysqlQuery(sql, [id, swapId, senderEmail, receiverEmail]);
+      }
+    }
+  ]);
+}
+
+export async function getSwapRequestsForUser(email: string): Promise<DBResult<any[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const sql = `
+          SELECT 
+            r.*, 
+            s.course_code, s.have_section,
+            u.full_name AS sender_name
+          FROM swap_requests r
+          JOIN course_swaps s ON r.swap_id = s.id
+          LEFT JOIN users u ON r.sender_email = u.email
+          WHERE r.receiver_email = ? OR r.sender_email = ?
+          ORDER BY r.created_at DESC
+        `;
+        return await mysqlQuery<any>(sql, [email, email]);
+      }
+    }
+  ]);
+}
+
+export async function updateSwapRequestStatus(requestId: string, status: 'ACCEPTED' | 'REJECTED'): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        await mysqlQuery('UPDATE swap_requests SET status = ? WHERE id = ?', [status, requestId]);
+      }
+    }
+  ]);
+}
+
+export async function deleteSwapRequest(requestId: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        await mysqlQuery('DELETE FROM swap_requests WHERE id = ?', [requestId]);
+      }
+    }
+  ]);
+}
+
+export async function setCourseSwapDone(swapId: string, userEmail: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        // 🔥 Changed to single quotes for 'COMPLETED' to prevent MySQL strict mode errors
+        await mysqlQuery("UPDATE course_swaps SET status = 'COMPLETED' WHERE id = ? AND user_email = ?", [swapId, userEmail]);
+      }
+    }
+  ]);
+}
+
+export async function markNotificationsAsRead(email: string): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        // Marks accepted/rejected outgoing requests as seen
+        await mysqlQuery('UPDATE swap_requests SET is_read = 1 WHERE sender_email = ? AND status != "PENDING"', [email]);
+      }
+    }
+  ]);
+}
