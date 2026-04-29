@@ -42,20 +42,25 @@ export function RoutineViewer({
       <div className="export-header-banner flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 rounded-xl border border-border bg-card p-4 shadow-sm w-full">
         
         {/* Left Side: Title & Info */}
-        <div className="flex items-start gap-3 w-full md:w-auto">
-          <div className="shrink-0 rounded-xl bg-primary/10 p-2.5 text-primary hidden sm:block">
+        {/* 🔥 Changed to flex-1 to give the title maximum horizontal space */}
+        <div className="flex items-start gap-3 flex-1 min-w-0 w-full">
+          
+          {/* 🔥 Added export-icon to forcefully unhide it during mobile downloads */}
+          <div className="export-icon shrink-0 rounded-xl bg-primary/10 p-2.5 text-primary hidden sm:block">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
+          
           <div className="flex flex-col min-w-0 w-full">
             
             {/* Title & Info Column (Now Vertically Centered) */}
           <div className="flex flex-col justify-center min-w-0 w-full min-h-[44px]">
             
             {/* Title Row with Tags */}
-            <div className="flex flex-wrap items-center gap-2 overflow-hidden">
-              <h1 className="text-lg md:text-xl font-bold text-foreground tracking-tight truncate">
+            {/* 🔥 Added export-title classes to prevent truncation during download */}
+            <div className="export-title-wrapper flex flex-wrap items-center gap-2 overflow-hidden">
+              <h1 className="export-title text-lg md:text-xl font-bold text-foreground tracking-tight truncate">
                 {title}
               </h1>
               {semester && (
@@ -86,7 +91,8 @@ export function RoutineViewer({
         </div>
 
         {/* Mobile Horizontal Divider */}
-        <div className="w-full h-px bg-border md:hidden my-0.5"></div>
+        {/* 🔥 Added export-hide so it vanishes in the PNG */}
+        <div className="export-hide w-full h-px bg-border md:hidden my-0.5"></div>
 
         {/* Right Side: Structured Stats Grid */}
         <div className="export-header-stats flex flex-col items-start md:items-end gap-1.5 shrink-0 w-full md:w-auto">

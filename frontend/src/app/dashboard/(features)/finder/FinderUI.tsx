@@ -728,12 +728,20 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
             <tbody className="divide-y divide-border">
               {displayedCourses.map((course, index) => {
                 const isSelected  = selectedCourses.some((c) => c.sectionId === course.sectionId);
+                
+                // 🔥 DESKTOP CLASH DETECTION LOGIC
+                const causesClash = !isSelected && selectedCourses.length > 0 && checkCourseClash(course, selectedCourses);
+                
                 const capacity    = course.capacity || 0;
                 const booked      = course.consumedSeat || 0;
                 const available   = capacity - booked;
 
                 return (
-                  <tr key={`${course.sectionId}-${index}`} className={`transition-colors hover:bg-muted/40 ${isSelected ? "bg-emerald-500/10 dark:bg-emerald-500/10" : ""}`}>
+                  // 🔥 Apply red background tint if it clashes
+                  <tr key={`${course.sectionId}-${index}`} className={`transition-colors hover:bg-muted/40 
+                    ${isSelected ? "bg-emerald-500/10 dark:bg-emerald-500/10" : ""}
+                    ${causesClash ? "bg-red-50/40 dark:bg-red-900/10" : ""}
+                  `}>
                     <td className="py-3 px-2 font-medium text-foreground align-middle leading-tight">
                         {course.courseCode} <span className="text-[11px] font-normal text-muted-foreground">[{course.sectionName}]</span>
                     </td>
@@ -763,7 +771,18 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                       })()}
                     </td>
                     <td className="py-3 px-2 text-center align-middle">
-                      <button onClick={() => toggleCourse(course)} className={`flex h-7 w-7 items-center justify-center rounded-lg border transition mx-auto ${isSelected ? "border-destructive bg-destructive text-destructive-foreground hover:opacity-80" : "border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/10"}`}>
+                      {/* 🔥 Action Button (With glowing red clash effect matched to mobile) */}
+                      <button 
+                        onClick={() => toggleCourse(course)} 
+                        title={causesClash ? "Warning: This course overlaps with your routine" : ""}
+                        className={`flex h-7 w-7 items-center justify-center rounded-lg border transition mx-auto 
+                          ${isSelected 
+                            ? "border-destructive bg-destructive text-destructive-foreground hover:opacity-80" 
+                            : causesClash
+                              ? "border-red-500 text-red-500 hover:bg-red-500 hover:text-white shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                              : "border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/10"
+                          }`}
+                      >
                         {isSelected ? "✕" : "+"}
                       </button>
                     </td>

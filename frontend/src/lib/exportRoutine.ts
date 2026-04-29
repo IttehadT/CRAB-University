@@ -55,9 +55,11 @@ export const exportRoutineToPNG = async ({
 
     try {
     // ── FORCE DESKTOP VIEW IN THE CLONE ──
-    // Because Tailwind's media queries read the physical window width, 
-    // zooming in can cause the cloned image to fall back to mobile layouts. 
-    // We must manually strip mobile classes and force the desktop structure!
+    
+    // 🔥 ADD PREMIUM PADDING TO THE DOWNLOADED IMAGE
+    clonedNode.style.padding = '32px';
+    clonedNode.style.backgroundColor = bgColor;
+    clonedNode.style.borderRadius = '0px';
 
     // 1. Force the Grid
     const desktopGrid = clonedNode.querySelector('.crabu-desktop-grid') as HTMLElement;
@@ -79,11 +81,31 @@ export const exportRoutineToPNG = async ({
       headerBanner.classList.add('flex-row', 'items-center');
     }
 
-    // 3. Force the Header Stats to align right (Remove the top border line)
+    // 3. Force the Header Stats to align right
     const headerStats = clonedNode.querySelector('.export-header-stats') as HTMLElement;
     if (headerStats) {
       headerStats.classList.remove('items-start', 'border-t', 'pt-3', 'w-full');
       headerStats.classList.add('items-end', 'border-t-0', 'pt-0', 'w-auto');
+    }
+
+    // 🔥 4. FORCE THE ICON TO SHOW ON MOBILE EXPORTS
+    const exportIcon = clonedNode.querySelector('.export-icon') as HTMLElement;
+    if (exportIcon) {
+      exportIcon.classList.remove('hidden', 'sm:block');
+      exportIcon.style.display = 'block';
+    }
+
+    // 🔥 5. PREVENT TITLE TRUNCATION IN EXPORT
+    const titleWrapper = clonedNode.querySelector('.export-title-wrapper') as HTMLElement;
+    if (titleWrapper) {
+        titleWrapper.classList.remove('overflow-hidden', 'flex-wrap');
+        titleWrapper.style.flexWrap = 'nowrap'; // Lock tags to the same line
+    }
+    const titleText = clonedNode.querySelector('.export-title') as HTMLElement;
+    if (titleText) {
+        titleText.classList.remove('truncate');
+        titleText.style.whiteSpace = 'nowrap'; // Lock text to a single line
+        titleText.style.minWidth = 'max-content'; // Prevent any squeezing
     }
 
     // Wait 150ms for fonts and Tailwind styles to fully render on the clone
