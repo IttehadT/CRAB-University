@@ -33,7 +33,11 @@ import {
   upsertAcademicProfile,
   getAcademicProfile,
   updateUserSocialProfile,
-  getUserSocialProfile
+  getUserSocialProfile,
+  fetchTicketsByUser,
+  insertSupportTicket,
+  updateSupportTicketStatus,
+  fetchAllSupportTickets
 } from './db/control';
 import { CourseMold, User } from './db/mold';
 import { siteConfig } from "@/config/site"; // <-- Added for Master Semester Switch
@@ -243,5 +247,27 @@ export async function fetchSocialProfile(email: string) {
 
 export async function saveSocialProfile(email: string, data: any) {
   const result = await updateUserSocialProfile(email, data);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function createSupportTicket(userEmail: string, data: any) {
+  const ticketId = crypto.randomUUID();
+  const result = await insertSupportTicket(ticketId, userEmail, data);
+  if (!result.success) throw new Error(result.error);
+  return ticketId;
+}
+
+export async function getUserSupportTickets(userEmail: string) {
+  const result = await fetchTicketsByUser(userEmail);
+  return result.success ? result.data : [];
+}
+
+export async function getAllSupportTickets() {
+  const result = await fetchAllSupportTickets();
+  return result.success ? result.data : [];
+}
+
+export async function changeTicketStatus(ticketId: string, status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED') {
+  const result = await updateSupportTicketStatus(ticketId, status);
   if (!result.success) throw new Error(result.error);
 }

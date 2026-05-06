@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Users, Ticket, RefreshCw, Mail, Trash2, KeyRound, Inbox, X, Send, AlertTriangle, Copy, CheckCircle } from "lucide-react";
+import { useState, useEffect, useTransition } from "react";
+import { Users, Ticket, RefreshCw, Mail, Trash2, KeyRound, Inbox, X, Send, AlertTriangle, Copy, CheckCircle, Clock, AlertCircle, Loader2, Image as ImageIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+
+// ── IMPORT ACTIONS FOR TICKETS ──
+import { getAdminTicketsAction, updateTicketStatusAction } from "./actions";
 
 // ── TYPES ──
 type Toast = { message: string; type: "success" | "error" | "info" } | null;
@@ -12,12 +15,17 @@ type DeleteTarget = { isOpen: boolean; id: string; name: string };
 export default function AdminHubPage() {
   const [activeTab, setActiveTab] = useState<"users" | "tickets">("users");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isPending, startTransition] = useTransition();
   
   // ── REAL DATA STATES ──
   const [users, setUsers] = useState<any[]>([]);
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // ── TICKET STATES ──
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(true);
+  const [ticketsFilter, setTicketsFilter] = useState<"ALL" | "OPEN" | "IN_PROGRESS" | "RESOLVED">("ALL");
 
   // ── UI STATES (Replacing Alerts/Confirms) ──
   const [toast, setToast] = useState<Toast>(null);
@@ -41,10 +49,25 @@ export default function AdminHubPage() {
       } catch (error) {
         showToast("Failed to fetch users", "error");
       } finally {
-        setIsLoading(false);
+        setIsLoadingUsers(false);
       }
     };
+
+    const fetchTickets = async () => {
+      try {
+        const res = await getAdminTicketsAction();
+        if (res.success && res.data) {
+          setTickets(res.data);
+        }
+      } catch (error) {
+        showToast("Failed to fetch tickets", "error");
+      } finally {
+        setIsLoadingTickets(false);
+      }
+    };
+
     fetchUsers();
+    fetchTickets();
   }, []);
 
   const handleMasterSync = async () => {
@@ -64,7 +87,7 @@ export default function AdminHubPage() {
     }
   };
 
-  // ── ACTION HANDLERS ──
+  // ── ACTION HANDLERS (USERS) ──
   const handleResetPassword = async (email: string) => {
     if (!window.confirm(`Are you sure you want to send a password reset link to ${email}?`)) return;
     try {
@@ -100,10 +123,21 @@ export default function AdminHubPage() {
       showToast("Please fill out the subject and message.", "error");
       return;
     }
-    
-    // Note: This is currently a UI stub. We will build the Resend API to actually send this later!
     showToast(`Notification sent to ${emailModal.to}`, "success");
     setEmailModal({ isOpen: false, to: "", subject: "", message: "" });
+  };
+
+  // ── ACTION HANDLERS (TICKETS) ──
+  const handleStatusChange = (ticketId: string, newStatus: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED') => {
+    startTransition(async () => {
+      const res = await updateTicketStatusAction(ticketId, newStatus);
+      if (res.success) {
+        showToast(`Ticket marked as ${newStatus.replace('_', ' ')}`, "success");
+        setTickets(tickets.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
+      } else {
+        showToast(res.error || "Failed to update status", "error");
+      }
+    });
   };
 
   const filteredUsers = users.filter(u => 
@@ -111,6 +145,8 @@ export default function AdminHubPage() {
     u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.id.includes(searchQuery)
   );
+
+  const filteredTickets = ticketsFilter === "ALL" ? tickets : tickets.filter(t => t.status === ticketsFilter);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-7xl mx-auto relative">
@@ -186,7 +222,7 @@ export default function AdminHubPage() {
                 </tr>
               </thead>
               <tbody>
-                {isLoading ? (
+                {isLoadingUsers ? (
                   <tr>
                     <td colSpan={6} className="px-6 py-10 text-center text-muted-foreground animate-pulse">
                       Loading user database...
@@ -272,10 +308,94 @@ export default function AdminHubPage() {
 
       {/* ── TAB CONTENT: TICKETS ── */}
       {activeTab === "tickets" && (
-        <div className="flex flex-col items-center justify-center p-16 border border-dashed border-border rounded-xl bg-card text-center">
-           <Inbox className="h-12 w-12 text-muted-foreground mb-4 opacity-40" />
-           <p className="font-bold text-lg text-foreground">No tickets for now.</p>
-           <p className="text-sm text-muted-foreground mt-1 max-w-sm">When students submit bug reports or support requests, they will appear here.</p>
+        <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h2 className="font-bold text-foreground">Support Queue</h2>
+            
+            <div className="flex bg-background border border-border rounded-lg p-1 shadow-sm overflow-x-auto w-full sm:w-auto">
+              {["ALL", "OPEN", "IN_PROGRESS", "RESOLVED"].map(f => (
+                <button 
+                  key={f} onClick={() => setTicketsFilter(f as any)} 
+                  className={`px-4 py-1.5 text-xs font-bold rounded-md transition-all whitespace-nowrap ${ticketsFilter === f ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                >
+                  {f.replace('_', ' ')}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-muted-foreground uppercase bg-muted/30 border-b border-border">
+                <tr>
+                  <th className="px-6 py-4 font-bold">Status & Category</th>
+                  <th className="px-6 py-4 font-bold">User</th>
+                  <th className="px-6 py-4 font-bold">Issue Details</th>
+                  <th className="px-6 py-4 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {isLoadingTickets ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                      <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" /> Loading queue...
+                    </td>
+                  </tr>
+                ) : filteredTickets.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
+                      <AlertCircle className="h-8 w-8 mx-auto mb-2 opacity-50" /> No tickets found in this category.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredTickets.map((ticket) => (
+                    <tr key={ticket.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-6 py-4 align-top">
+                        <div className="flex flex-col gap-2 items-start">
+                          {ticket.status === 'OPEN' && <span className="text-[10px] font-bold text-red-600 bg-red-500/10 px-2 py-1 rounded border border-red-500/20"><AlertCircle className="h-3 w-3 inline mr-1" />OPEN</span>}
+                          {ticket.status === 'IN_PROGRESS' && <span className="text-[10px] font-bold text-amber-600 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20"><Clock className="h-3 w-3 inline mr-1" />IN PROGRESS</span>}
+                          {ticket.status === 'RESOLVED' && <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20"><CheckCircle className="h-3 w-3 inline mr-1" />RESOLVED</span>}
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase">{ticket.category}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 align-top font-medium text-foreground">
+                        <div className="flex items-center gap-2">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          {ticket.user_email}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {new Date(ticket.created_at).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 align-top max-w-md">
+                        <p className="font-bold text-foreground mb-1">{ticket.subject}</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">{ticket.description}</p>
+                        {ticket.image_url && (
+                          <a href={ticket.image_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 mt-2 text-xs font-bold text-[#0070F3] hover:underline">
+                            <ImageIcon className="h-3 w-3" /> View Attachment
+                          </a>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 align-top text-right">
+                        <div className="flex flex-col items-end gap-2">
+                          {ticket.status !== 'IN_PROGRESS' && ticket.status !== 'RESOLVED' && (
+                            <button onClick={() => handleStatusChange(ticket.id, 'IN_PROGRESS')} disabled={isPending} className="text-[11px] font-bold px-3 py-1.5 rounded bg-amber-500 hover:bg-amber-600 text-white shadow-sm disabled:opacity-50 transition-colors w-28 text-center">
+                              Mark In Progress
+                            </button>
+                          )}
+                          {ticket.status !== 'RESOLVED' && (
+                            <button onClick={() => handleStatusChange(ticket.id, 'RESOLVED')} disabled={isPending} className="text-[11px] font-bold px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm disabled:opacity-50 transition-colors w-28 text-center">
+                              Mark Resolved
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

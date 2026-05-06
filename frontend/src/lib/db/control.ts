@@ -605,3 +605,76 @@ export async function updateUserSocialProfile(
     }
   ]);
 }
+
+
+// suport ticket system
+export async function insertSupportTicket(
+  ticketId: string,
+  userEmail: string,
+  data: { subject: string; category: string; description: string; image_url: string }
+): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        await mysqlQuery(
+          'INSERT INTO support_tickets (id, user_email, subject, category, description, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [ticketId, userEmail, data.subject, data.category, data.description, data.image_url, 'OPEN']
+        );
+      }
+    }
+  ]);
+}
+
+export async function fetchTicketsByUser(email: string): Promise<DBResult<any[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const rows = await mysqlQuery(
+          'SELECT * FROM support_tickets WHERE user_email = ? ORDER BY created_at DESC',
+          [email]
+        );
+        return Array.isArray(rows) ? rows : [];
+      }
+    }
+  ]);
+}
+
+// suport ticket system --- admin side
+
+export async function fetchAllSupportTickets(): Promise<DBResult<any[]>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const rows = await mysqlQuery(
+          'SELECT * FROM support_tickets ORDER BY created_at DESC', 
+          []
+        );
+        return Array.isArray(rows) ? rows : [];
+      }
+    }
+  ]);
+}
+
+export async function updateSupportTicketStatus(
+  ticketId: string, 
+  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'
+): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        await mysqlQuery(
+          'UPDATE support_tickets SET status = ? WHERE id = ?',
+          [status, ticketId]
+        );
+      }
+    }
+  ]);
+}

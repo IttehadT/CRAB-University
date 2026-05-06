@@ -207,7 +207,8 @@ export default function SwapUI({ initialSwaps, currentUserEmail, currentUserName
         </div>
         
         <div className="flex items-center gap-3">
-          <button 
+          {/* notification button */}
+          {/* <button 
             onClick={() => {
               setIsNotificationsOpen(true);
               if (unreadNotifsCount > 0) {
@@ -228,7 +229,7 @@ export default function SwapUI({ initialSwaps, currentUserEmail, currentUserName
                   {unreadNotifsCount}
               </span>
             )}
-          </button>
+          </button> */}
           <button onClick={() => setIsAddModalOpen(true)} className="flex items-center justify-center gap-2 rounded-xl bg-[#0070F3] px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#0070F3]/90 hover:-translate-y-0.5">
             <Plus className="h-4 w-4" /> Add Swap
           </button>
