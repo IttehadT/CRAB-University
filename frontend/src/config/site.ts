@@ -87,40 +87,48 @@ export const siteConfig = {
       ]
     },
     {
-      title: "Academic Tools",
+      title: "Social & Community",
       items: [
-        { id: "base-converter", label: "Base Converter", description: "Convert binary, hex, and more.", href: "/dashboard/converter", icon: "🔢", badges: ["NEW"], isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
-        { id: "signal-grapher", label: "Signal Grapher", description: "Plot complex signals.", href: "/dashboard/signals", icon: "📈", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
-        { id: "web-ide", label: "Web IDE", description: "Code directly in your browser.", href: "/dashboard/ide", icon: "💻", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "circuit-sim", label: "Circuit Simulator", description: "Build and test digital logic.", href: "/dashboard/circuits", icon: "🔌", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+        { id: "friends", label: "Friends", description: "Find peers and manage your network.", href: "/dashboard/friends", icon: "🤝", placements: ["SIDEBAR"], requiresAuth: true },
+        { id: "chat", label: "Messages", description: "Chat with friends and swap partners.", href: "/dashboard/chat", icon: "💬", placements: ["SIDEBAR"], requiresAuth: true },
       ]
     },
-    {
-      title: "Campus Life",
-      items: [
-        { id: "friend-matcher", label: "Friend Matcher", description: "Find students with similar interests.", href: "/dashboard/friend-matcher", icon: "🤝", badges: ["BETA"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 4 },
-        { id: "bus-schedule", label: "Bus Schedule", description: "Live campus transport timings.", href: "/dashboard/bus", icon: "🚌", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
-        { id: "faculty-reviews", label: "Faculty Reviews", description: "Read and write professor ratings.", href: "/dashboard/reviews", icon: "⭐", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
-      ]
-    },
-    {
-      title: "Resources & Career",
-      items: [
-        { id: "course-materials", label: "Course Materials", description: "Shared notes and past papers.", href: "/dashboard/materials", icon: "📚", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "tech-roadmaps", label: "Tech Roadmaps", description: "Guides for software engineering paths.", href: "/dashboard/roadmap", icon: "🗺️", badges: ["NEW"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
-        { id: "cv-builder", label: "CV Builder", description: "Generate a professional resume.", href: "/dashboard/cv", icon: "📄", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-      ]
-    },
-    {
-      title: "AI & Lounge",
-      items: [
-        { id: "ai-mentor", label: "AI Peer Mentor", description: "Your 24/7 academic assistant.", href: "/dashboard/mentor", icon: "🤖", badges: ["AI"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 5 },
-        { id: "gaming-lounge", label: "Gaming Lounge", description: "Relax with browser games.", href: "/dashboard/games", icon: "🎮", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
-      ]
-    },
+    // {
+    //   title: "Academic Tools",
+    //   items: [
+    //     { id: "base-converter", label: "Base Converter", description: "Convert binary, hex, and more.", href: "/dashboard/converter", icon: "🔢", badges: ["NEW"], isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
+    //     { id: "signal-grapher", label: "Signal Grapher", description: "Plot complex signals.", href: "/dashboard/signals", icon: "📈", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+    //     { id: "web-ide", label: "Web IDE", description: "Code directly in your browser.", href: "/dashboard/ide", icon: "💻", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+    //     { id: "circuit-sim", label: "Circuit Simulator", description: "Build and test digital logic.", href: "/dashboard/circuits", icon: "🔌", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+    //   ]
+    // },
+    // {
+    //   title: "Campus Life",
+    //   items: [
+    //     { id: "friend-matcher", label: "Friend Matcher", description: "Find students with similar interests.", href: "/dashboard/friend-matcher", icon: "🤝", badges: ["BETA"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 4 },
+    //     { id: "bus-schedule", label: "Bus Schedule", description: "Live campus transport timings.", href: "/dashboard/bus", icon: "🚌", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: false },
+    //     { id: "faculty-reviews", label: "Faculty Reviews", description: "Read and write professor ratings.", href: "/dashboard/reviews", icon: "⭐", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+    //   ]
+    // },
+    // {
+    //   title: "Resources & Career",
+    //   items: [
+    //     { id: "course-materials", label: "Course Materials", description: "Shared notes and past papers.", href: "/dashboard/materials", icon: "📚", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+    //     { id: "tech-roadmaps", label: "Tech Roadmaps", description: "Guides for software engineering paths.", href: "/dashboard/roadmap", icon: "🗺️", badges: ["NEW"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+    //     { id: "cv-builder", label: "CV Builder", description: "Generate a professional resume.", href: "/dashboard/cv", icon: "📄", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+    //   ]
+    // },
+    // {
+    //   title: "AI & Lounge",
+    //   items: [
+    //     { id: "ai-mentor", label: "AI Peer Mentor", description: "Your 24/7 academic assistant.", href: "/dashboard/mentor", icon: "🤖", badges: ["AI"], isDisabled: true, placements: ["HERO", "SIDEBAR"], requiresAuth: true, sortOrder: 5 },
+    //     { id: "gaming-lounge", label: "Gaming Lounge", description: "Relax with browser games.", href: "/dashboard/games", icon: "🎮", badges: ["BETA"], isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+    //   ]
+    // },
     {
       title: "Support",
       items: [
+        { id: "support", label: "Support Tickets", description: "Get help from the admin team.", href: "/dashboard/support", icon: "🎫", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "report-bug", label: "Report a Bug", description: "Help us improve CRABU.", href: "/dashboard/bug", icon: "🐛", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "dev-profile", label: "Developer Profile", description: "About the creator.", href: "/dashboard/developer", icon: "👨‍💻", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
       ]
@@ -130,7 +138,7 @@ export const siteConfig = {
       items: [
         { 
           id: "admin-hub", 
-          label: "Admin Hub", 
+          label: "Admin Panel", 
           description: "Manage users, sync DB, and resolve tickets.", 
           href: "/dashboard/admin", 
           icon: "🛡️", 
