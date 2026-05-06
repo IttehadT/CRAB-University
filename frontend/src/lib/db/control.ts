@@ -1,33 +1,18 @@
-/**
- * ── THE CONTROL CENTER (THE BRAIN) ──────────────────────────────────────────
- * This file dictates HOW data is fetched. It holds the fallback logic, 
- * the database routing rules, and the raw SQL queries.
- * * RULE: Services ONLY import from this file. They never touch mysql.ts or json.ts directly.
- */
-
 import { mysqlQuery } from './mysql';
 import { fetchCourseDataFromCDN, fetchCourseDataFromBucket } from './json';
 import { CourseMold, User, DBResult } from './mold';
 import { siteConfig } from '@/config/site';
 
 // ============================================================
-// SECTION 1: DATABASE CONFIGURATION & ROUTING (Formerly db.config.ts)
+// SECTION 1: DATABASE CONFIGURATION & ROUTING 
 // ============================================================
 export const DB_CONFIG = {
-  // Use these booleans as your "Kill Switches"
   useTier1_CDN: true,
   useTier2_SupabaseJSON: true, 
   useTier3_MySQL: true,        
   useTier4_VectorAI: true,     
 };
 
-// ============================================================
-// SECTION 2: THE FALLBACK ENGINE (Formerly middleMan.service.ts)
-// ============================================================
-/**
- * Tries a sequence of database calls. Returns the first one that succeeds.
- * If all fail, it returns an error.
- */
 async function withFallback<T>(
   // FIX: Explicitly typing 'name' here ensures TypeScript perfectly matches it to the DBResult mold
   attempts: Array<{ name: 'mysql' | 'cdn' | 'bucket' | 'local'; condition: boolean; fn: () => Promise<T> }>
@@ -46,11 +31,7 @@ async function withFallback<T>(
   return { success: false, error: 'Critical Failure: All active databases are down.' };
 }
 
-// ============================================================
-// SECTION 3: PUBLIC API (Exported for service.ts to use)
-// ============================================================
 
-// ── COURSES (Waterfall Strategy: CDN -> Bucket -> MySQL) ──
 export async function getCourseData<K extends keyof CourseMold>(
   parameters: K[],
   requestedSemester: string = siteConfig.currentSemester // Defaults to current if not provided
@@ -74,10 +55,6 @@ export async function getCourseData<K extends keyof CourseMold>(
       name: 'mysql',
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
-        // The Master JOIN Query (Moved from mysqlDb.ts)
-        // The Master JOIN Query (Updated to include schedules & exams)
-        // The Master JOIN Query (Perfectly aliased to match the JSON CDN)
-        // The Master JOIN Query (Perfectly mapped to the actual schema)
         const sql = `
           SELECT 
             s.id AS sectionId, 
@@ -178,7 +155,7 @@ export async function upsertUser(user: any): Promise<DBResult<void>> {
 
 
 // ============================================================
-// ── SAVED ROUTINES (MySQL Only Strategy) ──
+// ── SAVED ROUTINES 
 // ============================================================
 
 export async function getSavedRoutinesByUser(email: string): Promise<DBResult<any[]>> {
@@ -212,7 +189,6 @@ export async function createSavedRoutine(
       name: 'mysql',
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
-        // We added total_days to the column list, and an extra ? to the VALUES
         const sql = `
           INSERT INTO saved_routines 
           (id, user_email, routine_name, routine_data, semester, course_count, total_credits, total_days, total_minutes, has_clash)
@@ -239,8 +215,6 @@ export async function deleteSavedRoutine(id: string, email: string): Promise<DBR
 
 /**
  * ── RENAME ROUTINE ─────────────────────────────────────────────────────────
- * Updates the name of a specific routine, heavily guarded by user_email 
- * to prevent unauthorized modifications.
  */
 export async function updateSavedRoutineName(id: string, email: string, newName: string): Promise<DBResult<void>> {
   return withFallback([
@@ -257,8 +231,6 @@ export async function updateSavedRoutineName(id: string, email: string, newName:
 
 /**
  * ── FETCH PUBLIC ROUTINE BY ID ──────────────────────────────────────────────
- * Retrieves a single routine from MySQL using its unique UUID.
- * This does NOT filter by user_email because it is meant for public sharing.
  */
 export async function getSavedRoutineById(id: string): Promise<DBResult<any>> {
   return withFallback([
@@ -285,8 +257,6 @@ export async function getSavedRoutineById(id: string): Promise<DBResult<any>> {
 
 /**
  * ── TOGGLE DEFAULT ROUTINE ────────────────────────────────────────────────
- * If setting to true, it wipes all other defaults for this user first
- * so they can only have ONE default routine at a time.
  */
 export async function setRoutineActiveStatus(id: string, email: string, isActive: boolean): Promise<DBResult<void>> {
   return withFallback([
@@ -435,8 +405,6 @@ export async function createCourseSwap(
   ]);
 }
 
-// ── NEW: BORACLE HANDSHAKE SYSTEM ──
-
 export async function createSwapRequest(id: string, swapId: string, senderEmail: string, receiverEmail: string): Promise<DBResult<void>> {
   return withFallback([
     {
@@ -503,7 +471,6 @@ export async function setCourseSwapDone(swapId: string, userEmail: string): Prom
       name: 'mysql',
       condition: DB_CONFIG.useTier3_MySQL,
       fn: async () => {
-        // 🔥 Changed to single quotes for 'COMPLETED' to prevent MySQL strict mode errors
         await mysqlQuery("UPDATE course_swaps SET status = 'COMPLETED' WHERE id = ? AND user_email = ?", [swapId, userEmail]);
       }
     }

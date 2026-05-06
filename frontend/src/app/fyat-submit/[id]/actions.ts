@@ -7,12 +7,11 @@ export async function submitFyatRoutineAction(groupId: string, studentName: stri
     throw new Error("All fields are required.");
   }
 
-  const responseId = `resp_${crypto.randomUUID()}`;
-  
   // Clean up the courses string (uppercase, remove extra spaces)
   const cleanedCourses = courses.toUpperCase().split(',').map(c => c.trim()).filter(Boolean).join(', ');
 
-  await addFyatResponse(responseId, groupId, studentName, studentId, cleanedCourses);
+  // 🔥 FIX: Removed responseId. We only pass the 4 exact arguments that service.ts expects.
+  await addFyatResponse(groupId, studentName, studentId, cleanedCourses);
   
   return { success: true };
 }

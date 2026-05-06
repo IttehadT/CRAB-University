@@ -77,20 +77,31 @@ export const siteConfig = {
       items: [
         { id: "overview", label: "Overview", description: "Your central hub.", href: "/dashboard", icon: "🏠", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         // ── ACTIVE FEATURES (Ordered for Carousel: Left, Middle, Right) ──
-        { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 1 },
-        { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 2 },
-        { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 3 },
-        { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", isDisabled: true, badges: ["NEW"], placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },        
+              
         // ── LOCKED FEATURES ──
         // { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: true },
       ]
     },
     {
-      title: "Social & Community",
+      title: "Advising Tools",
       items: [
-        { id: "friends", label: "Friends", description: "Find peers and manage your network.", href: "/dashboard/friends", icon: "🤝", placements: ["SIDEBAR"], requiresAuth: true },
-        { id: "chat", label: "Messages", description: "Chat with friends and swap partners.", href: "/dashboard/chat", icon: "💬", placements: ["SIDEBAR"], requiresAuth: true },
+        { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 1 },
+        { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 2 },
+        { id: "saved-routines", label: "Saved Routines", description: "Manage your saved schedules.", href: "/dashboard/saved-routines", icon: "📅", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 3 },
+        { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 4},
+      ]
+    },
+    // {
+    //   title: "Social & Community",
+    //   items: [
+    //     { id: "friends", label: "Friends", description: "Find peers and manage your network.", href: "/dashboard/friends", icon: "🤝", placements: ["SIDEBAR"], requiresAuth: true },
+    //     { id: "chat", label: "Messages", description: "Chat with friends and swap partners.", href: "/dashboard/chat", icon: "💬", placements: ["SIDEBAR"], requiresAuth: true },
+    //   ]
+    // },
+    {
+      title: "FYAT Tools",
+      items: [
+        { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", badges: ["NEW"], placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 5},  
       ]
     },
     // {
@@ -138,7 +149,7 @@ export const siteConfig = {
       items: [
         { 
           id: "admin-hub", 
-          label: "Admin Panel", 
+          label: "Admin Panel (Admins Only)", 
           description: "Manage users, sync DB, and resolve tickets.", 
           href: "/dashboard/admin", 
           icon: "🛡️", 

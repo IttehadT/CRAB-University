@@ -184,7 +184,8 @@ export async function addFyatGroup(id: string, email: string, groupName: string,
   if (!result.success) throw new Error(result.error);
 }
 
-export async function addFyatResponse(id: string, groupId: string, studentName: string, studentId: string, courses: string) {
+export async function addFyatResponse(groupId: string, studentName: string, studentId: string, courses: string) {
+  const id = crypto.randomUUID();
   const result = await createFyatResponse(id, groupId, studentName, studentId, courses);
   if (!result.success) throw new Error(result.error);
 }
