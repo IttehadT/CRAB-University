@@ -1,14 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { UploadCloud, ShieldCheck, Lock, FileText, ChevronRight, AlertTriangle, ArrowRight } from "lucide-react";
+import { useState, useTransition } from "react";
+import { UploadCloud, ShieldCheck, Lock, FileText, ChevronRight, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/Toast";
+import { saveManualProfileAction } from "./actions";
 
 export default function GetStartedPage() {
   const router = useRouter();
+  const { showToast, ToastComponent } = useToast();
+  const [isPending, startTransition] = useTransition();
+
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isSavingManual, setIsSavingManual] = useState(false);
+
+  // Expanded Form State to match Database Schema
+  const [studentId, setStudentId] = useState("");
+  const [program, setProgram] = useState("BSc");
+  const [department, setDepartment] = useState("CSE");
+  const [cgpa, setCgpa] = useState("");
+  const [credits, setCredits] = useState("");
+  const [semesters, setSemesters] = useState("");
+
+  const DEPARTMENTS = ["CSE", "EEE", "BBA", "ESS", "MNS", "ENH", "ARC", "PHR", "LAW"];
+  const PROGRAMS = ["BSc", "BA", "BBA", "BSS", "MSc", "MBA"];
 
   // Drag and Drop Handlers
   const handleDragOver = (e: React.DragEvent) => e.preventDefault();
@@ -23,23 +38,38 @@ export default function GetStartedPage() {
   const handleFileUpload = async () => {
     if (!file) return;
     setIsUploading(true);
-    // TODO: Phase 3 - Send PDF to Python Backend
     setTimeout(() => {
-      // Drop cookie to bypass the guard, then redirect
       document.cookie = "crabu_skipped_onboarding=true; max-age=604800; path=/";
       router.push("/dashboard"); 
     }, 2000);
   };
 
-  // Manual Save Logic
-  const handleManualSave = async () => {
-    setIsSavingManual(true);
-    // TODO: Insert data into MySQL user_academic_profiles
-    setTimeout(() => {
-      // Drop cookie to bypass the guard, then redirect
-      document.cookie = "crabu_skipped_onboarding=true; max-age=604800; path=/";
-      router.push("/dashboard");
-    }, 1500);
+  // Manual Save Logic via Server Action
+  const handleManualSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentId || !department || !cgpa || !credits) {
+      showToast("Please fill in all required fields.", "error");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("student_id", studentId);
+    formData.append("program", program);
+    formData.append("department", department);
+    formData.append("cgpa", cgpa);
+    formData.append("credits", credits);
+    formData.append("semesters", semesters);
+
+    startTransition(async () => {
+      const res = await saveManualProfileAction(formData);
+      if (res.success) {
+        showToast("Profile saved successfully!", "success");
+        document.cookie = "crabu_skipped_onboarding=true; max-age=604800; path=/";
+        router.push("/dashboard");
+      } else {
+        showToast(res.error || "Failed to save profile", "error");
+      }
+    });
   };
 
   return (
@@ -70,7 +100,6 @@ export default function GetStartedPage() {
         {/* ── MAIN CONTENT AREA ── */}
         <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-xl relative overflow-hidden">
           
-          {/* 2-Column Grid for Side-by-Side layout */}
           <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-8">
             
             {/* ── LEFT: UPLOAD ZONE ── */}
@@ -117,13 +146,11 @@ export default function GetStartedPage() {
 
             {/* ── MIDDLE: "OR" DIVIDER ── */}
             <div className="flex items-center justify-center">
-              {/* Desktop Vertical Divider */}
               <div className="hidden md:flex h-full flex-col items-center">
                 <div className="w-px h-full bg-border"></div>
                 <span className="py-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">OR</span>
                 <div className="w-px h-full bg-border"></div>
               </div>
-              {/* Mobile Horizontal Divider */}
               <div className="flex md:hidden w-full items-center">
                 <div className="h-px flex-1 bg-border"></div>
                 <span className="px-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">OR</span>
@@ -131,48 +158,73 @@ export default function GetStartedPage() {
               </div>
             </div>
 
-            {/* ── RIGHT: MANUAL ENTRY ── */}
-            <div className="flex flex-col h-full">
+            {/* ── RIGHT: MANUAL ENTRY FORM ── */}
+            <form onSubmit={handleManualSave} className="flex flex-col h-full">
               <h3 className="text-lg font-bold text-foreground mb-4 text-center md:text-left">Enter Manually</h3>
               <div className="flex-1 flex flex-col justify-between">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase text-muted-foreground">Student ID</label>
-                    <input type="text" placeholder="e.g. 23201642" className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                
+                {/* 3x2 Grid for the 6 Fields */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[11px] font-bold uppercase text-muted-foreground">Student ID</label>
+                    <input required type="text" value={studentId} onChange={(e) => setStudentId(e.target.value)} placeholder="e.g. 23201642" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase text-muted-foreground">Department</label>
-                    <input type="text" placeholder="e.g. CSE" className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                  
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[11px] font-bold uppercase text-muted-foreground">Program</label>
+                    <div className="relative">
+                      <select value={program} onChange={(e) => setProgram(e.target.value)} className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                        {PROGRAMS.map(prog => <option key={prog} value={prog}>{prog}</option>)}
+                      </select>
+                      <ChevronRight className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground rotate-90" />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase text-muted-foreground">CGPA</label>
-                    <input type="number" step="0.01" placeholder="e.g. 3.85" className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[11px] font-bold uppercase text-muted-foreground">Department</label>
+                    <div className="relative">
+                      <select value={department} onChange={(e) => setDepartment(e.target.value)} className="w-full appearance-none rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary">
+                        {DEPARTMENTS.map(dept => <option key={dept} value={dept}>{dept}</option>)}
+                      </select>
+                      <ChevronRight className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground rotate-90" />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold uppercase text-muted-foreground">Credits</label>
-                    <input type="number" step="0.5" placeholder="e.g. 85.0" className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[11px] font-bold uppercase text-muted-foreground">Semesters</label>
+                    <input type="number" min="0" value={semesters} onChange={(e) => setSemesters(e.target.value)} placeholder="e.g. 4" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                  </div>
+
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[11px] font-bold uppercase text-muted-foreground">CGPA</label>
+                    <input required type="number" step="0.01" value={cgpa} onChange={(e) => setCgpa(e.target.value)} placeholder="e.g. 3.85" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
+                  </div>
+
+                  <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                    <label className="text-[11px] font-bold uppercase text-muted-foreground">Credits</label>
+                    <input required type="number" step="0.5" value={credits} onChange={(e) => setCredits(e.target.value)} placeholder="e.g. 85.0" className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary" />
                   </div>
                 </div>
                 
                 <button 
-                  onClick={handleManualSave}
-                  disabled={isSavingManual}
-                  className="w-full mt-6 rounded-lg bg-card border border-border hover:bg-muted px-6 py-2.5 text-sm font-bold text-foreground transition shadow-sm disabled:opacity-50"
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full mt-5 flex items-center justify-center gap-2 rounded-lg bg-card border border-border hover:bg-muted px-6 py-2.5 text-sm font-bold text-foreground transition shadow-sm disabled:opacity-50"
                 >
-                  {isSavingManual ? "Saving..." : "Save Profile Manually"}
+                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Profile Manually"}
                 </button>
               </div>
-            </div>
+            </form>
 
           </div>
         </div>
 
-        {/* ── SKIP BUTTON & WARNING ── */}
+        {/* ── SKIP BUTTON ── */}
         <div className="mt-8 flex flex-col items-center justify-center">
           <div className="flex items-start gap-3 bg-warning-muted border border-warning/30 p-3 rounded-lg max-w-md mb-4 shadow-sm">
             <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
             <p className="text-xs font-medium text-warning-foreground leading-relaxed">
-              <strong>Note:</strong> If you skip this, advanced features like Degree Evaluation and Automated Advising will be locked.
+              <strong>Note:</strong> If you skip this, advanced features will be locked.
             </p>
           </div>
           
@@ -188,6 +240,7 @@ export default function GetStartedPage() {
         </div>
 
       </div>
+      {ToastComponent}
     </div>
   );
 }

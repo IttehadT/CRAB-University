@@ -522,3 +522,86 @@ export async function markNotificationsAsRead(email: string): Promise<DBResult<v
     }
   ]);
 }
+
+// getting started feature
+export async function upsertAcademicProfile(
+  userId: string,
+  data: { student_id: string; program: string; department: string; semesters_completed: number; cgpa: number; completed_credits: number }
+): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        // 1. Check if profile already exists
+        const existing = await mysqlQuery('SELECT id FROM user_academic_profiles WHERE user_id = ?', [userId]);
+        
+        if (Array.isArray(existing) && existing.length > 0) {
+          // Update existing
+          await mysqlQuery(
+            'UPDATE user_academic_profiles SET student_id = ?, program = ?, department = ?, semesters_completed = ?, cgpa = ?, completed_credits = ? WHERE user_id = ?',
+            [data.student_id, data.program, data.department, data.semesters_completed, data.cgpa, data.completed_credits, userId]
+          );
+        } else {
+          // Insert new
+          const newId = crypto.randomUUID();
+          await mysqlQuery(
+            'INSERT INTO user_academic_profiles (id, user_id, student_id, program, department, semesters_completed, cgpa, completed_credits) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [newId, userId, data.student_id, data.program, data.department, data.semesters_completed, data.cgpa, data.completed_credits]
+          );
+        }
+      }
+    }
+  ]);
+}
+
+export async function getAcademicProfile(userId: string): Promise<DBResult<any>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const rows = await mysqlQuery('SELECT * FROM user_academic_profiles WHERE user_id = ? LIMIT 1', [userId]);
+        return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      }
+    }
+  ]);
+}
+
+
+
+// user profile settings -- modified by user
+
+export async function getUserSocialProfile(email: string): Promise<DBResult<any>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        const rows = await mysqlQuery(
+          'SELECT nickname, bio, avatar_url, is_discoverable FROM users WHERE email = ? LIMIT 1', 
+          [email]
+        );
+        return Array.isArray(rows) && rows.length > 0 ? rows[0] : null;
+      }
+    }
+  ]);
+}
+
+export async function updateUserSocialProfile(
+  email: string, 
+  data: { nickname: string; bio: string; avatar_url: string; is_discoverable: boolean }
+): Promise<DBResult<void>> {
+  return withFallback([
+    {
+      name: 'mysql',
+      condition: DB_CONFIG.useTier3_MySQL,
+      fn: async () => {
+        await mysqlQuery(
+          'UPDATE users SET nickname = ?, bio = ?, avatar_url = ?, is_discoverable = ? WHERE email = ?',
+          [data.nickname, data.bio, data.avatar_url, data.is_discoverable ? 1 : 0, email]
+        );
+      }
+    }
+  ]);
+}

@@ -152,7 +152,7 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
                       <Link
                         key={link.href}
                         // If it's locked behind auth, send them through the ?next pipeline!
-                        href={link.isDisabled ? "#" : needsAuthLock ? `/login?next=${link.href}` : link.href}
+                        href={link.isDisabled ? "#" : needsAuthLock ? `/dashboard/locked?redirectedFrom=${link.href}` : link.href}
                         onClick={(e) => { 
                           if (link.isDisabled) {
                             e.preventDefault();
@@ -183,51 +183,7 @@ export function Sidebar({ isOpen, closeMobileMenu }: SidebarProps) {
         </div>
 
         {/* ── PROFILE & SIGN OUT ── */}
-        <div className="shrink-0 border-t border-border bg-card p-3 flex flex-col gap-2 pb-8">
-          <div className={`flex items-center rounded-lg bg-muted p-2 overflow-hidden ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
-            {userProfile.avatar ? (
-              <img 
-                src={userProfile.avatar} 
-                alt="Profile" 
-                onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userProfile.name)}&background=2563eb&color=fff` }}
-                className="h-9 w-9 flex-shrink-0 rounded-full border border-border object-cover" 
-              />
-            ) : (
-              <div className="h-9 w-9 flex-shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
-                {userProfile.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            
-            {!isCollapsed && (
-              <div className="truncate">
-                <p className="text-sm font-semibold text-card-foreground truncate">{userProfile.name}</p>
-                <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{userProfile.role}</p>
-              </div>
-            )}
-          </div>
-          
-          {userProfile.name === "Guest View" ? (
-            <Link 
-              href="/login" 
-              title={isCollapsed ? "Sign In" : undefined}
-              className={`flex items-center justify-center rounded-md border border-border bg-primary/10 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground ${isCollapsed ? 'px-0' : 'px-4'}`}
-            >
-              {isCollapsed ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-              ) : "Sign In"}
-            </Link>
-          ) : (
-            <button 
-              onClick={handleSignOut} 
-              title={isCollapsed ? "Sign Out" : undefined}
-              className={`flex items-center justify-center rounded-md border border-border bg-card py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-500/10 ${isCollapsed ? 'px-0' : 'px-4'}`}
-            >
-              {isCollapsed ? (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="h-5 w-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
-              ) : "Sign Out"}
-            </button>
-          )}
-        </div>
+        <div className="shrink-0 pb-8"></div>
       </aside>
     </>
   );

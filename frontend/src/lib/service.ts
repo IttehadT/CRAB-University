@@ -29,7 +29,11 @@ import {
   updateSwapRequestStatus,
   deleteSwapRequest,
   setCourseSwapDone,
-  markNotificationsAsRead
+  markNotificationsAsRead,
+  upsertAcademicProfile,
+  getAcademicProfile,
+  updateUserSocialProfile,
+  getUserSocialProfile
 } from './db/control';
 import { CourseMold, User } from './db/mold';
 import { siteConfig } from "@/config/site"; // <-- Added for Master Semester Switch
@@ -218,5 +222,26 @@ export async function markSwapAsDone(swapId: string, userEmail: string) {
 
 export async function readAllSwapNotifications(email: string) {
   const result = await markNotificationsAsRead(email);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function saveAcademicProfile(userId: string, data: any) {
+  const result = await upsertAcademicProfile(userId, data);
+  if (!result.success) throw new Error(result.error);
+}
+
+export async function fetchUserAcademicProfile(userId: string) {
+  const result = await getAcademicProfile(userId);
+  if (!result.success) throw new Error(result.error);
+  return result.data;
+}
+
+export async function fetchSocialProfile(email: string) {
+  const result = await getUserSocialProfile(email);
+  return result.success ? result.data : null;
+}
+
+export async function saveSocialProfile(email: string, data: any) {
+  const result = await updateUserSocialProfile(email, data);
   if (!result.success) throw new Error(result.error);
 }

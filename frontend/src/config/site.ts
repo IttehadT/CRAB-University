@@ -75,7 +75,7 @@ export const siteConfig = {
     {
       title: "Dashboard",
       items: [
-        { id: "overview", label: "Overview", description: "Your central hub.", href: "/dashboard", icon: "🏠", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+        { id: "overview", label: "Overview", description: "Your central hub.", href: "/dashboard", icon: "🏠", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         // ── ACTIVE FEATURES (Ordered for Carousel: Left, Middle, Right) ──
         { id: "routine-finder", label: "Routine Finder", description: "Build your perfect schedule.", href: "/dashboard/finder", icon: "🔍", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: false, sortOrder: 1 },
         { id: "my-routine", label: "My Routine", description: "View your default active schedule.", href: "/dashboard/routine", icon: "⭐", placements: ["HERO", "SLIDER", "SIDEBAR"], requiresAuth: true, sortOrder: 2 },
@@ -83,7 +83,7 @@ export const siteConfig = {
         { id: "course-swap", label: "Course Swap", description: "Trade sections with other students.", href: "/dashboard/swap", icon: "🔄", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
         { id: "fyat-routine", label: "FYAT Routine", description: "First-year advising schedules.", href: "/dashboard/fyat", icon: "👥", isDisabled: true, badges: ["NEW"], placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },        
         // ── LOCKED FEATURES ──
-        { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: true },
+        // { id: "grade-sheet", label: "Grade Sheet", description: "Track your academic performance.", href: "/dashboard/grades", icon: "📊", isDisabled: true, placements: ["SIDEBAR"], requiresAuth: true },
       ]
     },
     {
@@ -128,9 +128,9 @@ export const siteConfig = {
     {
       title: "Support",
       items: [
-        { id: "support", label: "Support Tickets", description: "Get help from the admin team.", href: "/dashboard/support", icon: "🎫", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "report-bug", label: "Report a Bug", description: "Help us improve CRABU.", href: "/dashboard/bug", icon: "🐛", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
-        { id: "dev-profile", label: "Developer Profile", description: "About the creator.", href: "/dashboard/developer", icon: "👨‍💻", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
+        { id: "support", label: "Report Issue", description: "Get help from the admin team.", href: "/dashboard/support", icon: "🎫", placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+        // { id: "report-bug", label: "Report a Bug", description: "Help us improve CRABU.", href: "/dashboard/bug", icon: "🐛", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: true },
+        // { id: "dev-profile", label: "Developer Profile", description: "About the creator.", href: "/dashboard/developer", icon: "👨‍💻", isDisabled: true, placements: ["SLIDER", "SIDEBAR"], requiresAuth: false },
       ]
     },
     {

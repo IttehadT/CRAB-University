@@ -54,6 +54,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // 🔥 FIX: ALLOW EXCEPTION FOR LOCKED PAGE TO PREVENT INFINITE REDIRECT LOOPS
+  if (currentPath === '/dashboard/locked') {
+    return supabaseResponse
+  }
+
   // Check Dashboard Access dynamically based on siteConfig
   if (isAccessingDashboard) {
     // Flatten all features to search through them
@@ -75,12 +80,12 @@ export async function proxy(request: NextRequest) {
     }
 
     // SOFT GATE: If the route requires auth and there is no user logged in
-    if (requiresAuth && !user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/login' 
-      url.searchParams.set('next', currentPath) // Set the pipeline parameter
-      return NextResponse.redirect(url) // Force redirect so the URL pipeline begins
-    }
+    if (requiresAuth && !user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/dashboard/locked' // Fixed path to match your folder structure
+      url.searchParams.set('redirectedFrom', currentPath) // Fixed to match your page.tsx
+      return NextResponse.redirect(url)
+    }
 
     // 5. ROLE-BASED ACCESS CONTROL (RBAC)
     if (user && requestedFeature && requestedFeature.allowedRoles) {
