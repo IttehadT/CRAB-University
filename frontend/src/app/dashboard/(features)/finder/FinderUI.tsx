@@ -961,7 +961,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
                 <div className="relative">
                   <div className="flex items-center w-full bg-background border border-border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                     <input 
-                      type="text" placeholder="Search faculties..." value={facultySearch}
+                      type="text" placeholder="Search..." value={facultySearch}
                       onChange={(e) => { setFacultySearch(e.target.value); setFacultyDropdownOpen(true); }}
                       onFocus={() => setFacultyDropdownOpen(true)}
                       className="flex-1 px-3 py-2.5 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
