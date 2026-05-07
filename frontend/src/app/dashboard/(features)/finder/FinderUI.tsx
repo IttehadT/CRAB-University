@@ -957,7 +957,7 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
               
               {/* Avoid Faculties UI */}
               <div className="space-y-3">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Avoid Faculties</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Pass</label>
                 <div className="relative">
                   <div className="flex items-center w-full bg-background border border-border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                     <input 
