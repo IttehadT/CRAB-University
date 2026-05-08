@@ -957,11 +957,11 @@ export default function FinderUI({ initialCourses, studentName, semester }: Find
               
               {/* Avoid Faculties UI */}
               <div className="space-y-3">
-                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Pass</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider">Avoid Faculties</label>
                 <div className="relative">
                   <div className="flex items-center w-full bg-background border border-border rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
                     <input 
-                      type="text" placeholder="Search..." value={facultySearch}
+                      type="text" placeholder="Search Faculties..." value={facultySearch}
                       onChange={(e) => { setFacultySearch(e.target.value); setFacultyDropdownOpen(true); }}
                       onFocus={() => setFacultyDropdownOpen(true)}
                       className="flex-1 px-3 py-2.5 bg-transparent text-foreground placeholder:text-muted-foreground focus:outline-none"
